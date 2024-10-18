@@ -21,26 +21,26 @@ linters:
 
 run:
   timeout: 5m
-  skip-dirs:
-    - .git
-    - .github
-  skip-files:
-    - ".*_test.go"
 
 issues:
   max-issues-per-linter: 0
   max-same-issues: 5
+  exclude-files:
+    - ".*_test.go"
+  exclude-dirs:
+    - .git
+    - .github
 
 output:
   sort-results: true
-  format: colored-line-number
+  formats: colored-line-number
 
 
 linters-settings:
   staticcheck:
     checks: ["all"]
   govet:
-    check-shadowing: true
+    shadow: true
   revive:
     ignore-generated-header: true 
   misspell:
