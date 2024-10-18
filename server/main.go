@@ -1,0 +1,45 @@
+package main
+
+import (
+	"log"
+
+	"github.com/gabrielg2020/chess-api/api/handler"
+	"github.com/gabrielg2020/chess-api/api/service/validate"
+	"github.com/gin-gonic/gin"
+)
+
+func main() {
+	engine := setUpEngine()
+
+	// Initalise services
+	fenService := validate.NewFENService()
+
+	// Initalise handlers
+	fenHandler := handler.NewFENValidatorHandler(fenService)
+
+	// Set up endpoints
+	engine.GET("/", func(ctx *gin.Context) {
+		ctx.JSON(200, gin.H{
+			"message": "Welcome to the Chess API!",
+		})
+	})
+
+	validateGroup := engine.Group("/validate")
+	{
+		validateGroup.GET("/fen", fenHandler.ValidateFEN)
+	}
+
+	// Start engine
+	if err := engine.Run(":8000"); err != nil {
+		log.Fatalf("Failed to run engine %v", err)
+	}
+}
+
+func setUpEngine() *gin.Engine{
+	engine := gin.New()
+	engine.Use(gin.Logger())
+	engine.Use(gin.Recovery())
+	engine.SetTrustedProxies([]string{"127.0.0.1"})
+
+	return engine
+}
