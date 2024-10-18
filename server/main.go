@@ -30,7 +30,7 @@ func main() {
 	}
 
 	// Start engine
-	if err := engine.Run(":8000"); err != nil {
+	if err := engine.Run(":8080"); err != nil {
 		log.Fatalf("Failed to run engine %v", err)
 	}
 }
@@ -39,7 +39,10 @@ func setUpEngine() *gin.Engine{
 	engine := gin.New()
 	engine.Use(gin.Logger())
 	engine.Use(gin.Recovery())
-	engine.SetTrustedProxies([]string{"127.0.0.1"})
+	err := engine.SetTrustedProxies([]string{"127.0.0.1"})
+	if err != nil {
+		log.Fatalf("Failed to run engine %v", err)
+	}
 
 	return engine
 }
