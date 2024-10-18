@@ -1,4 +1,4 @@
-package handler
+package FENHandler
 
 import (
 	"net/http"
@@ -64,7 +64,7 @@ func TestValidateFEN(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			mockFENService := new(mockFENService)
-			handler := NewFENValidatorHandler(mockFENService)
+			handler := NewFENHandler(mockFENService)
 		
 			engine := gin.Default()
 			engine.GET("/validate/fen", handler.ValidateFEN)

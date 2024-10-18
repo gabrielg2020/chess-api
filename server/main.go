@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
-	"github.com/gabrielg2020/chess-api/api/handler"
-	"github.com/gabrielg2020/chess-api/api/service/validate"
+	"github.com/gabrielg2020/chess-api/api/handler/fen_handler"
+	"github.com/gabrielg2020/chess-api/api/service/fen_service"
 	"github.com/gin-gonic/gin"
 )
 
@@ -12,10 +12,10 @@ func main() {
 	engine := setUpEngine()
 
 	// Initalise services
-	fenService := validate.NewFENService()
+	fenService := FENService.NewFENService()
 
 	// Initalise handlers
-	fenHandler := handler.NewFENValidatorHandler(fenService)
+	fenHandler := FENHandler.NewFENHandler(fenService)
 
 	// Set up endpoints
 	engine.GET("/", func(ctx *gin.Context) {

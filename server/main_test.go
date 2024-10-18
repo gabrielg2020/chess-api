@@ -5,8 +5,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gabrielg2020/chess-api/api/handler"
-	"github.com/gabrielg2020/chess-api/api/service/validate"
+	"github.com/gabrielg2020/chess-api/api/handler/fen_handler"
+	"github.com/gabrielg2020/chess-api/api/service/fen_service"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 )
@@ -40,8 +40,8 @@ func TestValidateFENEndpoint(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	engine := setUpEngine()
 
-	fenService := validate.NewFENService()
-	fenHandler := handler.NewFENValidatorHandler(fenService)
+	fenService := FENService.NewFENService()
+	fenHandler := FENHandler.NewFENHandler(fenService)
 
 	validateGroup := engine.Group("/validate")
 	{
