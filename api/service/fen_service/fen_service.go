@@ -1,4 +1,4 @@
-package validate
+package FENService
 
 import (
 	"errors"
@@ -14,6 +14,8 @@ type FENService struct {}
 func NewFENService() *FENService {
 	return &FENService{}
 }
+
+// Methods
 
 func (service *FENService) Validate(fen string) (bool, error) {
 	if fen == "" {
