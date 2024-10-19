@@ -42,6 +42,6 @@ func (service *FENService) Validate(fen string) (error) {
 func (service *FENService) Parse(validFen string) (entity.ChessboardEntityInterface, error) {
 	// TODO Create parsing functionality
 	var board [8][8]int
-	chessboard := entity.NewChessboardEntity(board, validFen)
+	chessboard := entity.NewChessboardEntity(board, validFen, "", "", "", 0, 0)
 	return chessboard, nil
 }

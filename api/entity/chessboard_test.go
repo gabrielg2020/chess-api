@@ -31,7 +31,7 @@ func Test_ChessboardEntity_GetFen(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Arrange
-			entity := NewChessboardEntity([8][8]int{}, tc.fen)
+			entity := NewChessboardEntity([8][8]int{}, tc.fen, "", "", "", 0, 0)
 			// Act
 			response, err := entity.GetFen()
 			// Assert
@@ -92,7 +92,7 @@ func Test_ChessboardEntity_GetBoard(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Arrange
-			entity := NewChessboardEntity(tc.board, "fen")
+			entity := NewChessboardEntity(tc.board, "fen", "", "", "", 0, 0)
 			// Act
 			response, err := entity.GetBoard()
 			// Assert
