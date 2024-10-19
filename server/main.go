@@ -3,6 +3,8 @@ package main
 import (
 	"log"
 
+	"github.com/gabrielg2020/chess-api/api/handler/best_move_handler"
+	"github.com/gabrielg2020/chess-api/api/service/best_move_service"
 	"github.com/gabrielg2020/chess-api/api/handler/fen_handler"
 	"github.com/gabrielg2020/chess-api/api/service/fen_service"
 	"github.com/gin-gonic/gin"
@@ -13,9 +15,11 @@ func main() {
 
 	// Initalise services
 	fenService := FENService.NewFENService()
+	bestMoveService := BestMoveService.NewBestMoveService()
 
 	// Initalise handlers
 	fenHandler := FENHandler.NewFENHandler(fenService)
+	bestMoveHandler := BestMoveHandler.NewBestMoveHandler(fenService, bestMoveService)
 
 	// Set up endpoints
 	engine.GET("/", func(ctx *gin.Context) {
@@ -28,6 +32,8 @@ func main() {
 	{
 		validateGroup.GET("/fen", fenHandler.ValidateFEN)
 	}
+
+	engine.GET("/best_move", bestMoveHandler.FindBestMove)
 
 	// Start engine
 	if err := engine.Run(":8080"); err != nil {
