@@ -25,14 +25,24 @@ type ChessboardEntity struct {
 	// White = +, Black = -
 	// Pawns = 1, Knights = 2, Bishops = 3, Rooks = 4, Queens = 5, King = 6
 	// e.g a white rook on square c5 -> board[2][4] = 4
-	board [8][8]int
-	fen string
+	board           [8][8]int
+	fen             string
+	activeColour    string
+	castlingRights  string
+	enPassantSqaure string
+	halfmoveClock   int
+	fullmoveNumber  int
 }
 
-func NewChessboardEntity(board [8][8]int, fen string) *ChessboardEntity {
+func NewChessboardEntity(board [8][8]int, fen string, activeColour string, castlingRights string, enPassantSquare string, halfmoveClock int, fullmoveNumber int) *ChessboardEntity {
 	return &ChessboardEntity{
 		board: board,
 		fen: fen,
+		activeColour: activeColour,
+		castlingRights: castlingRights,
+		enPassantSqaure: enPassantSquare,
+		halfmoveClock: halfmoveClock,
+		fullmoveNumber: fullmoveNumber,
 	}
 }
 
