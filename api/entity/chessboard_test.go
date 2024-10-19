@@ -92,7 +92,7 @@ func Test_ChessboardEntity_GetBoard(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Arrange
-			entity := NewChessboardEntity(tc.board, "fen", "", "", "", 0, 0)
+			entity := NewChessboardEntity(tc.board, "fen", "", "", "", "", "")
 			// Act
 			response, err := entity.GetBoard()
 			// Assert

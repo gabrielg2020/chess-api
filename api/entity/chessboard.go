@@ -29,18 +29,18 @@ type ChessboardEntity struct {
 	fen             string
 	activeColour    string
 	castlingRights  string
-	enPassantSqaure string
-	halfmoveClock   int
-	fullmoveNumber  int
+	enPassantSquare string
+	halfmoveClock   string
+	fullmoveNumber  string
 }
 
-func NewChessboardEntity(board [8][8]int, fen string, activeColour string, castlingRights string, enPassantSquare string, halfmoveClock int, fullmoveNumber int) *ChessboardEntity {
+func NewChessboardEntity(board [8][8]int, fen string, activeColour string, castlingRights string, enPassantSquare string, halfmoveClock string, fullmoveNumber string) *ChessboardEntity {
 	return &ChessboardEntity{
 		board: board,
 		fen: fen,
 		activeColour: activeColour,
 		castlingRights: castlingRights,
-		enPassantSqaure: enPassantSquare,
+		enPassantSquare: enPassantSquare,
 		halfmoveClock: halfmoveClock,
 		fullmoveNumber: fullmoveNumber,
 	}

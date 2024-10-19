@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// Mock services
+// Mocking
 // FEN Service
 type mockFENService struct {
 	mock.Mock
