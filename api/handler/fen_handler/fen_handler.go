@@ -8,21 +8,21 @@ import (
 )
 
 type FENHandler struct {
-	service FENService.FENServiceInterface
+	fenService FENService.FENServiceInterface
 }
 
-func NewFENHandler(service FENService.FENServiceInterface) *FENHandler {
-	return &FENHandler{service: service}
+func NewFENHandler(FENService FENService.FENServiceInterface) *FENHandler {
+	return &FENHandler{fenService: FENService}
 }
 
 func (handler *FENHandler) ValidateFEN(ctx *gin.Context) {
 	fen := ctx.Query("fen")
 
-	isValid, err := handler.service.Validate(fen)
+	err := handler.fenService.Validate(fen)
 
 	if  err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"valid":        isValid,
+			"valid":        (err == nil),
 			"errorMessage": err.Error(),
 			"errorCode":    http.StatusBadRequest,
 		})
@@ -30,6 +30,6 @@ func (handler *FENHandler) ValidateFEN(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"valid": isValid,
+		"valid": (err == nil),
 	})
 }
