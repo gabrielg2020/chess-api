@@ -45,7 +45,7 @@ func Test_ChessboardEntity_GetBoard(t *testing.T) {
 	testCases := []struct {
 		name              string
 		board             [8][8]int
-		expectedResponse [8][8]int
+		expectedResponse  [8][8]int
 		expectedError     error
 	}{
 		{
