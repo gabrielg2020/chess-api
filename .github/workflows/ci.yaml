@@ -1,8 +1,6 @@
 name: CI
 
 on:
-  push:
-    bracnhes: [ main ]
   pull_request:
 
 jobs: 
