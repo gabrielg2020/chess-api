@@ -3,6 +3,8 @@ package FENService
 import (
 	"errors"
 	"regexp"
+	"strconv"
+	"strings"
 
 	"github.com/gabrielg2020/chess-api/api/entity"
 )
@@ -40,8 +42,68 @@ func (service *FENService) Validate(fen string) (error) {
 }
 
 func (service *FENService) Parse(validFen string) (entity.ChessboardEntityInterface, error) {
-	// TODO Create parsing functionality
-	var board [8][8]int
-	chessboard := entity.NewChessboardEntity(board, validFen)
+	emptyChessboard := entity.NewChessboardEntity([8][8]int{}, "" ,"", "", "", "", "")
+	// Split fen string and assign into seperate variables
+	// REFRENCE: rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+	fenParts := strings.Fields(strings.TrimSpace(validFen))
+	if len(fenParts) != 6 {
+		return emptyChessboard,errors.New("expected 6 feilds in fenParts")
+	}
+
+	piecePlacement, activeColour, castlingRights, enPassantSquare, halfmoveClock, fullmoveNumber := fenParts[0], fenParts[1], fenParts[2], fenParts[3], fenParts[4], fenParts[5]
+
+	pieceToIntMap := map[string]int{
+		"p": -1, "P": 1,
+		"n": -2, "N": 2,
+		"b": -3, "B": 3,
+		"r": -4, "R": 4,
+		"q": -5, "Q": 5,
+		"k": -6, "K": 6,
+	}
+
+	rows := strings.Split(piecePlacement, "/")
+	board := [8][8]int{}
+	
+	for i := 0; i < 8; i++ {
+		row := rows[i]
+		col := 0
+		for j := 0; j < len(row); j++ {
+			piece := string(row[j])
+
+			if pieceAsInt, exists := pieceToIntMap[piece]; exists { // Add piece to board
+				if col >= 8 {
+					return emptyChessboard, errors.New("too many pieces in row")
+				}
+				board[i][col] = pieceAsInt
+				col++
+			} else { // Add spaces to board
+				emptySquares, err := strconv.Atoi(piece)
+				if err != nil {
+					return emptyChessboard, errors.New("invalid character in row")
+				}
+				if (col+emptySquares) > 8 {
+					return emptyChessboard, errors.New("too many squares in row")
+				}
+				for k := 0; k < emptySquares; k++ {
+					board[i][col] = 0
+					col ++
+				}
+			}
+		}
+		if col != 8 {
+			return emptyChessboard, errors.New("row does not have exactly 8 squares")
+		}
+	}
+
+	chessboard := entity.NewChessboardEntity(
+		board,
+		validFen,
+		activeColour,
+		castlingRights,
+		enPassantSquare,
+		halfmoveClock,
+		fullmoveNumber,
+	)
+	
 	return chessboard, nil
 }

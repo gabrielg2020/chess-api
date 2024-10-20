@@ -1,11 +1,18 @@
 package entity
 
-import "errors"
+import (
+	"errors"
+)
 
 type ChessboardEntityInterface interface {
-	GetFen() (string, error)
-	// SetFen(fen string) (*ChessboardEntity, error)
 	GetBoard() ([8][8]int, error)
+	GetFen() (string, error)
+	GetActiveColour() (string, error)
+	GetCastlingRights() (string, error)
+	GetEnPassantSquare() (string, error)
+	GetHalfmoveClock() (string, error)
+	GetFullmoveNumber() (string, error)
+	// SetFen(fen string) (*ChessboardEntity, error)
 	// ResetBoard() (*ChessboardEntity, error)
 	// GetPiece(position string) (int, error)
 	// SetPiece(position string, peice int) error
@@ -25,25 +32,28 @@ type ChessboardEntity struct {
 	// White = +, Black = -
 	// Pawns = 1, Knights = 2, Bishops = 3, Rooks = 4, Queens = 5, King = 6
 	// e.g a white rook on square c5 -> board[2][4] = 4
-	board [8][8]int
-	fen string
+	board           [8][8]int
+	fen             string
+	activeColour    string
+	castlingRights  string
+	enPassantSquare string
+	halfmoveClock   string
+	fullmoveNumber  string
 }
 
-func NewChessboardEntity(board [8][8]int, fen string) *ChessboardEntity {
+func NewChessboardEntity(board [8][8]int, fen string, activeColour string, castlingRights string, enPassantSquare string, halfmoveClock string, fullmoveNumber string) *ChessboardEntity {
 	return &ChessboardEntity{
 		board: board,
 		fen: fen,
+		activeColour: activeColour,
+		castlingRights: castlingRights,
+		enPassantSquare: enPassantSquare,
+		halfmoveClock: halfmoveClock,
+		fullmoveNumber: fullmoveNumber,
 	}
 }
 
 // Methods
-
-func (entity *ChessboardEntity) GetFen() (string, error) {
-	if entity.fen == "" {
-		return "", errors.New("chessboard.fen is not set")
-	}
-	return entity.fen, nil
-}
 
 func (entity *ChessboardEntity) GetBoard() ([8][8]int, error){
 	for row := 0; row < 8; row++ {
@@ -54,4 +64,46 @@ func (entity *ChessboardEntity) GetBoard() ([8][8]int, error){
 		}
 	}
 	return entity.board, nil
+}
+
+func (entity *ChessboardEntity) GetFen() (string, error) {
+	if entity.fen == "" {
+		return "", errors.New("chessboard.fen is not set")
+	}
+	return entity.fen, nil
+}
+
+func (entity *ChessboardEntity) GetActiveColour() (string, error){
+	if entity.activeColour == "" {
+		return "", errors.New("chessboard.activeColour is not set")
+	}
+	return entity.activeColour, nil
+}
+
+func (entity *ChessboardEntity) GetCastlingRights() (string, error){
+	if entity.castlingRights == "" {
+		return "", errors.New("chessboard.castlingRights is not set")
+	}
+	return entity.castlingRights, nil
+}
+
+func (entity *ChessboardEntity) GetEnPassantSquare() (string, error){
+	if entity.enPassantSquare == "" {
+		return "", errors.New("chessboard.enPassantSquare is not set")
+	}
+	return entity.enPassantSquare, nil
+}
+
+func (entity *ChessboardEntity) GetHalfmoveClock() (string, error){
+	if entity.halfmoveClock == "" {
+		return "", errors.New("chessboard.halfmoveClock is not set")
+	}
+	return entity.halfmoveClock, nil
+}
+
+func (entity *ChessboardEntity) GetFullmoveNumber() (string, error){
+	if entity.fullmoveNumber == "" {
+		return "", errors.New("chessboard.fullmoveNumber is not set")
+	}
+	return entity.fullmoveNumber, nil
 }
