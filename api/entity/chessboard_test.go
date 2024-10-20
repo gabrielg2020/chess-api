@@ -202,3 +202,37 @@ func Test_ChessboardEntity_GetEnPassantSquare(t *testing.T) {
 		})
 	}
 }
+
+func Test_ChessboardEntity_GetHalfmoveClock(t *testing.T) {
+	testCases := []struct {
+		name              string
+		halfmoveClock      string
+		expectedResponse  string
+		expectedError     error
+	}{
+		{
+			name: "chessboard.halfmoveClock is set",
+			halfmoveClock: "w",
+			expectedResponse: "w",
+			expectedError: nil,
+		},
+		{
+			name: "chessboard.halfmoveClock is not set",
+			halfmoveClock: "",
+			expectedResponse: "",
+			expectedError: errors.New("chessboard.halfmoveClock is not set"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Arrange
+			entity := NewChessboardEntity([8][8]int{}, "", "", "", "", tc.halfmoveClock, "")
+			// Act
+			response, err := entity.GetHalfmoveClock()
+			// Assert
+			assert.Equal(t, tc.expectedResponse, response)
+			assert.Equal(t, tc.expectedError, err)
+		})
+	}
+}
