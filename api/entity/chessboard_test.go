@@ -134,3 +134,37 @@ func Test_ChessboardEntity_GetActiveColour(t *testing.T) {
 		})
 	}
 }
+
+func Test_ChessboardEntity_GetCastlingRights(t *testing.T) {
+	testCases := []struct {
+		name              string
+		castlingRights      string
+		expectedResponse  string
+		expectedError     error
+	}{
+		{
+			name: "chessboard.castlingRights is set",
+			castlingRights: "w",
+			expectedResponse: "w",
+			expectedError: nil,
+		},
+		{
+			name: "chessboard.castlingRights is not set",
+			castlingRights: "",
+			expectedResponse: "",
+			expectedError: errors.New("chessboard.castlingRights is not set"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Arrange
+			entity := NewChessboardEntity([8][8]int{}, "", "", tc.castlingRights, "", "", "")
+			// Act
+			response, err := entity.GetCastlingRights()
+			// Assert
+			assert.Equal(t, tc.expectedResponse, response)
+			assert.Equal(t, tc.expectedError, err)
+		})
+	}
+}
