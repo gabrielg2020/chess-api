@@ -53,44 +53,45 @@ func (service *FENService) Parse(validFen string) (entity.ChessboardEntityInterf
 	piecePlacement, activeColour, castlingRights, enPassantSquare, halfmoveClock, fullmoveNumber := fenParts[0], fenParts[1], fenParts[2], fenParts[3], fenParts[4], fenParts[5]
 
 	pieceToIntMap := map[string]int{
-		"p": -1,
-		"P": 1,
-		"n": -2,
-		"N": 2,
-		"b": -3,
-		"B": 3,
-		"r": -4,
-		"R": 4,
-		"q": -5,
-		"Q": 5,
-		"k": -6,
-		"K": 6,
+		"p": -1, "P": 1,
+		"n": -2, "N": 2,
+		"b": -3, "B": 3,
+		"r": -4, "R": 4,
+		"q": -5, "Q": 5,
+		"k": -6, "K": 6,
 	}
 
 	rows := strings.Split(piecePlacement, "/")
 	board := [8][8]int{}
 	
-	for i:=0; i<8; i++ {
+	for i := 0; i < 8; i++ {
 		row := rows[i]
-		for j:=0; j<8; {
+		col := 0
+		for j := 0; j < len(row); j++ {
 			piece := string(row[j])
-			peiceAsInt := pieceToIntMap[piece]
-			if (peiceAsInt != 0) { // therefore a piece
-				board[i][j] = peiceAsInt
-				j ++
-				continue
-			}
 
-			emptySquares, err := strconv.ParseInt(piece, 10, 64)
-
-			if err != nil {
-				return emptyChessboard, errors.New("failed to convert string into int64")
+			if pieceAsInt, exists := pieceToIntMap[piece]; exists { // Add piece to board
+				if col >= 8 {
+					return emptyChessboard, errors.New("too many pieces in row")
+				}
+				board[i][col] = pieceAsInt
+				col++
+			} else { // Add spaces to board
+				emptySquares, err := strconv.Atoi(piece)
+				if err != nil {
+					return emptyChessboard, errors.New("invalid character in row")
+				}
+				if (col+emptySquares) > 8 {
+					return emptyChessboard, errors.New("too many squares in row")
+				}
+				for k := 0; k < emptySquares; k++ {
+					board[i][col] = 0
+					col ++
+				}
 			}
-
-			for k:=0; k<int(emptySquares); k++ {
-				board[i][j] = 0
-				j ++
-			}
+		}
+		if col != 8 {
+			return emptyChessboard, errors.New("row does not have exactly 8 squares")
 		}
 	}
 
