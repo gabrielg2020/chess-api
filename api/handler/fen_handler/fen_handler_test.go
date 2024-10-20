@@ -6,26 +6,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gabrielg2020/chess-api/api/entity"
+	"github.com/gabrielg2020/chess-api/api/mocks"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
-
-// Mock service
-type mockFENService struct {
-	mock.Mock
-}
-
-func (m *mockFENService) Validate(fen string) (error) {
-	args := m.Called(fen)
-	return args.Error(0)
-}
-
-func (m *mockFENService) Parse(validFen string) (entity.ChessboardEntityInterface, error) {
-	args := m.Called(validFen)
-	return args.Get(0).(entity.ChessboardEntityInterface), args.Error(1)
-}
 
 func Test_FENHandler_ValidateFEN(t *testing.T) {
 	gin.SetMode(gin.TestMode)
@@ -33,14 +17,14 @@ func Test_FENHandler_ValidateFEN(t *testing.T) {
 	testCases := []struct {
 		name               string
 		fen                string
-		setupFENService      func(m *mockFENService)
+		setupFENService    func(m *mocks.MockFENService)
 		expectedStatusCode int
 		expectedResponse   string
 	}{
 		{
 			name:               "Valid FEN",
 			fen:                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-			setupFENService: func(m *mockFENService) {
+			setupFENService: func(m *mocks.MockFENService) {
 				m.On("Validate", "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").Return(nil)
 			},
 			expectedStatusCode: http.StatusOK,
@@ -49,7 +33,7 @@ func Test_FENHandler_ValidateFEN(t *testing.T) {
 		{
 			name:               "Invalid FEN [FEN string doesn't pass regex]",
 			fen:                "fen",
-			setupFENService: func(m *mockFENService) {
+			setupFENService: func(m *mocks.MockFENService) {
 				m.On("Validate", "fen").Return(errors.New("string is not a FEN"))
 			},
 			expectedStatusCode: http.StatusBadRequest,
@@ -58,7 +42,7 @@ func Test_FENHandler_ValidateFEN(t *testing.T) {
 		{
 			name:               "Invalid FEN [FEN string is empty]",
 			fen:                "",
-			setupFENService: func(m *mockFENService) {
+			setupFENService: func(m *mocks.MockFENService) {
 				m.On("Validate", "").Return(errors.New("FEN string empty"))
 			},
 			expectedStatusCode: http.StatusBadRequest,
@@ -70,7 +54,7 @@ func Test_FENHandler_ValidateFEN(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			//Arrange
-			mockFENService := new(mockFENService)
+			mockFENService := new(mocks.MockFENService)
 			handler := NewFENHandler(mockFENService)
 			tc.setupFENService(mockFENService)
 		
