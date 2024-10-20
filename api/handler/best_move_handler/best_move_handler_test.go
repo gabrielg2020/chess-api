@@ -42,14 +42,39 @@ type mockChessboardEntity struct {
 	mock.Mock
 }
 
+func (m *mockChessboardEntity) GetBoard() ([8][8]int, error) {
+	args := m.Called()
+	return args.Get(0).([8][8]int), args.Error(1)
+}
+
 func (m *mockChessboardEntity) GetFen() (string, error) {
 	args := m.Called()
 	return args.String(0), args.Error(1)
 }
 
-func (m *mockChessboardEntity) GetBoard() ([8][8]int, error) {
+func (m *mockChessboardEntity) GetActiveColour() (string, error) {
 	args := m.Called()
-	return args.Get(0).([8][8]int), args.Error(1)
+	return args.String(0), args.Error(1)
+}
+
+func (m *mockChessboardEntity) GetCastlingRights() (string, error) {
+	args := m.Called()
+	return args.String(0), args.Error(1)
+}
+
+func (m *mockChessboardEntity) GetEnPassantSquare() (string, error) {
+	args := m.Called()
+	return args.String(0), args.Error(1)
+}
+
+func (m *mockChessboardEntity) GetHalfmoveClock() (string, error) {
+	args := m.Called()
+	return args.String(0), args.Error(1)
+}
+
+func (m *mockChessboardEntity) GetFullmoveNumber() (string, error) {
+	args := m.Called()
+	return args.String(0), args.Error(1)
 }
 
 func Test_BestMoveHandler_FindBestMove(t *testing.T) {
