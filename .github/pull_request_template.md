@@ -15,7 +15,7 @@ Please provide a clear description of the changes made in this pull request.
 - [ ] My changes generate no new warnings or errors.
 - [ ] I have added tests that prove my fix is effective or that my feature works.
 - [ ] All new and existing tests pass.
-- [ ] My PR title follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) specification.
+- [ ] My PR title follows the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) specification.
 
 ## Additional Notes
 Include any additional information or considerations, such as known issues, future work, or alternatives considered.
