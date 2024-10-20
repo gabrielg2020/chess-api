@@ -1,4 +1,4 @@
-package BestMoveService
+package MoveService
 
 import (
 	"testing"
@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_BestMoveService_FindBestMoveWithArray(t *testing.T) {
-	service := NewBestMoveService()
+func Test_MoveService_FindMoveWithArray(t *testing.T) {
+	service := NewMoveService()
 
 	testCases := []struct {
 		name          string
@@ -32,7 +32,7 @@ func Test_BestMoveService_FindBestMoveWithArray(t *testing.T) {
 					{-4, -2, -3, -5, -6, -3, -2, -4},
 				}, nil)
 			},
-			expectedMove: "a2a4",
+			expectedMove:  "a2a4",
 			expectedError: nil,
 		},
 	}
@@ -44,7 +44,7 @@ func Test_BestMoveService_FindBestMoveWithArray(t *testing.T) {
 			tc.setupMock(mockChessboard)
 
 			// Act
-			move, err := service.FindBestMove(mockChessboard)
+			move, err := service.FindMove(mockChessboard)
 
 			// Assert
 			assert.Equal(t, tc.expectedError, err)
