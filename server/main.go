@@ -33,7 +33,7 @@ func main() {
 		validateGroup.GET("/fen", fenHandler.ValidateFEN)
 	}
 
-	engine.GET("/move", moveHandler.FindMove)
+	engine.GET("/move", moveHandler.FindBestMove)
 
 	// Start engine
 	if err := engine.Run(":8080"); err != nil {

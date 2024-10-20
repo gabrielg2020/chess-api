@@ -48,7 +48,7 @@ func Test_MoveHandler_FindMove(t *testing.T) {
 			tc.setupMoveService(mockMoveService)
 
 			engine := gin.Default()
-			engine.GET("/move", handler.FindMove)
+			engine.GET("/move", handler.FindBestMove)
 			req, err := http.NewRequest(http.MethodGet, "/move?fen="+tc.fen, nil)
 			assert.NoError(t, err, "Expected Not to fail when generating mock request")
 

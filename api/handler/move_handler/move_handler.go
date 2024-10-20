@@ -20,7 +20,7 @@ func NewMoveHandler(FENService FENService.FENServiceInterface, MoveService MoveS
 	}
 }
 
-func (handler *MoveHandler) FindMove(ctx *gin.Context) {
+func (handler *MoveHandler) FindBestMove(ctx *gin.Context) {
 	// Validate FEN
 	fen := ctx.Query("fen")
 
@@ -47,7 +47,7 @@ func (handler *MoveHandler) FindMove(ctx *gin.Context) {
 	}
 
 	// Find best move
-	bestmove, err := handler.moveService.FindMove(chessboard)
+	bestmove, err := handler.moveService.FindBestMove(chessboard)
 
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{

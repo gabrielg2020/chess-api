@@ -44,7 +44,7 @@ func Test_MoveService_FindMoveWithArray(t *testing.T) {
 			tc.setupMock(mockChessboard)
 
 			// Act
-			move, err := service.FindMove(mockChessboard)
+			move, err := service.FindBestMove(mockChessboard)
 
 			// Assert
 			assert.Equal(t, tc.expectedError, err)

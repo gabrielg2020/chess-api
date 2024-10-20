@@ -74,7 +74,7 @@ func Test_GetMove_Endpoint(t *testing.T) {
 	moveService := MoveService.NewMoveService()
 	moveHandler := MoveHandler.NewMoveHandler(fenService, moveService)
 
-	engine.GET("/move", moveHandler.FindMove)
+	engine.GET("/move", moveHandler.FindBestMove)
 
 	req, err := http.NewRequest("GET", "/move?fen=rnbqkbnr%2Fpppppppp%2F8%2F8%2F8%2F8%2FPPPPPPPP%2FRNBQKBNR%20w%20KQkq%20-%200%201", nil)
 	assert.NoError(t, err, "Expected Not to fail when generating mock request")
