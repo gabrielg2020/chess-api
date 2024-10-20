@@ -138,7 +138,7 @@ func Test_ChessboardEntity_GetActiveColour(t *testing.T) {
 func Test_ChessboardEntity_GetCastlingRights(t *testing.T) {
 	testCases := []struct {
 		name              string
-		castlingRights      string
+		castlingRights    string
 		expectedResponse  string
 		expectedError     error
 	}{
@@ -172,7 +172,7 @@ func Test_ChessboardEntity_GetCastlingRights(t *testing.T) {
 func Test_ChessboardEntity_GetEnPassantSquare(t *testing.T) {
 	testCases := []struct {
 		name              string
-		enPassantSquare      string
+		enPassantSquare   string
 		expectedResponse  string
 		expectedError     error
 	}{
@@ -206,7 +206,7 @@ func Test_ChessboardEntity_GetEnPassantSquare(t *testing.T) {
 func Test_ChessboardEntity_GetHalfmoveClock(t *testing.T) {
 	testCases := []struct {
 		name              string
-		halfmoveClock      string
+		halfmoveClock     string
 		expectedResponse  string
 		expectedError     error
 	}{
@@ -230,6 +230,40 @@ func Test_ChessboardEntity_GetHalfmoveClock(t *testing.T) {
 			entity := NewChessboardEntity([8][8]int{}, "", "", "", "", tc.halfmoveClock, "")
 			// Act
 			response, err := entity.GetHalfmoveClock()
+			// Assert
+			assert.Equal(t, tc.expectedResponse, response)
+			assert.Equal(t, tc.expectedError, err)
+		})
+	}
+}
+
+func Test_ChessboardEntity_GetFullmoveNumber(t *testing.T) {
+	testCases := []struct {
+		name              string
+		fullmoveNumber    string
+		expectedResponse  string
+		expectedError     error
+	}{
+		{
+			name: "chessboard.fullmoveNumber is set",
+			fullmoveNumber: "w",
+			expectedResponse: "w",
+			expectedError: nil,
+		},
+		{
+			name: "chessboard.fullmoveNumber is not set",
+			fullmoveNumber: "",
+			expectedResponse: "",
+			expectedError: errors.New("chessboard.fullmoveNumber is not set"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Arrange
+			entity := NewChessboardEntity([8][8]int{}, "", "", "", "", "", tc.fullmoveNumber)
+			// Act
+			response, err := entity.GetFullmoveNumber()
 			// Assert
 			assert.Equal(t, tc.expectedResponse, response)
 			assert.Equal(t, tc.expectedError, err)
