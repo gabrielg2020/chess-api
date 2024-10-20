@@ -1,11 +1,18 @@
 package entity
 
-import "errors"
+import (
+	"errors"
+)
 
 type ChessboardEntityInterface interface {
-	GetFen() (string, error)
-	// SetFen(fen string) (*ChessboardEntity, error)
 	GetBoard() ([8][8]int, error)
+	GetFen() (string, error)
+	GetActiveColour() (string, error)
+	GetCastlingRights() (string, error)
+	GetEnPassantSquare() (string, error)
+	GetHalfmoveClock() (string, error)
+	GetFullmoveNumber() (string, error)
+	// SetFen(fen string) (*ChessboardEntity, error)
 	// ResetBoard() (*ChessboardEntity, error)
 	// GetPiece(position string) (int, error)
 	// SetPiece(position string, peice int) error
@@ -48,13 +55,6 @@ func NewChessboardEntity(board [8][8]int, fen string, activeColour string, castl
 
 // Methods
 
-func (entity *ChessboardEntity) GetFen() (string, error) {
-	if entity.fen == "" {
-		return "", errors.New("chessboard.fen is not set")
-	}
-	return entity.fen, nil
-}
-
 func (entity *ChessboardEntity) GetBoard() ([8][8]int, error){
 	for row := 0; row < 8; row++ {
 		for col := 0; col < 8; col++ {
@@ -64,4 +64,46 @@ func (entity *ChessboardEntity) GetBoard() ([8][8]int, error){
 		}
 	}
 	return entity.board, nil
+}
+
+func (entity *ChessboardEntity) GetFen() (string, error) {
+	if entity.fen == "" {
+		return "", errors.New("chessboard.fen is not set")
+	}
+	return entity.fen, nil
+}
+
+func (entity *ChessboardEntity) GetActiveColour() (string, error){
+	if entity.activeColour == "" {
+		return "", errors.New("chessboard.activeColour is not set")
+	}
+	return entity.activeColour, nil
+}
+
+func (entity *ChessboardEntity) GetCastlingRights() (string, error){
+	if entity.castlingRights == "" {
+		return "", errors.New("chessboard.castlingRights is not set")
+	}
+	return entity.castlingRights, nil
+}
+
+func (entity *ChessboardEntity) GetEnPassantSquare() (string, error){
+	if entity.enPassantSquare == "" {
+		return "", errors.New("chessboard.enPassantSquare is not set")
+	}
+	return entity.enPassantSquare, nil
+}
+
+func (entity *ChessboardEntity) GetHalfmoveClock() (string, error){
+	if entity.halfmoveClock == "" {
+		return "", errors.New("chessboard.halfmoveClock is not set")
+	}
+	return entity.halfmoveClock, nil
+}
+
+func (entity *ChessboardEntity) GetFullmoveNumber() (string, error){
+	if entity.fullmoveNumber == "" {
+		return "", errors.New("chessboard.fullmoveNumber is not set")
+	}
+	return entity.fullmoveNumber, nil
 }
