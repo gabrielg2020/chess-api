@@ -168,3 +168,37 @@ func Test_ChessboardEntity_GetCastlingRights(t *testing.T) {
 		})
 	}
 }
+
+func Test_ChessboardEntity_GetEnPassantSquare(t *testing.T) {
+	testCases := []struct {
+		name              string
+		enPassantSquare      string
+		expectedResponse  string
+		expectedError     error
+	}{
+		{
+			name: "chessboard.enPassantSquare is set",
+			enPassantSquare: "w",
+			expectedResponse: "w",
+			expectedError: nil,
+		},
+		{
+			name: "chessboard.enPassantSquare is not set",
+			enPassantSquare: "",
+			expectedResponse: "",
+			expectedError: errors.New("chessboard.enPassantSquare is not set"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Arrange
+			entity := NewChessboardEntity([8][8]int{}, "", "", "", tc.enPassantSquare, "", "")
+			// Act
+			response, err := entity.GetEnPassantSquare()
+			// Assert
+			assert.Equal(t, tc.expectedResponse, response)
+			assert.Equal(t, tc.expectedError, err)
+		})
+	}
+}
