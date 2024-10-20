@@ -42,6 +42,7 @@ func (service *FENService) Validate(fen string) (error) {
 }
 
 func (service *FENService) Parse(validFen string) (entity.ChessboardEntityInterface, error) {
+	// TODO Maybe don't return an emptyChessboard just retrun nil
 	emptyChessboard := entity.NewChessboardEntity([8][8]int{}, "" ,"", "", "", "", "")
 	// Split fen string and assign into seperate variables
 	// REFRENCE: rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
