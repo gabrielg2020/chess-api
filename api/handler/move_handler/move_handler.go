@@ -1,32 +1,32 @@
-package BestMoveHandler
+package MoveHandler
 
 import (
 	"net/http"
 
 	"github.com/gabrielg2020/chess-api/api/service/fen_service"
-	"github.com/gabrielg2020/chess-api/api/service/best_move_service"
+	"github.com/gabrielg2020/chess-api/api/service/move_service"
 	"github.com/gin-gonic/gin"
 )
 
-type BestMoveHandler struct {
-	fenService FENService.FENServiceInterface
-	bestMoveService BestMoveService.BestMoveServiceInterface
+type MoveHandler struct {
+	fenService  FENService.FENServiceInterface
+	moveService MoveService.MoveServiceInterface
 }
 
-func NewBestMoveHandler(FENService FENService.FENServiceInterface, BestMoveService BestMoveService.BestMoveServiceInterface) *BestMoveHandler {
-	return &BestMoveHandler{
-		fenService: FENService,
-		bestMoveService: BestMoveService,
+func NewMoveHandler(FENService FENService.FENServiceInterface, MoveService MoveService.MoveServiceInterface) *MoveHandler {
+	return &MoveHandler{
+		fenService:  FENService,
+		moveService: MoveService,
 	}
 }
 
-func (handler *BestMoveHandler) FindBestMove(ctx *gin.Context) {
+func (handler *MoveHandler) FindMove(ctx *gin.Context) {
 	// Validate FEN
 	fen := ctx.Query("fen")
 
 	err := handler.fenService.Validate(fen)
 
-	if  err != nil {
+	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"valid":        (err == nil),
 			"errorMessage": err.Error(),
@@ -36,7 +36,7 @@ func (handler *BestMoveHandler) FindBestMove(ctx *gin.Context) {
 	}
 
 	// Parse FEN
-	chessboard , err := handler.fenService.Parse(fen)
+	chessboard, err := handler.fenService.Parse(fen)
 
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -47,7 +47,7 @@ func (handler *BestMoveHandler) FindBestMove(ctx *gin.Context) {
 	}
 
 	// Find best move
-	bestmove, err := handler.bestMoveService.FindBestMove(chessboard)
+	bestmove, err := handler.moveService.FindMove(chessboard)
 
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -57,7 +57,6 @@ func (handler *BestMoveHandler) FindBestMove(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"bestMove": bestmove,
+		"move": bestmove,
 	})
 }
-
