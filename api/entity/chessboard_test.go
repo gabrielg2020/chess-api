@@ -6,41 +6,6 @@ import (
 	
 	"github.com/stretchr/testify/assert"
 )
-
-func Test_ChessboardEntity_GetFen(t *testing.T) {
-	testCases := []struct {
-		name              string
-		fen               string
-		expectedResponse string
-		expectedError     error
-	}{
-		{
-			name: "chessboard.fen is set",
-			fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-			expectedResponse: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-			expectedError: nil,
-		},
-		{
-			name: "chessboard.fen is not set",
-			fen: "",
-			expectedResponse: "",
-			expectedError: errors.New("chessboard.fen is not set"),
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			// Arrange
-			entity := NewChessboardEntity([8][8]int{}, tc.fen, "", "", "", "", "")
-			// Act
-			response, err := entity.GetFen()
-			// Assert
-			assert.Equal(t, tc.expectedResponse, response)
-			assert.Equal(t, tc.expectedError, err)
-		})
-	}
-}
-
 func Test_ChessboardEntity_GetBoard(t *testing.T) {
 	testCases := []struct {
 		name              string
@@ -95,6 +60,74 @@ func Test_ChessboardEntity_GetBoard(t *testing.T) {
 			entity := NewChessboardEntity(tc.board, "fen", "", "", "", "", "")
 			// Act
 			response, err := entity.GetBoard()
+			// Assert
+			assert.Equal(t, tc.expectedResponse, response)
+			assert.Equal(t, tc.expectedError, err)
+		})
+	}
+}
+
+func Test_ChessboardEntity_GetFen(t *testing.T) {
+	testCases := []struct {
+		name              string
+		fen               string
+		expectedResponse  string
+		expectedError     error
+	}{
+		{
+			name: "chessboard.fen is set",
+			fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+			expectedResponse: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+			expectedError: nil,
+		},
+		{
+			name: "chessboard.fen is not set",
+			fen: "",
+			expectedResponse: "",
+			expectedError: errors.New("chessboard.fen is not set"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Arrange
+			entity := NewChessboardEntity([8][8]int{}, tc.fen, "", "", "", "", "")
+			// Act
+			response, err := entity.GetFen()
+			// Assert
+			assert.Equal(t, tc.expectedResponse, response)
+			assert.Equal(t, tc.expectedError, err)
+		})
+	}
+}
+
+func Test_ChessboardEntity_GetActiveColour(t *testing.T) {
+	testCases := []struct {
+		name              string
+		activeColour      string
+		expectedResponse  string
+		expectedError     error
+	}{
+		{
+			name: "chessboard.activeColour is set",
+			activeColour: "w",
+			expectedResponse: "w",
+			expectedError: nil,
+		},
+		{
+			name: "chessboard.activeColour is not set",
+			activeColour: "",
+			expectedResponse: "",
+			expectedError: errors.New("chessboard.activeColour is not set"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Arrange
+			entity := NewChessboardEntity([8][8]int{}, "", tc.activeColour, "", "", "", "")
+			// Act
+			response, err := entity.GetActiveColour()
 			// Assert
 			assert.Equal(t, tc.expectedResponse, response)
 			assert.Equal(t, tc.expectedError, err)
