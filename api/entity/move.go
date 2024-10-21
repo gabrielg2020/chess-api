@@ -1,5 +1,7 @@
 package entity
 
+import ("errors")
+
 type MoveEntityInterface interface {
 	GetFromX() (int, error)
 	GetFromY() (int, error)
@@ -12,46 +14,68 @@ type MoveEntityInterface interface {
 }
 
 type MoveEntity struct {
-	fromX       int
-	fromY       int
-	toX         int
-	toY         int 
-	promotion   int // 0 if not a promotion, otherwise the piece code
-	isCastling  bool
-	isEnPassant bool
-	captured    int // 0 if no piece was captured, otherwise hold the piece code of the piece captured
-}
-
-// TODO Create getter functions for all methods
+	fromX       *int
+	fromY       *int
+	toX         *int
+	toY         *int
+	promotion   *int // 0 if not a promotion, otherwise the piece code
+	isCastling  *bool
+	isEnPassant *bool
+	captured    *int // 0 if no piece was captured, otherwise hold the piece code of the piece captured
+} 
 
 func (entity *MoveEntity) GetFromX() (int, error) {
-	return entity.fromX, nil
+	if entity.fromX == nil {
+		return 0, errors.New("move.fromX is not set")
+	}
+	return *entity.fromX, nil
 }
 
 func (entity *MoveEntity) GetFromY() (int, error) {
-	return entity.fromY, nil
+	if entity.fromY == nil {
+		return 0, errors.New("move.fromY is not set")
+	}
+	return *entity.fromY, nil
 }
 
 func (entity *MoveEntity) GetToX() (int, error) {
-	return entity.toX, nil
+	if entity.toX == nil {
+		return 0, errors.New("move.toX is not set")
+	}
+	return *entity.toX, nil
 }
 
 func (entity *MoveEntity) GetToY() (int, error) {
-	return entity.toY, nil
+	if entity.toY == nil {
+		return 0, errors.New("move.toY is not set")
+	}
+	return *entity.toY, nil
 }
 
 func (entity *MoveEntity) GetPromotion() (int, error) {
-	return entity.promotion, nil
+	if entity.promotion == nil {
+		return 0, errors.New("move.promotion is not set")
+	}
+	return *entity.promotion, nil
 }
 
 func (entity *MoveEntity) IsCastling() (bool, error) {
-	return entity.isCastling, nil
+	if entity.isCastling == nil {
+		return false, errors.New("move.isCastling is not set")
+	}
+	return *entity.isCastling, nil
 }
 
 func (entity *MoveEntity) IsEnPassant() (bool, error) {
-	return entity.isEnPassant, nil
+	if entity.isEnPassant == nil {
+		return false, errors.New("move.isEnPassant is not set")
+	}
+	return *entity.isEnPassant, nil
 }
 
 func (entity *MoveEntity) GetCaptured() (int, error) {
-  return entity.captured, nil
+	if entity.captured == nil {
+		return 0, errors.New("move.captured is not set")
+	}
+	return *entity.captured, nil
 }

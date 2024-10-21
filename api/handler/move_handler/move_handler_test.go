@@ -58,7 +58,7 @@ func Test_MoveHandler_FindBestMove(t *testing.T) {
 			engine.ServeHTTP(rr, req)
 
 			// Assert
-			// TODO Complete test when move_service.FindBestMove is completed.
+			// TODO [FindBestMove] Complete test when move_service.FindBestMove is completed.
 			// assert.Equal(t, tc.expectedStatusCode, rr.Result().StatusCode, "Expected mock status code and test status code to equate")
 			// assert.JSONEq(t, tc.expectedResponse, rr.Body.String(), "Expected mock response and test response to equate")
 			// mockFENService.AssertNumberOfCalls(t, "Validate", 1)

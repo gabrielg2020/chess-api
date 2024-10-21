@@ -8,8 +8,8 @@ import (
 	// "github.com/stretchr/testify/assert"
 )
 
-func Test_MoveService_FindMoveWithArray(t *testing.T) {
-	// TODO Complete test when move_service.FindBestMove is completed.
+func Test_MoveService_FindBestMove(t *testing.T) {
+	// TODO [FindBestMove] Complete test when move_service.FindBestMove is completed.
 	// service := NewMoveService()
 
 	testCases := []struct {
@@ -19,7 +19,7 @@ func Test_MoveService_FindMoveWithArray(t *testing.T) {
 		expectedError error
 	}{
 		{
-			// TODO Add test cases when functionallity is made
+			// TODO [FindBestMove] Add test cases when functionallity is made
 			name: "Test Case 1",
 			setupMock: func(m *mocks.MockChessboardEntity) {
 				m.On("GetBoard").Return([8][8]int{
@@ -44,7 +44,7 @@ func Test_MoveService_FindMoveWithArray(t *testing.T) {
 			mockChessboard := new(mocks.MockChessboardEntity)
 			tc.setupMock(mockChessboard)
 
-			// TODO Complete test when move_service.FindBestMove is completed.
+			// TODO [FindBestMove] Complete test when move_service.FindBestMove is completed.
 			// Act
 			//move, err := service.FindBestMove(mockChessboard)
 
