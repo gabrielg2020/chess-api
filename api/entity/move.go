@@ -24,6 +24,8 @@ type MoveEntity struct {
 	captured    *int // 0 if no piece was captured, otherwise hold the piece code of the piece captured
 } 
 
+// Methods
+
 func (entity *MoveEntity) GetFromX() (int, error) {
 	if entity.fromX == nil {
 		return 0, errors.New("move.fromX is not set")
