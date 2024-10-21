@@ -8,14 +8,14 @@ import (
 )
 func Test_ChessboardEntity_GetBoard(t *testing.T) {
 	testCases := []struct {
-		name              string
-		board             [8][8]int
-		expectedResponse  [8][8]int
-		expectedError     error
+		name             string
+		board            *[8][8]int
+		expectedResponse [8][8]int
+		expectedError    error
 	}{
 		{
 			name: "chessboard.board is set",
-			board: [8][8]int{
+			board: &[8][8]int{
 				{-4, -2, -3, -5, -6, -3, -2, -4},
 				{-1, -1, -1, -1, -1, -1, -1, -1},
 				{0, 0, 0, 0, 0, 0, 0, 0},
@@ -39,16 +39,7 @@ func Test_ChessboardEntity_GetBoard(t *testing.T) {
 		},
 		{
 			name: "chessboard.board is not set",
-			board: [8][8]int{
-				{-7, -7, -7, -7, -7, -7, -7, -7},
-				{-7, -7, -7, -7, -7, -7, -7, -7},
-				{0, 0, 0, 0, 0, 0, 0, 0},
-				{0, 0, 0, 0, 0, 0, 0, 0},
-				{0, 0, 0, 0, 0, 0, 0, 0},
-				{0, 0, 0, 0, 0, 0, 0, 0},
-				{7, 7, 7, 7, 7, 7, 7, 7},
-				{7, 7, 7, 7, 7, 7, 7, 7},
-			},
+			board: nil,
 			expectedResponse: [8][8]int{},
 			expectedError: errors.New("chessboard.board is not set"),
 		},
@@ -57,32 +48,39 @@ func Test_ChessboardEntity_GetBoard(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Arrange
-			entity := NewChessboardEntity(tc.board, "fen", "", "", "", "", "")
+			entity := NewChessboardEntity(tc.board, nil, nil, nil, nil, nil, nil)
 			// Act
 			response, err := entity.GetBoard()
 			// Assert
 			assert.Equal(t, tc.expectedResponse, response)
-			assert.Equal(t, tc.expectedError, err)
+			if tc.expectedError != nil {
+				assert.EqualError(t, err, tc.expectedError.Error())
+			} else {
+				assert.NoError(t, err)
+			}
 		})
 	}
 }
 
 func Test_ChessboardEntity_GetFen(t *testing.T) {
 	testCases := []struct {
-		name              string
-		fen               string
-		expectedResponse  string
-		expectedError     error
+		name             string
+		fen              *string
+		expectedResponse string
+		expectedError    error
 	}{
 		{
 			name: "chessboard.fen is set",
-			fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+			fen: func() *string {
+				s := "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+				return &s
+			}(),
 			expectedResponse: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
 			expectedError: nil,
 		},
 		{
 			name: "chessboard.fen is not set",
-			fen: "",
+			fen: nil,
 			expectedResponse: "",
 			expectedError: errors.New("chessboard.fen is not set"),
 		},
@@ -91,32 +89,39 @@ func Test_ChessboardEntity_GetFen(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Arrange
-			entity := NewChessboardEntity([8][8]int{}, tc.fen, "", "", "", "", "")
+			entity := NewChessboardEntity(nil, tc.fen, nil, nil, nil, nil, nil)
 			// Act
 			response, err := entity.GetFen()
 			// Assert
 			assert.Equal(t, tc.expectedResponse, response)
-			assert.Equal(t, tc.expectedError, err)
+			if tc.expectedError != nil {
+				assert.EqualError(t, err, tc.expectedError.Error())
+			} else {
+				assert.NoError(t, err)
+			}
 		})
 	}
 }
 
 func Test_ChessboardEntity_GetActiveColour(t *testing.T) {
 	testCases := []struct {
-		name              string
-		activeColour      string
-		expectedResponse  string
-		expectedError     error
+		name             string
+		activeColour     *string
+		expectedResponse string
+		expectedError    error
 	}{
 		{
 			name: "chessboard.activeColour is set",
-			activeColour: "w",
+			activeColour: func() *string {
+				s := "w"
+				return &s
+			}(),
 			expectedResponse: "w",
 			expectedError: nil,
 		},
 		{
 			name: "chessboard.activeColour is not set",
-			activeColour: "",
+			activeColour: nil,
 			expectedResponse: "",
 			expectedError: errors.New("chessboard.activeColour is not set"),
 		},
@@ -125,32 +130,39 @@ func Test_ChessboardEntity_GetActiveColour(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Arrange
-			entity := NewChessboardEntity([8][8]int{}, "", tc.activeColour, "", "", "", "")
+			entity := NewChessboardEntity(nil, nil, tc.activeColour, nil, nil, nil, nil)
 			// Act
 			response, err := entity.GetActiveColour()
 			// Assert
 			assert.Equal(t, tc.expectedResponse, response)
-			assert.Equal(t, tc.expectedError, err)
+			if tc.expectedError != nil {
+				assert.EqualError(t, err, tc.expectedError.Error())
+			} else {
+				assert.NoError(t, err)
+			}
 		})
 	}
 }
 
 func Test_ChessboardEntity_GetCastlingRights(t *testing.T) {
 	testCases := []struct {
-		name              string
-		castlingRights    string
-		expectedResponse  string
-		expectedError     error
+		name             string
+		castlingRights   *string
+		expectedResponse string
+		expectedError    error
 	}{
 		{
 			name: "chessboard.castlingRights is set",
-			castlingRights: "w",
-			expectedResponse: "w",
+			castlingRights: func() *string {
+				s := "KQkq"
+				return &s
+			}(),
+			expectedResponse: "KQkq",
 			expectedError: nil,
 		},
 		{
 			name: "chessboard.castlingRights is not set",
-			castlingRights: "",
+			castlingRights: nil,
 			expectedResponse: "",
 			expectedError: errors.New("chessboard.castlingRights is not set"),
 		},
@@ -159,32 +171,39 @@ func Test_ChessboardEntity_GetCastlingRights(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Arrange
-			entity := NewChessboardEntity([8][8]int{}, "", "", tc.castlingRights, "", "", "")
+			entity := NewChessboardEntity(nil, nil, nil, tc.castlingRights, nil, nil, nil)
 			// Act
 			response, err := entity.GetCastlingRights()
 			// Assert
 			assert.Equal(t, tc.expectedResponse, response)
-			assert.Equal(t, tc.expectedError, err)
+			if tc.expectedError != nil {
+				assert.EqualError(t, err, tc.expectedError.Error())
+			} else {
+				assert.NoError(t, err)
+			}
 		})
 	}
 }
 
 func Test_ChessboardEntity_GetEnPassantSquare(t *testing.T) {
 	testCases := []struct {
-		name              string
-		enPassantSquare   string
-		expectedResponse  string
-		expectedError     error
+		name             string
+		enPassantSquare  *string
+		expectedResponse string
+		expectedError    error
 	}{
 		{
 			name: "chessboard.enPassantSquare is set",
-			enPassantSquare: "w",
-			expectedResponse: "w",
+			enPassantSquare: func() *string {
+				s := "e3"
+				return &s
+			}(),
+			expectedResponse: "e3",
 			expectedError: nil,
 		},
 		{
 			name: "chessboard.enPassantSquare is not set",
-			enPassantSquare: "",
+			enPassantSquare: nil,
 			expectedResponse: "",
 			expectedError: errors.New("chessboard.enPassantSquare is not set"),
 		},
@@ -193,32 +212,39 @@ func Test_ChessboardEntity_GetEnPassantSquare(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Arrange
-			entity := NewChessboardEntity([8][8]int{}, "", "", "", tc.enPassantSquare, "", "")
+			entity := NewChessboardEntity(nil, nil, nil, nil, tc.enPassantSquare, nil, nil)
 			// Act
 			response, err := entity.GetEnPassantSquare()
 			// Assert
 			assert.Equal(t, tc.expectedResponse, response)
-			assert.Equal(t, tc.expectedError, err)
+			if tc.expectedError != nil {
+				assert.EqualError(t, err, tc.expectedError.Error())
+			} else {
+				assert.NoError(t, err)
+			}
 		})
 	}
 }
 
 func Test_ChessboardEntity_GetHalfmoveClock(t *testing.T) {
 	testCases := []struct {
-		name              string
-		halfmoveClock     string
-		expectedResponse  string
-		expectedError     error
+		name             string
+		halfmoveClock    *string
+		expectedResponse string
+		expectedError    error
 	}{
 		{
 			name: "chessboard.halfmoveClock is set",
-			halfmoveClock: "w",
-			expectedResponse: "w",
+			halfmoveClock: func() *string {
+				s := "0"
+				return &s
+			}(),
+			expectedResponse: "0",
 			expectedError: nil,
 		},
 		{
 			name: "chessboard.halfmoveClock is not set",
-			halfmoveClock: "",
+			halfmoveClock: nil,
 			expectedResponse: "",
 			expectedError: errors.New("chessboard.halfmoveClock is not set"),
 		},
@@ -227,32 +253,39 @@ func Test_ChessboardEntity_GetHalfmoveClock(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Arrange
-			entity := NewChessboardEntity([8][8]int{}, "", "", "", "", tc.halfmoveClock, "")
+			entity := NewChessboardEntity(nil, nil, nil, nil, nil, tc.halfmoveClock, nil)
 			// Act
 			response, err := entity.GetHalfmoveClock()
 			// Assert
 			assert.Equal(t, tc.expectedResponse, response)
-			assert.Equal(t, tc.expectedError, err)
+			if tc.expectedError != nil {
+				assert.EqualError(t, err, tc.expectedError.Error())
+			} else {
+				assert.NoError(t, err)
+			}
 		})
 	}
 }
 
 func Test_ChessboardEntity_GetFullmoveNumber(t *testing.T) {
 	testCases := []struct {
-		name              string
-		fullmoveNumber    string
-		expectedResponse  string
-		expectedError     error
+		name             string
+		fullmoveNumber   *string
+		expectedResponse string
+		expectedError    error
 	}{
 		{
 			name: "chessboard.fullmoveNumber is set",
-			fullmoveNumber: "w",
-			expectedResponse: "w",
-			expectedError: nil,
+			fullmoveNumber: func() *string {
+				s := "1"
+				return &s
+			}(),
+			expectedResponse: "1",
+			expectedError:    nil,
 		},
 		{
 			name: "chessboard.fullmoveNumber is not set",
-			fullmoveNumber: "",
+			fullmoveNumber: nil,
 			expectedResponse: "",
 			expectedError: errors.New("chessboard.fullmoveNumber is not set"),
 		},
@@ -261,12 +294,16 @@ func Test_ChessboardEntity_GetFullmoveNumber(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Arrange
-			entity := NewChessboardEntity([8][8]int{}, "", "", "", "", "", tc.fullmoveNumber)
+			entity := NewChessboardEntity(nil, nil, nil, nil, nil, nil, tc.fullmoveNumber)
 			// Act
 			response, err := entity.GetFullmoveNumber()
 			// Assert
 			assert.Equal(t, tc.expectedResponse, response)
-			assert.Equal(t, tc.expectedError, err)
+			if tc.expectedError != nil {
+				assert.EqualError(t, err, tc.expectedError.Error())
+			} else {
+				assert.NoError(t, err)
+			}
 		})
 	}
 }
