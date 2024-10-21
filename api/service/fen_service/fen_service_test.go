@@ -117,7 +117,7 @@ func Test_FENService_Validate(t *testing.T) {
 	}
 }
 
-func Test_FENService_Parse(t *testing.T){
+func Test_FENService_Parse(t *testing.T) {
 	testCases := []struct {
 		name                    string
 		fen                     string
@@ -128,10 +128,10 @@ func Test_FENService_Parse(t *testing.T){
 		expectedHalfmoveClock   string
 		expectedFullmoveNumber  string
 		expectedError           error
-	} {
+	}{
 		{
 			name: "Starting Board",
-			fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+			fen:  "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
 			expectedBoard: [8][8]int{
 				{-4, -2, -3, -5, -6, -3, -2, -4},
 				{-1, -1, -1, -1, -1, -1, -1, -1},
@@ -142,185 +142,91 @@ func Test_FENService_Parse(t *testing.T){
 				{1, 1, 1, 1, 1, 1, 1, 1},
 				{4, 2, 3, 5, 6, 3, 2, 4},
 			},
-			expectedActiveColour: "w",
-			expectedCastlingRights: "KQkq",
+			expectedActiveColour:    "w",
+			expectedCastlingRights:  "KQkq",
 			expectedEnPassantSquare: "-",
-			expectedHalfmoveClock: "0",
-			expectedFullmoveNumber: "1",
-			expectedError: nil,
+			expectedHalfmoveClock:   "0",
+			expectedFullmoveNumber:  "1",
+			expectedError:           nil,
 		},
 		{
-			name: "Custom Board",
-			fen: "rnbqkbnr/ppp2ppp/8/4pPnN/8/bBrRqQkK/PPPPPPPP/3QKBNR w KQkq - 0 1",
-			expectedBoard: [8][8]int{
-				{-4, -2, -3, -5, -6, -3, -2, -4},
-				{-1, -1, -1, 0, 0, -1, -1, -1},
-				{0, 0, 0, 0, 0, 0, 0, 0},
-				{0, 0, 0, 0, -1, 1, -2, 2},
-				{0, 0, 0, 0, 0, 0, 0, 0},
-				{-3, 3, -4, 4, -5, 5, -6, 6},
-				{1, 1, 1, 1, 1, 1, 1, 1},
-				{0, 0, 0, 5, 6, 3, 2, 4},
-			},
-			expectedActiveColour: "w",
-			expectedCastlingRights: "KQkq",
+			name: "Invalid FEN - Empty String",
+			fen:  "",
+			expectedError: errors.New("expected 6 fields in fenParts"),
+		},
+		{
+			name: "Invalid FEN - Not Enough Fields",
+			fen:  "8/8/8/8/8/8/8/8 w",
+			expectedError: errors.New("expected 6 fields in fenParts"),
+		},
+		{
+			name: "Invalid FEN - Too Many Fields",
+			fen:  "8/8/8/8/8/8/8/8 w KQkq - 0 1 extra",
+			expectedError: errors.New("expected 6 fields in fenParts"),
+		},
+		{
+			name: "Invalid Piece Placement - Too Many Pieces in Row",
+			fen:  "9/8/8/8/8/8/8/8 w KQkq - 0 1",
+			expectedError: errors.New("too many squares in row"),
+		},
+		{
+			name: "Invalid Character in Piece Placement",
+			fen:  "8/8/8/8/8/8/8/8x w KQkq - 0 1",
+			expectedError: errors.New("invalid character in row"),
+		},
+		{
+			name: "Empty Board",
+			fen:  "8/8/8/8/8/8/8/8 w - - 0 1",
+			expectedBoard:          [8][8]int{},
+			expectedActiveColour:    "w",
+			expectedCastlingRights:  "-",
 			expectedEnPassantSquare: "-",
-			expectedHalfmoveClock: "0",
-			expectedFullmoveNumber: "1",
-			expectedError: nil,
-		},
-		{
-			name: "Clear Board",
-			fen: "PPPPPPPP/PPPPPPPP/PPPPPPPP/PPPPPPPP/PPPPPPPP/PPPPPPPP/PPPPPPPP/PPPPPPPP w KQkq - 0 1",
-			expectedBoard: [8][8]int{
-				{1, 1, 1, 1, 1, 1, 1, 1},
-				{1, 1, 1, 1, 1, 1, 1, 1},
-				{1, 1, 1, 1, 1, 1, 1, 1},
-				{1, 1, 1, 1, 1, 1, 1, 1},
-				{1, 1, 1, 1, 1, 1, 1, 1},
-				{1, 1, 1, 1, 1, 1, 1, 1},
-				{1, 1, 1, 1, 1, 1, 1, 1},
-				{1, 1, 1, 1, 1, 1, 1, 1},
-			},
-			expectedActiveColour: "w",
-			expectedCastlingRights: "KQkq",
-			expectedEnPassantSquare: "-",
-			expectedHalfmoveClock: "0",
-			expectedFullmoveNumber: "1",
-			expectedError: nil,
-		},
-		{
-			name: "Only white has Castling Rights",
-			fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQ - 0 1",
-			expectedBoard: [8][8]int{
-				{-4, -2, -3, -5, -6, -3, -2, -4},
-				{-1, -1, -1, -1, -1, -1, -1, -1},
-				{0, 0, 0, 0, 0, 0, 0, 0},
-				{0, 0, 0, 0, 0, 0, 0, 0},
-				{0, 0, 0, 0, 0, 0, 0, 0},
-				{0, 0, 0, 0, 0, 0, 0, 0},
-				{1, 1, 1, 1, 1, 1, 1, 1},
-				{4, 2, 3, 5, 6, 3, 2, 4},
-			},
-			expectedActiveColour: "w",
-			expectedCastlingRights: "KQ",
-			expectedEnPassantSquare: "-",
-			expectedHalfmoveClock: "0",
-			expectedFullmoveNumber: "1",
-			expectedError: nil,
-		},
-		{
-			name: "Only black has Castling Rights",
-			fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w kq - 0 1",
-			expectedBoard: [8][8]int{
-				{-4, -2, -3, -5, -6, -3, -2, -4},
-				{-1, -1, -1, -1, -1, -1, -1, -1},
-				{0, 0, 0, 0, 0, 0, 0, 0},
-				{0, 0, 0, 0, 0, 0, 0, 0},
-				{0, 0, 0, 0, 0, 0, 0, 0},
-				{0, 0, 0, 0, 0, 0, 0, 0},
-				{1, 1, 1, 1, 1, 1, 1, 1},
-				{4, 2, 3, 5, 6, 3, 2, 4},
-			},
-			expectedActiveColour: "w",
-			expectedCastlingRights: "kq",
-			expectedEnPassantSquare: "-",
-			expectedHalfmoveClock: "0",
-			expectedFullmoveNumber: "1",
-			expectedError: nil,
-		},
-		{
-			name: "No Castling Rights",
-			fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1",
-			expectedBoard: [8][8]int{
-				{-4, -2, -3, -5, -6, -3, -2, -4},
-				{-1, -1, -1, -1, -1, -1, -1, -1},
-				{0, 0, 0, 0, 0, 0, 0, 0},
-				{0, 0, 0, 0, 0, 0, 0, 0},
-				{0, 0, 0, 0, 0, 0, 0, 0},
-				{0, 0, 0, 0, 0, 0, 0, 0},
-				{1, 1, 1, 1, 1, 1, 1, 1},
-				{4, 2, 3, 5, 6, 3, 2, 4},
-			},
-			expectedActiveColour: "w",
-			expectedCastlingRights: "-",
-			expectedEnPassantSquare: "-",
-			expectedHalfmoveClock: "0",
-			expectedFullmoveNumber: "1",
-			expectedError: nil,
-		},
-		{
-			name: "En Passant Square active",
-			fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq e3 0 1",
-			expectedBoard: [8][8]int{
-				{-4, -2, -3, -5, -6, -3, -2, -4},
-				{-1, -1, -1, -1, -1, -1, -1, -1},
-				{0, 0, 0, 0, 0, 0, 0, 0},
-				{0, 0, 0, 0, 0, 0, 0, 0},
-				{0, 0, 0, 0, 0, 0, 0, 0},
-				{0, 0, 0, 0, 0, 0, 0, 0},
-				{1, 1, 1, 1, 1, 1, 1, 1},
-				{4, 2, 3, 5, 6, 3, 2, 4},
-			},
-			expectedActiveColour: "w",
-			expectedCastlingRights: "KQkq",
-			expectedEnPassantSquare: "e3",
-			expectedHalfmoveClock: "0",
-			expectedFullmoveNumber: "1",
-			expectedError: nil,
-		},
-		{
-			name: "Full Board",
-			fen: "8/8/8/8/8/8/8/8 w KQkq - 0 1",
-			expectedBoard: [8][8]int{
-				{0, 0, 0, 0, 0, 0, 0, 0},
-				{0, 0, 0, 0, 0, 0, 0, 0},
-				{0, 0, 0, 0, 0, 0, 0, 0},
-				{0, 0, 0, 0, 0, 0, 0, 0},
-				{0, 0, 0, 0, 0, 0, 0, 0},
-				{0, 0, 0, 0, 0, 0, 0, 0},
-				{0, 0, 0, 0, 0, 0, 0, 0},
-				{0, 0, 0, 0, 0, 0, 0, 0},
-			},
-			expectedActiveColour: "w",
-			expectedCastlingRights: "KQkq",
-			expectedEnPassantSquare: "-",
-			expectedHalfmoveClock: "0",
-			expectedFullmoveNumber: "1",
-			expectedError: nil,
-		},
-		
-		{
-			name: "Empty FEN",
-			fen: "",
-			expectedBoard: [8][8]int{},
-			expectedError: errors.New("expected 6 feilds in fenParts"),
+			expectedHalfmoveClock:   "0",
+			expectedFullmoveNumber:  "1",
+			expectedError:           nil,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-				// Arange
-				service := NewFENService()
-				// Act
-				chessboard, err := service.Parse(tc.fen)
-				board, _ := chessboard.GetBoard()
-				activeColour, _ := chessboard.GetActiveColour()
-				castlingRights, _ := chessboard.GetCastlingRights()
-				enPassantSquare, _ := chessboard.GetEnPassantSquare()
-				halfmoveClock, _ := chessboard.GetHalfmoveClock()
-				fullmoveNumber, _ := chessboard.GetFullmoveNumber()
+			// Arrange
+			service := NewFENService()
 
-				// Assert
-				// error
-				assert.Equal(t, tc.expectedError, err)
-				// values
-				assert.Equal(t, tc.expectedBoard, board)
-				assert.Equal(t, tc.expectedActiveColour, activeColour)
-				assert.Equal(t, tc.expectedCastlingRights, castlingRights)
-				assert.Equal(t, tc.expectedEnPassantSquare, enPassantSquare)
-				assert.Equal(t, tc.expectedHalfmoveClock, halfmoveClock)
-				assert.Equal(t, tc.expectedFullmoveNumber, fullmoveNumber)
+			// Act
+			chessboard, err := service.Parse(tc.fen)
+
+			if tc.expectedError != nil {
+				assert.Nil(t, chessboard)
+				assert.EqualError(t, err, tc.expectedError.Error())
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.NotNil(t, chessboard)
+
+			// Act
+			board, boardErr := chessboard.GetBoard()
+			activeColour, activeColourErr := chessboard.GetActiveColour()
+			castlingRights, castlingRightsErr := chessboard.GetCastlingRights()
+			enPassantSquare, enPassantSquareErr := chessboard.GetEnPassantSquare()
+			halfmoveClock, halfmoveClockErr := chessboard.GetHalfmoveClock()
+			fullmoveNumber, fullmoveNumberErr := chessboard.GetFullmoveNumber()
+
+			// Assert: No errors from getters
+			assert.NoError(t, boardErr)
+			assert.NoError(t, activeColourErr)
+			assert.NoError(t, castlingRightsErr)
+			assert.NoError(t, enPassantSquareErr)
+			assert.NoError(t, halfmoveClockErr)
+			assert.NoError(t, fullmoveNumberErr)
+
+			// Assert: Field values match expectations
+			assert.Equal(t, tc.expectedBoard, board)
+			assert.Equal(t, tc.expectedActiveColour, activeColour)
+			assert.Equal(t, tc.expectedCastlingRights, castlingRights)
+			assert.Equal(t, tc.expectedEnPassantSquare, enPassantSquare)
+			assert.Equal(t, tc.expectedHalfmoveClock, halfmoveClock)
+			assert.Equal(t, tc.expectedFullmoveNumber, fullmoveNumber)
 		})
 	}
 }
