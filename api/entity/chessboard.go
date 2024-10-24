@@ -2,6 +2,7 @@ package entity
 
 import (
 	"errors"
+	"math"
 )
 
 type ChessboardEntityInterface interface {
@@ -112,7 +113,23 @@ func (entity *ChessboardEntity) IsSquareEmpty(row int, col int) (bool, error) {
 
 	if entity.board[row][col] == 0 {
 		return true, nil
-	} else {
+	}
+
+	return false, nil
+}
+
+func (entity *ChessboardEntity) IsOpponent(piece int, row int, col int) (bool, error) {
+	if entity.board == nil {
+		return false, errors.New("chessboard.board is not set")
+	}
+
+	if entity.board[row][col] == 0 {
 		return false, nil
 	}
+
+	if (math.Signbit(float64(entity.board[row][col])) == math.Signbit(float64(piece))) {
+		return false, nil
+	}
+	
+	return true, nil
 }
