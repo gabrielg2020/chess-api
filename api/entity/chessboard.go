@@ -13,6 +13,7 @@ type ChessboardEntityInterface interface {
 	GetEnPassantSquare() (string, error)
 	GetHalfmoveClock() (string, error)
 	GetFullmoveNumber() (string, error)
+	GetPiece(int, int) (int, error)
 	IsSquareEmpty(int, int) (bool, error)
 	IsOpponent(int, int, int) (bool, error)
 	// SetFen(fen string) (*ChessboardEntity, error)
@@ -104,6 +105,15 @@ func (entity *ChessboardEntity) GetFullmoveNumber() (string, error) {
 		return "", errors.New("chessboard.fullmoveNumber is not set")
 	}
 	return *entity.fullmoveNumber, nil
+}
+
+// TODO needs to be tested ... :(
+func (entity *ChessboardEntity) GetPiece(row int, col int) (int, error) {
+	if entity.board == nil {
+		return -7, errors.New("chessboard.board is not set")
+	}
+
+	return entity.board[row][col], nil
 }
 
 // TODO needs to be tested ... :(
