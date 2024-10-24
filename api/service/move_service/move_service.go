@@ -57,7 +57,6 @@ func (service *MoveService) FindBestMove(chessboard entity.ChessboardEntityInter
 	return moves, nil
 }
 func getPawnMove (piece int, fromX int, fromY int) ([]entity.MoveEntityInterface, error) {
-
 	toX, toY, promotion, isCastling, isEnPassant, captured := 1, 1, 1, true, true, 1
 	move := entity.NewMoveEntity(
 		&fromX, 

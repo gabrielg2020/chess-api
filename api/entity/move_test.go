@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/gabrielg2020/chess-api/api/service/helper_service"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,10 +17,7 @@ func Test_MoveEntity_GetFromX(t *testing.T) {
 	}{
 		{
 			name: "move.fromX is set",
-			fromX: func() *int {
-				i := 3
-				return &i
-			}(),
+			fromX: HelperService.IntPtr(3),
 			expectedResponse: 3,
 			expectedError: nil,
 		},
@@ -57,10 +55,7 @@ func Test_MoveEntity_GetFromY(t *testing.T) {
 	}{
 		{
 			name: "move.fromY is set",
-			fromY: func() *int {
-				i := 4
-				return &i
-			}(),
+			fromY: HelperService.IntPtr(4),
 			expectedResponse: 4,
 			expectedError:    nil,
 		},
@@ -98,10 +93,7 @@ func Test_MoveEntity_GetToX(t *testing.T) {
 	}{
 		{
 			name: "move.toX is set",
-			toX: func() *int {
-				i := 5
-				return &i
-			}(),
+			toX: HelperService.IntPtr(5),
 			expectedResponse: 5,
 			expectedError:    nil,
 		},
@@ -139,10 +131,7 @@ func Test_MoveEntity_GetToY(t *testing.T) {
 	}{
 		{
 			name: "move.toY is set",
-			toY: func() *int {
-				i := 6
-				return &i
-			}(),
+			toY: HelperService.IntPtr(6),
 			expectedResponse: 6,
 			expectedError:    nil,
 		},
@@ -180,10 +169,7 @@ func Test_MoveEntity_GetPromotion(t *testing.T) {
 	}{
 		{
 			name: "move.promotion is set",
-			promotion: func() *int {
-				i := 5 // Promoting to a Queen
-				return &i
-			}(),
+			promotion: HelperService.IntPtr(5), // Promoting to a Queen
 			expectedResponse: 5,
 			expectedError:    nil,
 		},
@@ -221,19 +207,13 @@ func Test_MoveEntity_IsCastling(t *testing.T) {
 	}{
 		{
 			name: "move.isCastling is set to true",
-			isCastling: func() *bool {
-				b := true
-				return &b
-			}(),
+			isCastling: HelperService.BoolPtr(true),
 			expectedResponse: true,
 			expectedError:    nil,
 		},
 		{
 			name: "move.isCastling is set to false",
-			isCastling: func() *bool {
-				b := false
-				return &b
-			}(),
+			isCastling: HelperService.BoolPtr(false),
 			expectedResponse: false,
 			expectedError:    nil,
 		},
@@ -271,19 +251,13 @@ func Test_MoveEntity_IsEnPassant(t *testing.T) {
 	}{
 		{
 			name: "move.isEnPassant is set to true",
-			isEnPassant: func() *bool {
-				b := true
-				return &b
-			}(),
+			isEnPassant: HelperService.BoolPtr(true),
 			expectedResponse: true,
 			expectedError:    nil,
 		},
 		{
 			name: "move.isEnPassant is set to false",
-			isEnPassant: func() *bool {
-				b := false
-				return &b
-			}(),
+			isEnPassant: HelperService.BoolPtr(false),
 			expectedResponse: false,
 			expectedError:    nil,
 		},
@@ -321,10 +295,7 @@ func Test_MoveEntity_GetCaptured(t *testing.T) {
 	}{
 		{
 			name: "move.captured is set",
-			captured: func() *int {
-				i := 2 // Captured a Knight
-				return &i
-			}(),
+			captured: HelperService.IntPtr(2), // Captured a Knight
 			expectedResponse: 2,
 			expectedError:    nil,
 		},

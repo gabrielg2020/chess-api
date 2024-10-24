@@ -1,9 +1,10 @@
 package entity
 
 import (
-	"testing"
 	"errors"
-	
+	"testing"
+
+	"github.com/gabrielg2020/chess-api/api/service/helper_service"
 	"github.com/stretchr/testify/assert"
 )
 func Test_ChessboardEntity_GetBoard(t *testing.T) {
@@ -71,10 +72,7 @@ func Test_ChessboardEntity_GetFen(t *testing.T) {
 	}{
 		{
 			name: "chessboard.fen is set",
-			fen: func() *string {
-				s := "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-				return &s
-			}(),
+			fen: HelperService.StrPtr("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"),
 			expectedResponse: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
 			expectedError: nil,
 		},
@@ -112,10 +110,7 @@ func Test_ChessboardEntity_GetActiveColour(t *testing.T) {
 	}{
 		{
 			name: "chessboard.activeColour is set",
-			activeColour: func() *string {
-				s := "w"
-				return &s
-			}(),
+			activeColour: HelperService.StrPtr("w"),
 			expectedResponse: "w",
 			expectedError: nil,
 		},
@@ -153,10 +148,7 @@ func Test_ChessboardEntity_GetCastlingRights(t *testing.T) {
 	}{
 		{
 			name: "chessboard.castlingRights is set",
-			castlingRights: func() *string {
-				s := "KQkq"
-				return &s
-			}(),
+			castlingRights: HelperService.StrPtr("KQkq"),
 			expectedResponse: "KQkq",
 			expectedError: nil,
 		},
@@ -194,10 +186,7 @@ func Test_ChessboardEntity_GetEnPassantSquare(t *testing.T) {
 	}{
 		{
 			name: "chessboard.enPassantSquare is set",
-			enPassantSquare: func() *string {
-				s := "e3"
-				return &s
-			}(),
+			enPassantSquare: HelperService.StrPtr("e3"),
 			expectedResponse: "e3",
 			expectedError: nil,
 		},
@@ -235,10 +224,7 @@ func Test_ChessboardEntity_GetHalfmoveClock(t *testing.T) {
 	}{
 		{
 			name: "chessboard.halfmoveClock is set",
-			halfmoveClock: func() *string {
-				s := "0"
-				return &s
-			}(),
+			halfmoveClock: HelperService.StrPtr("0"),
 			expectedResponse: "0",
 			expectedError: nil,
 		},
@@ -276,10 +262,7 @@ func Test_ChessboardEntity_GetFullmoveNumber(t *testing.T) {
 	}{
 		{
 			name: "chessboard.fullmoveNumber is set",
-			fullmoveNumber: func() *string {
-				s := "1"
-				return &s
-			}(),
+			fullmoveNumber: HelperService.StrPtr("1"),
 			expectedResponse: "1",
 			expectedError:    nil,
 		},
