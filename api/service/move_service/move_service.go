@@ -36,16 +36,16 @@ func (service *MoveService) FindBestMove(chessboard entity.ChessboardEntityInter
 			switch math.Abs(float64(piece)) {
 			case 1: // Get Pawn Move
 				getPawnMove(piece, row, col, chessboard)
-			case 2: // Get Knight Move
-				getKnightMove(piece, row, col, chessboard)
-			case 3: // Get Bishop Move
-				getBishopMove(piece, row, col, chessboard)
-			case 4: // Get Rook Move
-				getRookMove(piece, row, col, chessboard)
-			case 5: // Get Queen Move
-				getQueenMove(piece, row, col, chessboard)
-			case 6: // Get King Move
-				getKingMove(piece, row, col, chessboard)
+			// case 2: // Get Knight Move
+			// 	getKnightMove(piece, row, col, chessboard)
+			// case 3: // Get Bishop Move
+			// 	getBishopMove(piece, row, col, chessboard)
+			// case 4: // Get Rook Move
+			// 	getRookMove(piece, row, col, chessboard)
+			// case 5: // Get Queen Move
+			// 	getQueenMove(piece, row, col, chessboard)
+			// case 6: // Get King Move
+			// 	getKingMove(piece, row, col, chessboard)
 			}
 		}
 	}
