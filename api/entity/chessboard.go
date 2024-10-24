@@ -14,6 +14,7 @@ type ChessboardEntityInterface interface {
 	GetHalfmoveClock() (string, error)
 	GetFullmoveNumber() (string, error)
 	IsSquareEmpty(int, int) (bool, error)
+	IsOpponent(int, int, int) (bool, error)
 	// SetFen(fen string) (*ChessboardEntity, error)
 	// ResetBoard() (*ChessboardEntity, error)
 	// GetPiece(position string) (int, error)
@@ -118,6 +119,7 @@ func (entity *ChessboardEntity) IsSquareEmpty(row int, col int) (bool, error) {
 	return false, nil
 }
 
+// TODO needs to be tested ... :(
 func (entity *ChessboardEntity) IsOpponent(piece int, row int, col int) (bool, error) {
 	if entity.board == nil {
 		return false, errors.New("chessboard.board is not set")
