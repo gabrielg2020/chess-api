@@ -109,6 +109,10 @@ func (entity *ChessboardEntity) GetFullmoveNumber() (string, error) {
 
 // TODO needs to be tested ... :(
 func (entity *ChessboardEntity) GetPiece(row int, col int) (int, error) {
+	if !isWithinBounds(row, col) {
+		return -7, errors.New("row or col out of bounds")
+	}
+
 	if entity.board == nil {
 		return -7, errors.New("chessboard.board is not set")
 	}
@@ -118,6 +122,10 @@ func (entity *ChessboardEntity) GetPiece(row int, col int) (int, error) {
 
 // TODO needs to be tested ... :(
 func (entity *ChessboardEntity) IsSquareEmpty(row int, col int) (bool, error) {
+	if !isWithinBounds(row, col) {
+		return false, errors.New("row or col out of bounds")
+	}
+
 	if entity.board == nil {
 		return false, errors.New("chessboard.board is not set")
 	}
@@ -131,6 +139,10 @@ func (entity *ChessboardEntity) IsSquareEmpty(row int, col int) (bool, error) {
 
 // TODO needs to be tested ... :(
 func (entity *ChessboardEntity) IsOpponent(piece int, row int, col int) (bool, error) {
+	if !isWithinBounds(row, col) {
+		return false, errors.New("row or col out of bounds")
+	}
+	
 	if entity.board == nil {
 		return false, errors.New("chessboard.board is not set")
 	}
@@ -144,4 +156,13 @@ func (entity *ChessboardEntity) IsOpponent(piece int, row int, col int) (bool, e
 	}
 	
 	return true, nil
+}
+
+// TODO needs to be tested ... :(
+func isWithinBounds (toX int, toY int) (bool) {
+	if (toX > 7) || (toX < 0) || (toY > 7) || (toY < 0) {
+		return false
+	} else {
+		return true
+	}
 }
