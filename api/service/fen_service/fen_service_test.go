@@ -114,10 +114,9 @@ func Test_FENService_Validate(t *testing.T) {
 			// Assert
 			if tc.expectedError != nil {
 				assert.EqualError(t, err, tc.expectedError.Error())
-				return
+			} else {
+				assert.NoError(t, err)
 			}
-
-			assert.NoError(t, err)
 		})
 	}
 }
