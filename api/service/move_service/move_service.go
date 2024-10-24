@@ -35,7 +35,11 @@ func (service *MoveService) FindBestMove(chessboard entity.ChessboardEntityInter
 			}
 			switch math.Abs(float64(piece)) {
 			case 1: // Get Pawn Move
-				getPawnMove(piece, row, col, chessboard)
+				pawnMoves, err := getPawnMove(piece, row, col, chessboard)
+				if err != nil {
+					return nil, errors.New("failed to get pawn moves")
+				}
+				moves = append(moves, pawnMoves...)
 			// case 2: // Get Knight Move
 			// 	getKnightMove(piece, row, col, chessboard)
 			// case 3: // Get Bishop Move
