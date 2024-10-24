@@ -13,94 +13,94 @@ func Test_FENService_Validate(t *testing.T) {
 		fen           string
 		expectedError error
 	}{
-		{ 
-			name:    "Empty FEN",
-			fen:     "",
+		{
+			name:          "Empty FEN",
+			fen:           "",
 			expectedError: errors.New("FEN string empty"),
 		},
-		{ 
-			name:    "Valid FEN",
-			fen:     "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+		{
+			name:          "Valid FEN",
+			fen:           "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
 			expectedError: nil,
 		},
-		{ 
-			name:    "Valid FEN [Black to play first]",
-			fen:     "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1",
+		{
+			name:          "Valid FEN [Black to play first]",
+			fen:           "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1",
 			expectedError: nil,
 		},
-		{ 
-			name:    "Valid FEN [White already castled]",
-			fen:     "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w kq - 0 1",
+		{
+			name:          "Valid FEN [White already castled]",
+			fen:           "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w kq - 0 1",
 			expectedError: nil,
 		},
-		{ 
-			name:    "Valid FEN [White can castle King side]",
-			fen:     "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w Kkq - 0 1",
+		{
+			name:          "Valid FEN [White can castle King side]",
+			fen:           "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w Kkq - 0 1",
 			expectedError: nil,
 		},
-		{ 
-			name:    "Valid FEN [White can castle Queen side]",
-			fen:     "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w Qkq - 0 1",
+		{
+			name:          "Valid FEN [White can castle Queen side]",
+			fen:           "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w Qkq - 0 1",
 			expectedError: nil,
 		},
-		{ 
-			name:    "Valid FEN [Black already castled]",
-			fen:     "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQ - 0 1",
+		{
+			name:          "Valid FEN [Black already castled]",
+			fen:           "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQ - 0 1",
 			expectedError: nil,
 		},
-		{ 
-			name:    "Valid FEN [Black can castle King side]",
-			fen:     "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQk - 0 1",
+		{
+			name:          "Valid FEN [Black can castle King side]",
+			fen:           "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQk - 0 1",
 			expectedError: nil,
 		},
-		{ 
-			name:    "Valid FEN [Black can castle Queen side]",
-			fen:     "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQq - 0 1",
+		{
+			name:          "Valid FEN [Black can castle Queen side]",
+			fen:           "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQq - 0 1",
 			expectedError: nil,
 		},
-		{ 
-			name:    "Valid FEN [Both players castled]",
-			fen:     "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1",
+		{
+			name:          "Valid FEN [Both players castled]",
+			fen:           "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1",
 			expectedError: nil,
 		},
-		{ 
-			name:    "Valid FEN [Possible en passant]",
-			fen:     "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq e3 0 1",
+		{
+			name:          "Valid FEN [Possible en passant]",
+			fen:           "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq e3 0 1",
 			expectedError: nil,
 		},
-		{ 
-			name:    "Invalid FEN",
-			fen:     "invalid_fen",
+		{
+			name:          "Invalid FEN",
+			fen:           "invalid_fen",
 			expectedError: errors.New("string is not a FEN"),
 		},
-		{ 
-			name:    "Invalid FEN [Remove a row]",
-			fen:     "pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+		{
+			name:          "Invalid FEN [Remove a row]",
+			fen:           "pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
 			expectedError: errors.New("string is not a FEN"),
 		},
-		{ 
-			name:    "Invalid FEN [Remove colour to play]",
-			fen:     "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR  KQkq - 0 1",
+		{
+			name:          "Invalid FEN [Remove colour to play]",
+			fen:           "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR  KQkq - 0 1",
 			expectedError: errors.New("string is not a FEN"),
 		},
-		{ 
-			name:    "Invalid FEN [Remove castling rights]",
-			fen:     "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w  - 0 1",
+		{
+			name:          "Invalid FEN [Remove castling rights]",
+			fen:           "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w  - 0 1",
 			expectedError: errors.New("string is not a FEN"),
 		},
-		{ 
-			name:    "Invalid FEN [Remove en passant]",
-			fen:     "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq  0 1",
+		{
+			name:          "Invalid FEN [Remove en passant]",
+			fen:           "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq  0 1",
 			expectedError: errors.New("string is not a FEN"),
 		},
-		{ 
-			name:    "Invalid FEN [Remove full turns]",
-			fen:     "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -  1",
+		{
+			name:          "Invalid FEN [Remove full turns]",
+			fen:           "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -  1",
 			expectedError: errors.New("string is not a FEN"),
 		},
-		{ 
-			name:    "Invalid FEN [Remove half turns]",
-			fen:     "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 ",
+		{
+			name:          "Invalid FEN [Remove half turns]",
+			fen:           "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 ",
 			expectedError: errors.New("string is not a FEN"),
 		},
 	}
@@ -112,7 +112,12 @@ func Test_FENService_Validate(t *testing.T) {
 			// Act
 			err := service.Validate(tc.fen)
 			// Assert
-			assert.Equal(t, tc.expectedError, err)
+			if tc.expectedError != nil {
+				assert.EqualError(t, err, tc.expectedError.Error())
+				return
+			}
+
+			assert.NoError(t, err)
 		})
 	}
 }
@@ -150,34 +155,34 @@ func Test_FENService_Parse(t *testing.T) {
 			expectedError:           nil,
 		},
 		{
-			name: "Invalid FEN - Empty String",
-			fen:  "",
+			name:          "Invalid FEN - Empty String",
+			fen:           "",
 			expectedError: errors.New("expected 6 fields in fenParts"),
 		},
 		{
-			name: "Invalid FEN - Not Enough Fields",
-			fen:  "8/8/8/8/8/8/8/8 w",
+			name:          "Invalid FEN - Not Enough Fields",
+			fen:           "8/8/8/8/8/8/8/8 w",
 			expectedError: errors.New("expected 6 fields in fenParts"),
 		},
 		{
-			name: "Invalid FEN - Too Many Fields",
-			fen:  "8/8/8/8/8/8/8/8 w KQkq - 0 1 extra",
+			name:          "Invalid FEN - Too Many Fields",
+			fen:           "8/8/8/8/8/8/8/8 w KQkq - 0 1 extra",
 			expectedError: errors.New("expected 6 fields in fenParts"),
 		},
 		{
-			name: "Invalid Piece Placement - Too Many Pieces in Row",
-			fen:  "9/8/8/8/8/8/8/8 w KQkq - 0 1",
+			name:          "Invalid Piece Placement - Too Many Pieces in Row",
+			fen:           "9/8/8/8/8/8/8/8 w KQkq - 0 1",
 			expectedError: errors.New("too many squares in row"),
 		},
 		{
-			name: "Invalid Character in Piece Placement",
-			fen:  "8/8/8/8/8/8/8/8x w KQkq - 0 1",
+			name:          "Invalid Character in Piece Placement",
+			fen:           "8/8/8/8/8/8/8/8x w KQkq - 0 1",
 			expectedError: errors.New("invalid character in row"),
 		},
 		{
-			name: "Empty Board",
-			fen:  "8/8/8/8/8/8/8/8 w - - 0 1",
-			expectedBoard:          [8][8]int{},
+			name:                    "Empty Board",
+			fen:                     "8/8/8/8/8/8/8/8 w - - 0 1",
+			expectedBoard:           [8][8]int{},
 			expectedActiveColour:    "w",
 			expectedCastlingRights:  "-",
 			expectedEnPassantSquare: "-",
