@@ -290,3 +290,65 @@ func Test_ChessboardEntity_GetFullmoveNumber(t *testing.T) {
 		})
 	}
 }
+
+func Test_ChessboardEntity_GetPiece(t *testing.T) {
+	testCases := []struct {
+		name             string
+		row              int
+		col              int
+		boardToSet       *[8][8]int
+		expectedResponse int
+		expectedError    error
+	}{
+		{
+			name: "Get Piece From Valid Square",
+			row: 0,
+			col: 3,
+			boardToSet: HelperService.IntBoardArrayPtr([8][8]int{
+				{-4, -2, -3, -5, -6, -3, -2, -4},
+				{-1, -1, -1, -1, -1, -1, -1, -1},
+				{0, 0, 0, 0, 0, 0, 0, 0},
+				{0, 0, 0, 0, 0, 0, 0, 0},
+				{0, 0, 0, 0, 0, 0, 0, 0},
+				{0, 0, 0, 0, 0, 0, 0, 0},
+				{1, 1, 1, 1, 1, 1, 1, 1},
+				{4, 2, 3, 5, 6, 3, 2, 4},
+			}),
+			expectedResponse: -5,
+			expectedError: nil,
+		},
+		{
+			name: "Get Piece When Board Is Not Set",
+			row: 0,
+			col: 3,
+			boardToSet: nil,
+			expectedResponse: -7,
+			expectedError: errors.New("chessboard.board is not set"),
+		},
+		{
+			name: "Get Piece When Indexing Out Of Bounds",
+			row: 8,
+			col: 8,
+			boardToSet: nil,
+			expectedResponse: -7,
+			expectedError: errors.New("row or col out of bounds"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Arrange
+			entity := NewChessboardEntity(nil, nil, nil, nil, nil, nil, nil)
+			entity.SetBoard(tc.boardToSet)
+			// Act
+			response, err := entity.GetPiece(tc.row, tc.col)
+			// Assert
+			assert.Equal(t, tc.expectedResponse, response)
+			if tc.expectedError != nil {
+				assert.EqualError(t, err, tc.expectedError.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
