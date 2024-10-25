@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// FEAT Add a way to propagate error messages. Maybe add a logger like logrus?
 func main() {
 	engine := setUpEngine()
 

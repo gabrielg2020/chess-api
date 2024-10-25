@@ -9,7 +9,7 @@ type MockMoveService struct {
 	mock.Mock
 }
 
-func (m *MockMoveService) FindBestMove(chessboard entity.ChessboardEntityInterface) ([]entity.MoveEntityInterface, error) {
+func (m *MockMoveService) FindBestMove(chessboard entity.ChessboardEntityInterface) (entity.MoveEntityInterface, error) {
 	args := m.Called(chessboard)
-	return args.Get(0).([]entity.MoveEntityInterface), args.Error(1)
+	return args.Get(0).(entity.MoveEntityInterface), args.Error(1)
 }

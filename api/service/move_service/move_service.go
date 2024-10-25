@@ -9,7 +9,7 @@ import (
 )
 
 type MoveServiceInterface interface {
-	FindBestMove(chessboard entity.ChessboardEntityInterface) ([]entity.MoveEntityInterface, error)
+	FindBestMove(chessboard entity.ChessboardEntityInterface) (entity.MoveEntityInterface, error)
 }
 
 type MoveService struct{}
@@ -18,12 +18,12 @@ func NewMoveService() *MoveService {
 	return &MoveService{}
 }
 
-func (service *MoveService) FindBestMove(chessboard entity.ChessboardEntityInterface) ([]entity.MoveEntityInterface, error) {
-	// 1. Find Pseudo Legal Moves
+func (service *MoveService) FindBestMove(chessboard entity.ChessboardEntityInterface) (entity.MoveEntityInterface, error) {
+	// 1. Find Pseudo Legal Moves // TODO move Pseudo Legal Moves into separate function
 		// a. Create a moves array
 	var moves []entity.MoveEntityInterface
 	board, err := chessboard.GetBoard()
-	if err == nil {
+	if err != nil {
 		return nil, errors.New("failed to retrieve chessboard")
 	}
 		// b. Loop through the board
@@ -35,7 +35,7 @@ func (service *MoveService) FindBestMove(chessboard entity.ChessboardEntityInter
 			}
 			switch math.Abs(float64(piece)) {
 			case 1: // Get Pawn Move
-				pawnMoves, err := getPawnMove(piece, row, col, chessboard)
+				pawnMoves, err := getPawnMove(piece, col, row, chessboard)
 				if err != nil {
 					return nil, errors.New("failed to get pawn moves")
 				}
@@ -54,12 +54,12 @@ func (service *MoveService) FindBestMove(chessboard entity.ChessboardEntityInter
 		}
 	}
 		// c. For each piece, find all moves
-	// 2. Filter for Legal Moves
+	// 2. Filter for Legal Moves // TODO moveFilter for Legal Moves into separate function
 		// a. Remove any move that goes off the board
 		// b. Remove any move that place king in check
 	// 3. Return Legal Moves
 		// a. Return moves array
-	return moves, nil
+	return moves[0], nil
 }
 
 // TODO needs to be tested ... :(
@@ -80,6 +80,10 @@ func getPawnMove (piece int, fromX int, fromY int, chessboard entity.ChessboardE
 
 	// 1 move forward
 	toX, toY := fromX, fromY + direction
+	if !chessboard.IsWithinBounds(toX, toY) {
+		return nil, nil // Shouldn't error if out of bounds
+	}
+
 	isSquareEmpty, err := chessboard.IsSquareEmpty(toX, toY)
 
 	if err != nil {
@@ -112,6 +116,10 @@ func getPawnMove (piece int, fromX int, fromY int, chessboard entity.ChessboardE
 
 	if fromY == startRank {
 		toX, toY := fromX, fromY + (direction * 2)
+		if !chessboard.IsWithinBounds(toX, toY) {
+			return nil, nil // Shouldn't error if out of bounds
+		}
+
 		isSquareEmpty, err := chessboard.IsSquareEmpty(toX, toY)
 
 		if err != nil {
@@ -134,6 +142,9 @@ func getPawnMove (piece int, fromX int, fromY int, chessboard entity.ChessboardE
 
 	for _, deltaX := range []int{-1, 1} {
 		toX, toY = fromX + deltaX, fromY + direction
+		if !chessboard.IsWithinBounds(toX, toY) {
+			return nil, nil // Shouldn't error if out of bounds
+		}
 		
 		IsOpponent, err := chessboard.IsOpponent(piece, toX, toY)
 
