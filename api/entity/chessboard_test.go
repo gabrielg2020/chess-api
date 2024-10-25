@@ -531,3 +531,36 @@ func Test_ChessboardEntity_IsOpponent(t *testing.T) {
 		})
 	}
 }
+
+func Test_ChessboardEntity_IsWithinBounds(t *testing.T) {
+	testCases := []struct {
+		name             string
+		toX              int
+		toY              int
+		expectedResponse bool
+	}{
+		{
+			name: "Check When Out Of Bounds",
+			toX: 8,
+			toY: 8,
+			expectedResponse: false,
+		},
+		{
+			name: "Check When In Bounds",
+			toX: 3,
+			toY: 5,
+			expectedResponse: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Arrange
+			entity := NewChessboardEntity(nil, nil, nil, nil, nil, nil, nil)
+			// Act
+			response := entity.IsWithinBounds(tc.toX, tc.toY)
+			// Assert
+			assert.Equal(t, tc.expectedResponse, response)
+		})
+	}
+}
