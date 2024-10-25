@@ -42,3 +42,23 @@ func (m *MockChessboardEntity) GetFullmoveNumber() (string, error) {
 	args := m.Called()
 	return args.String(0), args.Error(1)
 }
+
+func (m *MockChessboardEntity) GetPiece() (int, error) {
+	args := m.Called()
+	return args.Int(0), args.Error(1)
+}
+
+func (m *MockChessboardEntity) IsSquareEmpty() (bool, error) {
+	args := m.Called()
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *MockChessboardEntity) IsOpponent() (bool, error) {
+	args := m.Called()
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *MockChessboardEntity) IsWithinBounds() (bool) {
+	args := m.Called()
+	return args.Bool(0)
+}
