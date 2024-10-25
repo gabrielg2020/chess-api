@@ -1,6 +1,9 @@
 package entity
 
-import ("errors")
+import (
+	"errors"
+	"strconv"
+)
 
 type MoveEntityInterface interface {
 	GetFromX() (int, error)
@@ -93,4 +96,21 @@ func (entity *MoveEntity) GetCaptured() (int, error) {
 		return -1, errors.New("move.captured is not set")
 	}
 	return *entity.captured, nil
+}
+
+func (entity *MoveEntity) GetChessNotation() (string) {
+	rowToChessNotationRow := map[int]string{
+		0: "a", 1: "b",
+		2: "c", 3: "d",
+		4: "e", 5: "f",
+		6: "g", 7: "h",
+	}
+
+	fromX, _ := entity.GetFromX()
+	fromY, _ := entity.GetFromY()
+	toX, _ := entity.GetToX()
+	toY, _ := entity.GetToY()
+	
+
+	return rowToChessNotationRow[fromX] + strconv.FormatInt(int64(fromY), 10) + rowToChessNotationRow[toX] + strconv.FormatInt(int64(toY), 10)
 }

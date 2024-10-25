@@ -63,7 +63,7 @@ func (service *MoveService) FindBestMove(chessboard entity.ChessboardEntityInter
 }
 
 // TODO needs to be tested ... :(
-func getPawnMove (piece int, fromX int, fromY int, chessboard entity.ChessboardEntityInterface) ([]entity.MoveEntityInterface, error) {
+func getPawnMove(piece int, fromX int, fromY int, chessboard entity.ChessboardEntityInterface) ([]entity.MoveEntityInterface, error) {
 	var moves []entity.MoveEntityInterface
 
 	// Find startRank, promotionRank and direction
