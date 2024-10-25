@@ -66,6 +66,10 @@ func (entity *ChessboardEntity) GetBoard() ([8][8]int, error) {
 	return *entity.board, nil
 }
 
+func (entity *ChessboardEntity) SetBoard(board *[8][8]int) {
+	entity.board = (*[8][8]int)(board)
+}
+
 func (entity *ChessboardEntity) GetFen() (string, error) {
 	if entity.fen == nil {
 		return "", errors.New("chessboard.fen is not set")
