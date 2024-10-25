@@ -11,3 +11,7 @@ func StrPtr(s string) *string {
 func BoolPtr(b bool) *bool {
 	return &b
 }
+
+func IntBoardArrayPtr(a [8][8]int) *[8][8]int {
+	return &a
+}
