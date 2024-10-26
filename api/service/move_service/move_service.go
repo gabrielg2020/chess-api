@@ -26,11 +26,15 @@ func (service *MoveService) FindBestMove(chessboard entity.ChessboardEntityInter
 	if err != nil {
 		return nil, errors.New("failed to retrieve chessboard")
 	}
+	activeColour, err := chessboard.GetActiveColour()
+	if err != nil {
+		return nil, errors.New("failed to retrieve active colour")
+	}
 		// b. Loop through the board
 	for row := 0; row < 8; row++ {
 		for col := 0; col < 8; col++ {
 			piece := board[row][col]
-			if piece == 0 {
+			if piece == 0 || (activeColour == "w" && math.Signbit(float64(piece))) || (activeColour == "b" && !math.Signbit(float64(piece))){
 				continue
 			}
 			switch math.Abs(float64(piece)) {
