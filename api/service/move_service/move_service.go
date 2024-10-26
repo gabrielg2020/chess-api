@@ -4,8 +4,8 @@ import (
 	"errors"
 	"math"
 
-	"github.com/gabrielg2020/chess-api/api/service/helper_service"
 	"github.com/gabrielg2020/chess-api/api/entity"
+	"github.com/gabrielg2020/chess-api/api/service/helper_service"
 )
 
 type MoveServiceInterface interface {
@@ -64,18 +64,20 @@ func (service *MoveService) FindBestMove(chessboard entity.ChessboardEntityInter
 
 // TODO needs to be tested ... :(
 func getPawnMove(piece int, fromX int, fromY int, chessboard entity.ChessboardEntityInterface) ([]entity.MoveEntityInterface, error) {
+	// NOTE: When calling any methods from `chessboard` that interact with board, we must flip toX and toY as fromX=col and fromY=row
+	// methods such as: IsSquareEmpty, GetPiece, IsOpponent
 	var moves []entity.MoveEntityInterface
 
 	// Find startRank, promotionRank and direction
 	var direction, startRank, promotionRank int
-	if piece > 0 {
-		direction = 1
-		startRank = 1
-		promotionRank = 7
-	} else {
+	if piece > 0 { // White
 		direction = -1
 		startRank = 6
 		promotionRank = 0
+	} else { // Black
+		direction = 1
+		startRank = 1
+		promotionRank = 7
 	}
 
 	// 1 move forward
@@ -84,7 +86,7 @@ func getPawnMove(piece int, fromX int, fromY int, chessboard entity.ChessboardEn
 		return nil, nil // Shouldn't error if out of bounds
 	}
 
-	isSquareEmpty, err := chessboard.IsSquareEmpty(toX, toY)
+	isSquareEmpty, err := chessboard.IsSquareEmpty(toY, toX)
 
 	if err != nil {
 		return nil, errors.New("failed to check if square is empty")
@@ -120,14 +122,13 @@ func getPawnMove(piece int, fromX int, fromY int, chessboard entity.ChessboardEn
 			return nil, nil // Shouldn't error if out of bounds
 		}
 
-		isSquareEmpty, err := chessboard.IsSquareEmpty(toX, toY)
+		isSquareEmpty, err := chessboard.IsSquareEmpty(toY, toX)
 
 		if err != nil {
 			return nil, errors.New("failed to check if square is empty")
 		}
 
 		if isSquareEmpty { // ... should always be inbounds if from start position, but we'll check just in case
-			
 			moves = append(moves, entity.NewMoveEntity(
 				HelperService.IntPtr(fromX), HelperService.IntPtr(fromY),
 				HelperService.IntPtr(toX), HelperService.IntPtr(toY),
@@ -143,17 +144,17 @@ func getPawnMove(piece int, fromX int, fromY int, chessboard entity.ChessboardEn
 	for _, deltaX := range []int{-1, 1} {
 		toX, toY = fromX + deltaX, fromY + direction
 		if !chessboard.IsWithinBounds(toX, toY) {
-			return nil, nil // Shouldn't error if out of bounds
+			break // Shouldn't error if out of bounds
 		}
 		
-		IsOpponent, err := chessboard.IsOpponent(piece, toX, toY)
+		IsOpponent, err := chessboard.IsOpponent(piece, toY, toX)
 
 		if err != nil {
 			return nil, errors.New("failed to check if square is an opponent")
 		}
 
 		if IsOpponent {
-			capturedPiece, err := chessboard.GetPiece(toX, toY) 
+			capturedPiece, err := chessboard.GetPiece(toY, toX) 
 
 			if err != nil {
 				return nil, errors.New("failed to get captured piece")

@@ -2,6 +2,7 @@ package entity
 
 import (
 	"errors"
+	"math"
 	"strconv"
 )
 
@@ -14,6 +15,7 @@ type MoveEntityInterface interface {
 	IsCastling() (bool, error)
 	IsEnPassant() (bool, error)
 	GetCaptured() (int, error)
+	GetChessNotation() (string)
 }
 
 type MoveEntity struct {
@@ -110,7 +112,9 @@ func (entity *MoveEntity) GetChessNotation() (string) {
 	fromY, _ := entity.GetFromY()
 	toX, _ := entity.GetToX()
 	toY, _ := entity.GetToY()
-	
 
+	// We 'flip' the board, because board[0][0] represents top left, not bottom left like on a normal chessboard
+	fromY = int(math.Abs(float64(fromY) - (8)))
+	toY = int(math.Abs(float64(toY) - (8)))
 	return rowToChessNotationRow[fromX] + strconv.FormatInt(int64(fromY), 10) + rowToChessNotationRow[toX] + strconv.FormatInt(int64(toY), 10)
 }
