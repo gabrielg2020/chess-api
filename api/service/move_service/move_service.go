@@ -34,12 +34,12 @@ func (service *MoveService) FindBestMove(chessboard entity.ChessboardEntityInter
 	for row := 0; row < 8; row++ {
 		for col := 0; col < 8; col++ {
 			piece := board[row][col]
-			if piece == 0 || (activeColour == "w" && math.Signbit(float64(piece))) || (activeColour == "b" && !math.Signbit(float64(piece))){
+			if piece == 0 || (activeColour == "w" && math.Signbit(float64(piece))) || (activeColour == "b" && !math.Signbit(float64(piece))) {
 				continue
 			}
 			switch math.Abs(float64(piece)) {
 			case 1: // Get Pawn Move
-				pawnMoves, err := getPawnMove(piece, col, row, chessboard)
+				pawnMoves, err := getPawnMove(piece, row, col, chessboard)
 				if err != nil {
 					return nil, errors.New("failed to get pawn moves")
 				}
@@ -66,8 +66,7 @@ func (service *MoveService) FindBestMove(chessboard entity.ChessboardEntityInter
 	return moves[0], nil
 }
 
-// TODO needs to be tested ... :(
-func getPawnMove(piece int, fromX int, fromY int, chessboard entity.ChessboardEntityInterface) ([]entity.MoveEntityInterface, error) {
+func getPawnMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEntityInterface) ([]entity.MoveEntityInterface, error) {
 	// NOTE: When calling any methods from `chessboard` that interact with board, we must flip toX and toY as fromX=col and fromY=row
 	// methods such as: IsSquareEmpty, GetPiece, IsOpponent
 	var moves []entity.MoveEntityInterface
@@ -84,12 +83,8 @@ func getPawnMove(piece int, fromX int, fromY int, chessboard entity.ChessboardEn
 		promotionRank = 7
 	}
 
-	// 1 move forward
-	toX, toY := fromX, fromY + direction
-	if !chessboard.IsWithinBounds(toX, toY) {
-		return nil, nil // Shouldn't error if out of bounds
-	}
-
+	// Move 1 forward
+	toX, toY := fromX, fromY+direction
 	isSquareEmpty, err := chessboard.IsSquareEmpty(toY, toX)
 
 	if err != nil {
@@ -102,12 +97,13 @@ func getPawnMove(piece int, fromX int, fromY int, chessboard entity.ChessboardEn
 				moves = append(moves, entity.NewMoveEntity(
 					HelperService.IntPtr(fromX), HelperService.IntPtr(fromY),
 					HelperService.IntPtr(toX), HelperService.IntPtr(toY),
-					HelperService.IntPtr(promotionPiece),
+					HelperService.IntPtr(promotionPiece * (-1 * direction)),
 					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
 					HelperService.IntPtr(0),
 				))
 			}
 		} else {
+			// Create move
 			moves = append(moves, entity.NewMoveEntity(
 				HelperService.IntPtr(fromX), HelperService.IntPtr(fromY),
 				HelperService.IntPtr(toX), HelperService.IntPtr(toY),
@@ -115,149 +111,68 @@ func getPawnMove(piece int, fromX int, fromY int, chessboard entity.ChessboardEn
 				HelperService.BoolPtr(false), HelperService.BoolPtr(false),
 				HelperService.IntPtr(0),
 			))
+
+			// Move 2 forward
+			toY += direction
+
+			isSquareEmpty, err := chessboard.IsSquareEmpty(toY, toX)
+
+			if err != nil {
+				return nil, errors.New("failed to check if square is empty")
+			}
+			if fromY == startRank && isSquareEmpty {
+				// Don't check if can promote because a pawn can never promote off first move
+				// Create move
+				moves = append(moves, entity.NewMoveEntity(
+					HelperService.IntPtr(fromX), HelperService.IntPtr(fromY),
+					HelperService.IntPtr(toX), HelperService.IntPtr(toY),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(true),
+					HelperService.IntPtr(0),
+				))
+			}
 		}
 	}
-
-	// 2 moves forward
-
-	if fromY == startRank {
-		toX, toY := fromX, fromY + (direction * 2)
-		if !chessboard.IsWithinBounds(toX, toY) {
-			return nil, nil // Shouldn't error if out of bounds
-		}
-
-		isSquareEmpty, err := chessboard.IsSquareEmpty(toY, toX)
-
+	// Check diagonal moves
+	for _, deltaX := range []int{-1, 1} {
+		toX, toY := fromX+deltaX, fromY+direction
+		isOpponent, err := chessboard.IsOpponent(piece, toY, toX)
 		if err != nil {
 			return nil, errors.New("failed to check if square is empty")
 		}
 
-		if isSquareEmpty { // ... should always be inbounds if from start position, but we'll check just in case
-			moves = append(moves, entity.NewMoveEntity(
-				HelperService.IntPtr(fromX), HelperService.IntPtr(fromY),
-				HelperService.IntPtr(toX), HelperService.IntPtr(toY),
-				HelperService.IntPtr(0),
-				HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-				HelperService.IntPtr(0),
-			))
-		}
-	}
-
-	// Capture diagonal left
-
-	for _, deltaX := range []int{-1, 1} {
-		toX, toY = fromX + deltaX, fromY + direction
-		if !chessboard.IsWithinBounds(toX, toY) {
-			break // Shouldn't error if out of bounds
-		}
-		
-		IsOpponent, err := chessboard.IsOpponent(piece, toY, toX)
-
-		if err != nil {
-			return nil, errors.New("failed to check if square is an opponent")
-		}
-
-		if IsOpponent {
-			capturedPiece, err := chessboard.GetPiece(toY, toX) 
+		if isOpponent {
+			pieceCaptured, err := chessboard.GetPiece(toY, toX)
 
 			if err != nil {
 				return nil, errors.New("failed to get captured piece")
 			}
 
-			moves = append(moves, entity.NewMoveEntity(
-				HelperService.IntPtr(fromX), HelperService.IntPtr(fromY),
-				HelperService.IntPtr(toX), HelperService.IntPtr(toY),
-				HelperService.IntPtr(0),
-				HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-				HelperService.IntPtr(capturedPiece),
-			))
+			if pieceCaptured == 0 { // En Passant capture
+				pieceCaptured = piece * -1
+			}
+
+			if toY == promotionRank {
+				for _, promotionPiece := range []int{2, 3, 4, 5} { // Create a move for each piece it can promote too
+					moves = append(moves, entity.NewMoveEntity(
+						HelperService.IntPtr(fromX), HelperService.IntPtr(fromY),
+						HelperService.IntPtr(toX), HelperService.IntPtr(toY),
+						HelperService.IntPtr(promotionPiece * (-1 * direction)),
+						HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+						HelperService.IntPtr(pieceCaptured),
+					))
+				}
+			} else {
+				// Create move
+				moves = append(moves, entity.NewMoveEntity(
+					HelperService.IntPtr(fromX), HelperService.IntPtr(fromY),
+					HelperService.IntPtr(toX), HelperService.IntPtr(toY),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(pieceCaptured),
+				))
+			}
 		}
 	}
-
 	return moves, nil
 }
-
-// func getKnightMove (piece int, fromX int, fromY int, chessboard entity.ChessboardEntityInterface) ([]entity.MoveEntityInterface, error) {
-// 	toX, toY, promotion, isCastling, isEnPassant, captured := 1, 1, 1, true, true, 1
-// 	move := entity.NewMoveEntity(
-// 		&fromX, 
-// 		&fromY, 
-// 		&toX, 
-// 		&toY, 
-// 		&promotion, 
-// 		&isCastling,
-// 		&isEnPassant, 
-// 		&captured,
-// 	)
-// 	var moves []entity.MoveEntityInterface
-// 	moves = append(moves, move)
-// 	return moves, nil
-// }
-
-// func getBishopMove (piece int, fromX int, fromY int, chessboard entity.ChessboardEntityInterface) ([]entity.MoveEntityInterface, error) {
-// 	toX, toY, promotion, isCastling, isEnPassant, captured := 1, 1, 1, true, true, 1
-// 	move := entity.NewMoveEntity(
-// 		&fromX, 
-// 		&fromY, 
-// 		&toX, 
-// 		&toY, 
-// 		&promotion, 
-// 		&isCastling,
-// 		&isEnPassant, 
-// 		&captured,
-// 	)
-// 	var moves []entity.MoveEntityInterface
-// 	moves = append(moves, move)
-// 	return moves, nil
-// }
-
-// func getRookMove (piece int, fromX int, fromY int, chessboard entity.ChessboardEntityInterface) ([]entity.MoveEntityInterface, error) {
-// 	toX, toY, promotion, isCastling, isEnPassant, captured := 1, 1, 1, true, true, 1
-// 	move := entity.NewMoveEntity(
-// 		&fromX, 
-// 		&fromY, 
-// 		&toX, 
-// 		&toY, 
-// 		&promotion, 
-// 		&isCastling,
-// 		&isEnPassant, 
-// 		&captured,
-// 	)
-// 	var moves []entity.MoveEntityInterface
-// 	moves = append(moves, move)
-// 	return moves, nil
-// }
-
-// func getQueenMove (piece int, fromX int, fromY int, chessboard entity.ChessboardEntityInterface) ([]entity.MoveEntityInterface, error) {
-// 	toX, toY, promotion, isCastling, isEnPassant, captured := 1, 1, 1, true, true, 1
-// 	move := entity.NewMoveEntity(
-// 		&fromX, 
-// 		&fromY, 
-// 		&toX, 
-// 		&toY, 
-// 		&promotion, 
-// 		&isCastling,
-// 		&isEnPassant, 
-// 		&captured,
-// 	)
-// 	var moves []entity.MoveEntityInterface
-// 	moves = append(moves, move)
-// 	return moves, nil
-// }
-
-// func getKingMove (piece int, fromX int, fromY int, chessboard entity.ChessboardEntityInterface) ([]entity.MoveEntityInterface, error) {
-// 	toX, toY, promotion, isCastling, isEnPassant, captured := 1, 1, 1, true, true, 1
-// 	move := entity.NewMoveEntity(
-// 		&fromX, 
-// 		&fromY, 
-// 		&toX, 
-// 		&toY, 
-// 		&promotion, 
-// 		&isCastling,
-// 		&isEnPassant, 
-// 		&captured,
-// 	)
-// 	var moves []entity.MoveEntityInterface
-// 	moves = append(moves, move)
-// 	return moves, nil
-// }

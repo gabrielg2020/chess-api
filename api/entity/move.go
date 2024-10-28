@@ -100,6 +100,8 @@ func (entity *MoveEntity) GetCaptured() (int, error) {
 	return *entity.captured, nil
 }
 
+// TODO needs testing :(
+// BUG may need a refactor to be more robust, take a look at chessboard.convertChessNotation
 func (entity *MoveEntity) GetChessNotation() (string) {
 	rowToChessNotationRow := map[int]string{
 		0: "a", 1: "b",

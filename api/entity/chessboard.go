@@ -3,6 +3,9 @@ package entity
 import (
 	"errors"
 	"math"
+	"strconv"
+	"strings"
+	"unicode"
 )
 
 type ChessboardEntityInterface interface {
@@ -16,7 +19,6 @@ type ChessboardEntityInterface interface {
 	GetPiece(int, int) (int, error)
 	IsSquareEmpty(int, int) (bool, error)
 	IsOpponent(int, int, int) (bool, error)
-	IsWithinBounds(int, int) (bool)
 	// SetFen(fen string) (*ChessboardEntity, error)
 	// ResetBoard() (*ChessboardEntity, error)
 	// GetPiece(position string) (int, error)
@@ -98,6 +100,10 @@ func (entity *ChessboardEntity) GetEnPassantSquare() (string, error) {
 	return *entity.enPassantSquare, nil
 }
 
+func (entity *ChessboardEntity) SetEnPassantSquare(enPassantSquare *string) {
+	entity.enPassantSquare = (*string)(enPassantSquare)
+}
+
 func (entity *ChessboardEntity) GetHalfmoveClock() (string, error) {
 	if entity.halfmoveClock == nil {
 		return "", errors.New("chessboard.halfmoveClock is not set")
@@ -113,7 +119,7 @@ func (entity *ChessboardEntity) GetFullmoveNumber() (string, error) {
 }
 
 func (entity *ChessboardEntity) GetPiece(row int, col int) (int, error) {
-	if !entity.IsWithinBounds(row, col) {
+	if !entity.isWithinBounds(row, col) {
 		return -7, errors.New("row or col out of bounds")
 	}
 
@@ -125,8 +131,8 @@ func (entity *ChessboardEntity) GetPiece(row int, col int) (int, error) {
 }
 
 func (entity *ChessboardEntity) IsSquareEmpty(row int, col int) (bool, error) {
-	if !entity.IsWithinBounds(row, col) {
-		return false, errors.New("row or col out of bounds")
+	if !entity.isWithinBounds(row, col) {
+		return false, nil
 	}
 
 	if entity.board == nil {
@@ -136,17 +142,33 @@ func (entity *ChessboardEntity) IsSquareEmpty(row int, col int) (bool, error) {
 	if entity.board[row][col] == 0 {
 		return true, nil
 	}
-
 	return false, nil
 }
 
 func (entity *ChessboardEntity) IsOpponent(piece int, row int, col int) (bool, error) {
-	if !entity.IsWithinBounds(row, col) {
-		return false, errors.New("row or col out of bounds")
+	if !entity.isWithinBounds(row, col) {
+		return false, nil
 	}
 	
 	if entity.board == nil {
 		return false, errors.New("chessboard.board is not set")
+	}
+
+	// Check En Passant
+	if piece == 1 || piece == -1 {
+		enPassantSquare, err := entity.GetEnPassantSquare()
+		if err != nil {
+			return false, errors.New("chessboard.enPassantSquare is not set")
+		}
+
+		enPassantRow, enPassantCol, err := entity.convertChessNotation(enPassantSquare) 
+		if err != nil {
+			return false, errors.New("failed to convert chessboard.enPassantSquare")
+		}
+
+		if enPassantRow == row && enPassantCol == col {
+			return true, nil
+		}
 	}
 
 	if entity.board[row][col] == 0 {
@@ -156,14 +178,59 @@ func (entity *ChessboardEntity) IsOpponent(piece int, row int, col int) (bool, e
 	if (math.Signbit(float64(entity.board[row][col])) == math.Signbit(float64(piece))) {
 		return false, nil
 	}
-	
+
 	return true, nil
 }
 
-func (entity *ChessboardEntity) IsWithinBounds(toX int, toY int) (bool) {
+func (entity *ChessboardEntity) isWithinBounds(toX int, toY int) (bool) {
 	if (toX > 7) || (toX < 0) || (toY > 7) || (toY < 0) {
 		return false
 	} else {
 		return true
 	}
+}
+
+func (entity *ChessboardEntity) convertChessNotation(chessNotation string) (int, int, error) {
+	// remove spaces
+	chessNotation = strings.TrimSpace(chessNotation)
+
+	if len(chessNotation) < 2 {
+		return -7, -7, errors.New("invalid chess notation")
+	}
+
+	var letter, digit string
+
+	// separate chess notation
+	for _, char := range chessNotation {
+		if unicode.IsLetter(char) {
+			letter += string(char)
+		} else if unicode.IsDigit(char) {
+			digit += string(char)
+		} else {
+			return -7, -7, errors.New("invalid character in chess notation")
+		}
+	}
+
+	if len(letter) != 1 || len(digit) != 1 {
+		return -7, -7, errors.New("invalid chess notation format")
+	}
+
+	rowLetter := unicode.ToLower(rune(letter[0]))
+
+	if rowLetter < 'a' || rowLetter > 'h' {
+		return -7, -7, errors.New("invalid column letter")
+	}
+	row := int(rowLetter - 'a')
+
+	colNumber, err := strconv.Atoi(digit)
+	if err != nil {
+		return -7, -7, errors.New("invalid row number")
+	}
+	if colNumber < 1 || colNumber > 8 {
+		return -7, -7, errors.New("row number out of range")
+	}
+
+	col := 8 - colNumber
+
+	return col, row, nil
 }
