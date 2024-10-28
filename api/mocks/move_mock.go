@@ -33,7 +33,7 @@ func (m *MockMoveEntity) GetPromotion() (int, error) {
 	return args.Int(0), args.Error(1)
 }
 
-func (m *MockMoveEntity) isCastling() (bool, error) {
+func (m *MockMoveEntity) IsCastling() (bool, error) {
 	args := m.Called()
 	return args.Bool(0), args.Error(1)
 }
