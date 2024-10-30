@@ -42,24 +42,24 @@ func (handler *MoveHandler) FindBestMove(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"errorMessage": err.Error(),
 			"errorCode":    http.StatusBadRequest,
-			"chessboard": chessboard,
+			"chessboard":   chessboard,
 		})
 		return
 	}
 
 	// Find best move
-	bestMove, err := handler.moveService.FindBestMove(chessboard)
+	bestMove, boardErr := handler.moveService.FindBestMove(chessboard)
+	chessNotation, chessNotationErr := bestMove.GetChessNotation()
 
-	if err != nil {
+	if boardErr != nil || chessNotationErr != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"errorMessage": err.Error(),
 			"errorCode":    http.StatusBadRequest,
-			"move": bestMove.GetChessNotation(),
 		})
 		return
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"move": bestMove.GetChessNotation(),
+		"move": chessNotation,
 	})
 }
