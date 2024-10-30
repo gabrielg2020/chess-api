@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/gabrielg2020/chess-api/api/service/helper_service"
+	HelperService "github.com/gabrielg2020/chess-api/api/service/helper_service"
 	"github.com/stretchr/testify/assert"
 )
 func Test_ChessboardEntity_GetBoard(t *testing.T) {
@@ -575,6 +575,25 @@ func Test_ChessboardEntity_IsOpponent(t *testing.T) {
 			enPassantSquareToSet: nil,
 			expectedResponse: false,
 			expectedError: errors.New("chessboard.enPassantSquare is not set"),
+		},
+		{
+			name: "Check En Passant When There Is No En Passant Square",
+			piece: -1,
+			row: 4,
+			col: 4,
+			boardToSet: HelperService.IntBoardArrayPtr([8][8]int{
+				{-4, -2, -3, -5, -6, -3, -2, -4},
+				{-1, -1, -1, -1, -1, 0, -1, -1},
+				{0, 0, 0, 0, 0, 0, 0, 0},
+				{0, 0, 0, 0, 0, 0, 0, 0},
+				{0, 0, 0, 0, 1, -1, 0, 0},
+				{0, 0, 0, 0, 0, 0, 0, 0},
+				{1, 1, 1, 1, 0, 1, 1, 1},
+				{4, 2, 3, 5, 6, 3, 2, 4},
+			}),
+			enPassantSquareToSet: HelperService.StrPtr("-"),
+			expectedResponse: false,
+			expectedError: nil,
 		},
 		{
 			name: "Check En Passant When Failing to Convert En Passant Square",

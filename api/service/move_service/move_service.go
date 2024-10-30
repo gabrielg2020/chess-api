@@ -138,7 +138,7 @@ func getPawnMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEn
 		toX, toY := fromX+deltaX, fromY+direction
 		isOpponent, err := chessboard.IsOpponent(piece, toY, toX)
 		if err != nil {
-			return nil, errors.New("failed to check if square is empty")
+			return nil, errors.New("failed to check if is opponent")
 		}
 
 		if isOpponent {

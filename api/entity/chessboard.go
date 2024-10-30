@@ -21,7 +21,6 @@ type ChessboardEntityInterface interface {
 	IsOpponent(int, int, int) (bool, error)
 	// SetFen(fen string) (*ChessboardEntity, error)
 	// ResetBoard() (*ChessboardEntity, error)
-	// GetPiece(position string) (int, error)
 	// SetPiece(position string, peice int) error
 	// MovePiece(from string, to string) error
 	// IsCheckmate(colour string) error
@@ -159,6 +158,11 @@ func (entity *ChessboardEntity) IsOpponent(piece int, row int, col int) (bool, e
 		enPassantSquare, err := entity.GetEnPassantSquare()
 		if err != nil {
 			return false, errors.New("chessboard.enPassantSquare is not set")
+		}
+
+		// En Passant is not set
+		if enPassantSquare == "-" {
+			return false, nil
 		}
 
 		enPassantRow, enPassantCol, err := entity.convertChessNotation(enPassantSquare) 
