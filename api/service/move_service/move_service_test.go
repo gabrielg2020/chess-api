@@ -1,11 +1,12 @@
 package MoveService
 
 import (
-	"testing"
+	"errors"
 	"github.com/gabrielg2020/chess-api/api/entity"
 	"github.com/gabrielg2020/chess-api/api/mocks"
 	"github.com/gabrielg2020/chess-api/api/service/helper_service"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func Test_MoveService_FindBestMove(t *testing.T) {
@@ -106,7 +107,6 @@ func compareMoves(t *testing.T, expected entity.MoveEntityInterface, actual enti
 	assert.Equal(t, capturedExpected, capturedActual)
 }
 
-// TODO need to add test for edge cases... look at coverage.html
 func Test_MoveService_getPawnMove(t *testing.T) {
 	testCases := []struct {
 		name          string
@@ -118,7 +118,7 @@ func Test_MoveService_getPawnMove(t *testing.T) {
 		expectedError error
 	}{
 		{
-			name: "White Pawn 1 Move Forward",
+			name:  "White Pawn 1 Move Forward",
 			piece: 1,
 			fromX: 2,
 			fromY: 3,
@@ -144,7 +144,7 @@ func Test_MoveService_getPawnMove(t *testing.T) {
 			expectedError: nil,
 		},
 		{
-			name: "Black Pawn 1 Move Forward",
+			name:  "Black Pawn 1 Move Forward",
 			piece: -1,
 			fromX: 2,
 			fromY: 3,
@@ -170,7 +170,7 @@ func Test_MoveService_getPawnMove(t *testing.T) {
 			expectedError: nil,
 		},
 		{
-			name: "White Pawn 2 Move Forward",
+			name:  "White Pawn 2 Move Forward",
 			piece: 1,
 			fromX: 2,
 			fromY: 6,
@@ -203,7 +203,7 @@ func Test_MoveService_getPawnMove(t *testing.T) {
 			expectedError: nil,
 		},
 		{
-			name: "Black Pawn 2 Move Forward",
+			name:  "Black Pawn 2 Move Forward",
 			piece: -1,
 			fromX: 2,
 			fromY: 1,
@@ -236,7 +236,7 @@ func Test_MoveService_getPawnMove(t *testing.T) {
 			expectedError: nil,
 		},
 		{
-			name: "White Pawn Promotion",
+			name:  "White Pawn Promotion",
 			piece: 1,
 			fromX: 2,
 			fromY: 1,
@@ -281,7 +281,7 @@ func Test_MoveService_getPawnMove(t *testing.T) {
 			expectedError: nil,
 		},
 		{
-			name: "Black Pawn Promotion",
+			name:  "Black Pawn Promotion",
 			piece: -1,
 			fromX: 2,
 			fromY: 6,
@@ -326,7 +326,7 @@ func Test_MoveService_getPawnMove(t *testing.T) {
 			expectedError: nil,
 		},
 		{
-			name: "White Pawn Take Left and Right",
+			name:  "White Pawn Take Left and Right",
 			piece: 1,
 			fromX: 2,
 			fromY: 3,
@@ -359,7 +359,7 @@ func Test_MoveService_getPawnMove(t *testing.T) {
 			expectedError: nil,
 		},
 		{
-			name: "Black Pawn Take Left and Right",
+			name:  "Black Pawn Take Left and Right",
 			piece: -1,
 			fromX: 2,
 			fromY: 3,
@@ -392,7 +392,7 @@ func Test_MoveService_getPawnMove(t *testing.T) {
 			expectedError: nil,
 		},
 		{
-			name: "White Pawn Take Left With Promotion",
+			name:  "White Pawn Take Left With Promotion",
 			piece: 1,
 			fromX: 2,
 			fromY: 1,
@@ -438,7 +438,7 @@ func Test_MoveService_getPawnMove(t *testing.T) {
 			expectedError: nil,
 		},
 		{
-			name: "Black Pawn Take Left With Promotion",
+			name:  "Black Pawn Take Left With Promotion",
 			piece: -1,
 			fromX: 2,
 			fromY: 6,
@@ -482,6 +482,94 @@ func Test_MoveService_getPawnMove(t *testing.T) {
 				),
 			},
 			expectedError: nil,
+		},
+		{
+			name:  "Failed To Check If Square Is Empty When Checking 1 Move Ahead",
+			piece: 1,
+			fromX: 3,
+			fromY: 6,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				// Fail on 1st square
+				m.On("IsSquareEmpty", 5, 3).Return(false, errors.New("chessboard.board is not set"))
+			},
+			expectedMoves: nil,
+			expectedError: errors.New("failed to check if square is empty"),
+		},
+		{
+			name:  "Failed To Check If Square Is Empty When Checking 2 Move Ahead",
+			piece: 1,
+			fromX: 3,
+			fromY: 6,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				// Pass on 1st square
+				m.On("IsSquareEmpty", 5, 3).Return(true, nil)
+				// Fail on 2nd square
+				m.On("IsSquareEmpty", 4, 3).Return(false, errors.New("chessboard.board is not set"))
+			},
+			expectedMoves: nil,
+			expectedError: errors.New("failed to check if square is empty"),
+		},
+		{
+			name:  "Failed To Check If Is Opponent",
+			piece: 1,
+			fromX: 3,
+			fromY: 6,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				// Pass on 1st square
+				m.On("IsSquareEmpty", 5, 3).Return(true, nil)
+				// Pass on 2nd square
+				m.On("IsSquareEmpty", 4, 3).Return(true, nil)
+				// Fail Checking IsOpponent
+				m.On("IsOpponent", 1, 5, 2).Return(false, errors.New("chessboard.board is not set"))
+			},
+			expectedMoves: nil,
+			expectedError: errors.New("failed to check if is opponent"),
+		},
+		{
+			name:  "Failed To Get Captured Piece",
+			piece: 1,
+			fromX: 3,
+			fromY: 6,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				// Pass on 1st square
+				m.On("IsSquareEmpty", 5, 3).Return(true, nil)
+				// Pass on 2nd square
+				m.On("IsSquareEmpty", 4, 3).Return(true, nil)
+				// Pass Checking IsOpponent
+				m.On("IsOpponent", 1, 5, 2).Return(true, nil)
+				// Failed Getting Piece
+				m.On("GetPiece", 5, 2).Return(-7, errors.New("row or col out of bounds"))
+			},
+			expectedMoves: nil,
+			expectedError: errors.New("failed to get captured piece"),
+		},
+		{
+			name:  "En Passant Capture",
+			piece: 1,
+			fromX: 3,
+			fromY: 6,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				// Pass on 1st square
+				m.On("IsSquareEmpty", 5, 3).Return(true, nil)
+				// Pass on 2nd square
+				m.On("IsSquareEmpty", 4, 3).Return(true, nil)
+				// Pass Checking IsOpponent
+				m.On("IsOpponent", 1, 5, 2).Return(true, nil)
+				// Pass Getting Piece
+				m.On("GetPiece", 5, 2).Return(0, nil)
+				// Fail Checking IsOpponent
+				m.On("IsOpponent", 1, 5, 4).Return(false, errors.New("chessboard.board is not set"))
+			},
+			expectedMoves: []entity.MoveEntityInterface{
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(6),
+					HelperService.IntPtr(5), HelperService.IntPtr(2),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(-1),
+				),
+			},
+			expectedError: errors.New("failed to check if is opponent"),
 		},
 	}
 
