@@ -54,6 +54,14 @@ func (service *MoveService) FindBestMove(chessboard entity.ChessboardEntityInter
 			// 	getQueenMove(piece, row, col, chessboard)
 			// case 6: // Get King Move
 			// 	getKingMove(piece, row, col, chessboard)
+			default: // NOTE: Error on default when rest of cases are completed. for now add random move
+				moves = append(moves, entity.NewMoveEntity(
+					HelperService.IntPtr(0), HelperService.IntPtr(0),
+					HelperService.IntPtr(7), HelperService.IntPtr(7),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(0),
+				))
 			}
 		}
 	}
