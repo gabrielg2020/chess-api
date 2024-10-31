@@ -20,9 +20,9 @@ func (handler *FENHandler) ValidateFEN(ctx *gin.Context) {
 
 	err := handler.fenService.Validate(fen)
 
-	if  err != nil {
+	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"valid":        (err == nil),
+			"valid":        err == nil,
 			"errorMessage": err.Error(),
 			"errorCode":    http.StatusBadRequest,
 		})
@@ -30,6 +30,6 @@ func (handler *FENHandler) ValidateFEN(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"valid": (err == nil),
+		"valid": err == nil,
 	})
 }

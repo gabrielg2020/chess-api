@@ -7,6 +7,7 @@ import (
 	HelperService "github.com/gabrielg2020/chess-api/api/service/helper_service"
 	"github.com/stretchr/testify/assert"
 )
+
 func Test_ChessboardEntity_GetBoard(t *testing.T) {
 	testCases := []struct {
 		name             string
@@ -39,10 +40,10 @@ func Test_ChessboardEntity_GetBoard(t *testing.T) {
 			expectedError: nil,
 		},
 		{
-			name: "chessboard.board is not set",
-			board: nil,
+			name:             "chessboard.board is not set",
+			board:            nil,
 			expectedResponse: [8][8]int{},
-			expectedError: errors.New("chessboard.board is not set"),
+			expectedError:    errors.New("chessboard.board is not set"),
 		},
 	}
 
@@ -71,16 +72,16 @@ func Test_ChessboardEntity_GetFen(t *testing.T) {
 		expectedError    error
 	}{
 		{
-			name: "chessboard.fen is set",
-			fen: HelperService.StrPtr("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"),
+			name:             "chessboard.fen is set",
+			fen:              HelperService.StrPtr("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"),
 			expectedResponse: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-			expectedError: nil,
+			expectedError:    nil,
 		},
 		{
-			name: "chessboard.fen is not set",
-			fen: nil,
+			name:             "chessboard.fen is not set",
+			fen:              nil,
 			expectedResponse: "",
-			expectedError: errors.New("chessboard.fen is not set"),
+			expectedError:    errors.New("chessboard.fen is not set"),
 		},
 	}
 
@@ -109,16 +110,16 @@ func Test_ChessboardEntity_GetActiveColour(t *testing.T) {
 		expectedError    error
 	}{
 		{
-			name: "chessboard.activeColour is set",
-			activeColour: HelperService.StrPtr("w"),
+			name:             "chessboard.activeColour is set",
+			activeColour:     HelperService.StrPtr("w"),
 			expectedResponse: "w",
-			expectedError: nil,
+			expectedError:    nil,
 		},
 		{
-			name: "chessboard.activeColour is not set",
-			activeColour: nil,
+			name:             "chessboard.activeColour is not set",
+			activeColour:     nil,
 			expectedResponse: "",
-			expectedError: errors.New("chessboard.activeColour is not set"),
+			expectedError:    errors.New("chessboard.activeColour is not set"),
 		},
 	}
 
@@ -147,16 +148,16 @@ func Test_ChessboardEntity_GetCastlingRights(t *testing.T) {
 		expectedError    error
 	}{
 		{
-			name: "chessboard.castlingRights is set",
-			castlingRights: HelperService.StrPtr("KQkq"),
+			name:             "chessboard.castlingRights is set",
+			castlingRights:   HelperService.StrPtr("KQkq"),
 			expectedResponse: "KQkq",
-			expectedError: nil,
+			expectedError:    nil,
 		},
 		{
-			name: "chessboard.castlingRights is not set",
-			castlingRights: nil,
+			name:             "chessboard.castlingRights is not set",
+			castlingRights:   nil,
 			expectedResponse: "",
-			expectedError: errors.New("chessboard.castlingRights is not set"),
+			expectedError:    errors.New("chessboard.castlingRights is not set"),
 		},
 	}
 
@@ -185,16 +186,16 @@ func Test_ChessboardEntity_GetEnPassantSquare(t *testing.T) {
 		expectedError    error
 	}{
 		{
-			name: "chessboard.enPassantSquare is set",
-			enPassantSquare: HelperService.StrPtr("e3"),
+			name:             "chessboard.enPassantSquare is set",
+			enPassantSquare:  HelperService.StrPtr("e3"),
 			expectedResponse: "e3",
-			expectedError: nil,
+			expectedError:    nil,
 		},
 		{
-			name: "chessboard.enPassantSquare is not set",
-			enPassantSquare: nil,
+			name:             "chessboard.enPassantSquare is not set",
+			enPassantSquare:  nil,
 			expectedResponse: "",
-			expectedError: errors.New("chessboard.enPassantSquare is not set"),
+			expectedError:    errors.New("chessboard.enPassantSquare is not set"),
 		},
 	}
 
@@ -223,16 +224,16 @@ func Test_ChessboardEntity_GetHalfmoveClock(t *testing.T) {
 		expectedError    error
 	}{
 		{
-			name: "chessboard.halfmoveClock is set",
-			halfmoveClock: HelperService.StrPtr("0"),
+			name:             "chessboard.halfmoveClock is set",
+			halfmoveClock:    HelperService.StrPtr("0"),
 			expectedResponse: "0",
-			expectedError: nil,
+			expectedError:    nil,
 		},
 		{
-			name: "chessboard.halfmoveClock is not set",
-			halfmoveClock: nil,
+			name:             "chessboard.halfmoveClock is not set",
+			halfmoveClock:    nil,
 			expectedResponse: "",
-			expectedError: errors.New("chessboard.halfmoveClock is not set"),
+			expectedError:    errors.New("chessboard.halfmoveClock is not set"),
 		},
 	}
 
@@ -261,16 +262,16 @@ func Test_ChessboardEntity_GetFullmoveNumber(t *testing.T) {
 		expectedError    error
 	}{
 		{
-			name: "chessboard.fullmoveNumber is set",
-			fullmoveNumber: HelperService.StrPtr("1"),
+			name:             "chessboard.fullmoveNumber is set",
+			fullmoveNumber:   HelperService.StrPtr("1"),
 			expectedResponse: "1",
 			expectedError:    nil,
 		},
 		{
-			name: "chessboard.fullmoveNumber is not set",
-			fullmoveNumber: nil,
+			name:             "chessboard.fullmoveNumber is not set",
+			fullmoveNumber:   nil,
 			expectedResponse: "",
-			expectedError: errors.New("chessboard.fullmoveNumber is not set"),
+			expectedError:    errors.New("chessboard.fullmoveNumber is not set"),
 		},
 	}
 
@@ -302,8 +303,8 @@ func Test_ChessboardEntity_GetPiece(t *testing.T) {
 	}{
 		{
 			name: "Get Piece From Valid Square",
-			row: 0,
-			col: 3,
+			row:  0,
+			col:  3,
 			boardToSet: HelperService.IntBoardArrayPtr([8][8]int{
 				{-4, -2, -3, -5, -6, -3, -2, -4},
 				{-1, -1, -1, -1, -1, -1, -1, -1},
@@ -315,23 +316,23 @@ func Test_ChessboardEntity_GetPiece(t *testing.T) {
 				{4, 2, 3, 5, 6, 3, 2, 4},
 			}),
 			expectedResponse: -5,
-			expectedError: nil,
+			expectedError:    nil,
 		},
 		{
-			name: "Get Piece When Board Is Not Set",
-			row: 0,
-			col: 3,
-			boardToSet: nil,
+			name:             "Get Piece When Board Is Not Set",
+			row:              0,
+			col:              3,
+			boardToSet:       nil,
 			expectedResponse: -7,
-			expectedError: errors.New("chessboard.board is not set"),
+			expectedError:    errors.New("chessboard.board is not set"),
 		},
 		{
-			name: "Get Piece When Indexing Out Of Bounds",
-			row: 8,
-			col: 8,
-			boardToSet: nil,
+			name:             "Get Piece When Indexing Out Of Bounds",
+			row:              8,
+			col:              8,
+			boardToSet:       nil,
 			expectedResponse: -7,
-			expectedError: errors.New("row or col out of bounds"),
+			expectedError:    errors.New("row or col out of bounds"),
 		},
 	}
 
@@ -364,8 +365,8 @@ func Test_ChessboardEntity_IsSquareEmpty(t *testing.T) {
 	}{
 		{
 			name: "Check On Empty Square",
-			row: 2,
-			col: 3,
+			row:  2,
+			col:  3,
 			boardToSet: HelperService.IntBoardArrayPtr([8][8]int{
 				{-4, -2, -3, -5, -6, -3, -2, -4},
 				{-1, -1, -1, -1, -1, -1, -1, -1},
@@ -377,12 +378,12 @@ func Test_ChessboardEntity_IsSquareEmpty(t *testing.T) {
 				{4, 2, 3, 5, 6, 3, 2, 4},
 			}),
 			expectedResponse: true,
-			expectedError: nil,
+			expectedError:    nil,
 		},
 		{
 			name: "Check On Non-Empty Square",
-			row: 0,
-			col: 3,
+			row:  0,
+			col:  3,
 			boardToSet: HelperService.IntBoardArrayPtr([8][8]int{
 				{-4, -2, -3, -5, -6, -3, -2, -4},
 				{-1, -1, -1, -1, -1, -1, -1, -1},
@@ -394,20 +395,20 @@ func Test_ChessboardEntity_IsSquareEmpty(t *testing.T) {
 				{4, 2, 3, 5, 6, 3, 2, 4},
 			}),
 			expectedResponse: false,
-			expectedError: nil,
+			expectedError:    nil,
 		},
 		{
-			name: "Check When Board Is Not Set",
-			row: 0,
-			col: 3,
-			boardToSet: nil,
+			name:             "Check When Board Is Not Set",
+			row:              0,
+			col:              3,
+			boardToSet:       nil,
 			expectedResponse: false,
-			expectedError: errors.New("chessboard.board is not set"),
+			expectedError:    errors.New("chessboard.board is not set"),
 		},
 		{
 			name: "Check When Indexing Out Of Bounds",
-			row: 8,
-			col: 8,
+			row:  8,
+			col:  8,
 			boardToSet: HelperService.IntBoardArrayPtr([8][8]int{
 				{-4, -2, -3, -5, -6, -3, -2, -4},
 				{-1, -1, -1, -1, -1, -1, -1, -1},
@@ -419,7 +420,7 @@ func Test_ChessboardEntity_IsSquareEmpty(t *testing.T) {
 				{4, 2, 3, 5, 6, 3, 2, 4},
 			}),
 			expectedResponse: false,
-			expectedError: nil,
+			expectedError:    nil,
 		},
 	}
 
@@ -453,10 +454,10 @@ func Test_ChessboardEntity_IsOpponent(t *testing.T) {
 		expectedError        error
 	}{
 		{
-			name: "Check On Opponent Square",
+			name:  "Check On Opponent Square",
 			piece: 5,
-			row: 0,
-			col: 3,
+			row:   0,
+			col:   3,
 			boardToSet: HelperService.IntBoardArrayPtr([8][8]int{
 				{-4, -2, -3, -5, -6, -3, -2, -4},
 				{-1, -1, -1, -1, -1, -1, -1, -1},
@@ -468,14 +469,14 @@ func Test_ChessboardEntity_IsOpponent(t *testing.T) {
 				{4, 2, 3, 5, 6, 3, 2, 4},
 			}),
 			enPassantSquareToSet: HelperService.StrPtr("-"),
-			expectedResponse: true,
-			expectedError: nil,
+			expectedResponse:     true,
+			expectedError:        nil,
 		},
 		{
-			name: "Check On Non-Opponent Square",
+			name:  "Check On Non-Opponent Square",
 			piece: -5,
-			row: 0,
-			col: 3,
+			row:   0,
+			col:   3,
 			boardToSet: HelperService.IntBoardArrayPtr([8][8]int{
 				{-4, -2, -3, -5, -6, -3, -2, -4},
 				{-1, -1, -1, -1, -1, -1, -1, -1},
@@ -487,14 +488,14 @@ func Test_ChessboardEntity_IsOpponent(t *testing.T) {
 				{4, 2, 3, 5, 6, 3, 2, 4},
 			}),
 			enPassantSquareToSet: HelperService.StrPtr("-"),
-			expectedResponse: false,
-			expectedError: nil,
+			expectedResponse:     false,
+			expectedError:        nil,
 		},
 		{
-			name: "Check On Empty Square",
+			name:  "Check On Empty Square",
 			piece: -5,
-			row: 2,
-			col: 3,
+			row:   2,
+			col:   3,
 			boardToSet: HelperService.IntBoardArrayPtr([8][8]int{
 				{-4, -2, -3, -5, -6, -3, -2, -4},
 				{-1, -1, -1, -1, -1, -1, -1, -1},
@@ -506,24 +507,24 @@ func Test_ChessboardEntity_IsOpponent(t *testing.T) {
 				{4, 2, 3, 5, 6, 3, 2, 4},
 			}),
 			enPassantSquareToSet: HelperService.StrPtr("-"),
-			expectedResponse: false,
-			expectedError: nil,
+			expectedResponse:     false,
+			expectedError:        nil,
 		},
 		{
-			name: "Check When Board Is Not Set",
-			piece: -5,
-			row: 0,
-			col: 3,
-			boardToSet: nil,
+			name:                 "Check When Board Is Not Set",
+			piece:                -5,
+			row:                  0,
+			col:                  3,
+			boardToSet:           nil,
 			enPassantSquareToSet: HelperService.StrPtr("-"),
-			expectedResponse: false,
-			expectedError: errors.New("chessboard.board is not set"),
+			expectedResponse:     false,
+			expectedError:        errors.New("chessboard.board is not set"),
 		},
 		{
-			name: "Check When Indexing Out Of Bounds",
+			name:  "Check When Indexing Out Of Bounds",
 			piece: -5,
-			row: 8,
-			col: 8,
+			row:   8,
+			col:   8,
 			boardToSet: HelperService.IntBoardArrayPtr([8][8]int{
 				{-4, -2, -3, -5, -6, -3, -2, -4},
 				{-1, -1, -1, -1, -1, -1, -1, -1},
@@ -535,14 +536,14 @@ func Test_ChessboardEntity_IsOpponent(t *testing.T) {
 				{4, 2, 3, 5, 6, 3, 2, 4},
 			}),
 			enPassantSquareToSet: HelperService.StrPtr("-"),
-			expectedResponse: false,
-			expectedError: nil,
+			expectedResponse:     false,
+			expectedError:        nil,
 		},
 		{
-			name: "Check En Passant",
+			name:  "Check En Passant",
 			piece: -1,
-			row: 4,
-			col: 4,
+			row:   4,
+			col:   4,
 			boardToSet: HelperService.IntBoardArrayPtr([8][8]int{
 				{-4, -2, -3, -5, -6, -3, -2, -4},
 				{-1, -1, -1, -1, -1, 0, -1, -1},
@@ -554,14 +555,14 @@ func Test_ChessboardEntity_IsOpponent(t *testing.T) {
 				{4, 2, 3, 5, 6, 3, 2, 4},
 			}),
 			enPassantSquareToSet: HelperService.StrPtr("e4"),
-			expectedResponse: true,
-			expectedError: nil,
+			expectedResponse:     true,
+			expectedError:        nil,
 		},
 		{
-			name: "Check En Passant When En Passant Is Not Set",
+			name:  "Check En Passant When En Passant Is Not Set",
 			piece: -1,
-			row: 4,
-			col: 4,
+			row:   4,
+			col:   4,
 			boardToSet: HelperService.IntBoardArrayPtr([8][8]int{
 				{-4, -2, -3, -5, -6, -3, -2, -4},
 				{-1, -1, -1, -1, -1, 0, -1, -1},
@@ -573,14 +574,14 @@ func Test_ChessboardEntity_IsOpponent(t *testing.T) {
 				{4, 2, 3, 5, 6, 3, 2, 4},
 			}),
 			enPassantSquareToSet: nil,
-			expectedResponse: false,
-			expectedError: errors.New("chessboard.enPassantSquare is not set"),
+			expectedResponse:     false,
+			expectedError:        errors.New("chessboard.enPassantSquare is not set"),
 		},
 		{
-			name: "Check En Passant When There Is No En Passant Square",
+			name:  "Check En Passant When There Is No En Passant Square",
 			piece: -1,
-			row: 4,
-			col: 4,
+			row:   4,
+			col:   4,
 			boardToSet: HelperService.IntBoardArrayPtr([8][8]int{
 				{-4, -2, -3, -5, -6, -3, -2, -4},
 				{-1, -1, -1, -1, -1, 0, -1, -1},
@@ -592,14 +593,14 @@ func Test_ChessboardEntity_IsOpponent(t *testing.T) {
 				{4, 2, 3, 5, 6, 3, 2, 4},
 			}),
 			enPassantSquareToSet: HelperService.StrPtr("-"),
-			expectedResponse: false,
-			expectedError: nil,
+			expectedResponse:     false,
+			expectedError:        nil,
 		},
 		{
-			name: "Check En Passant When Failing to Convert En Passant Square",
+			name:  "Check En Passant When Failing to Convert En Passant Square",
 			piece: -1,
-			row: 4,
-			col: 4,
+			row:   4,
+			col:   4,
 			boardToSet: HelperService.IntBoardArrayPtr([8][8]int{
 				{-4, -2, -3, -5, -6, -3, -2, -4},
 				{-1, -1, -1, -1, -1, 0, -1, -1},
@@ -611,8 +612,8 @@ func Test_ChessboardEntity_IsOpponent(t *testing.T) {
 				{4, 2, 3, 5, 6, 3, 2, 4},
 			}),
 			enPassantSquareToSet: HelperService.StrPtr("e24"),
-			expectedResponse: false,
-			expectedError: errors.New("failed to convert chessboard.enPassantSquare"),
+			expectedResponse:     false,
+			expectedError:        errors.New("failed to convert chessboard.enPassantSquare"),
 		},
 	}
 
@@ -643,15 +644,15 @@ func Test_ChessboardEntity_IsWithinBounds(t *testing.T) {
 		expectedResponse bool
 	}{
 		{
-			name: "Check When Out Of Bounds",
-			toX: 8,
-			toY: 8,
+			name:             "Check When Out Of Bounds",
+			toX:              8,
+			toY:              8,
 			expectedResponse: false,
 		},
 		{
-			name: "Check When In Bounds",
-			toX: 3,
-			toY: 5,
+			name:             "Check When In Bounds",
+			toX:              3,
+			toY:              5,
 			expectedResponse: true,
 		},
 	}
@@ -670,67 +671,67 @@ func Test_ChessboardEntity_IsWithinBounds(t *testing.T) {
 
 func Test_ChessboardEntity_convertChessNotation(t *testing.T) {
 	testCases := []struct {
-		name             string
-		chessNotation    string
-		expectedRow      int
-		expectedCol      int
-		expectedErr      error
+		name          string
+		chessNotation string
+		expectedRow   int
+		expectedCol   int
+		expectedErr   error
 	}{
 		{
-			name: "Valid Chess Notation - a1",
+			name:          "Valid Chess Notation - a1",
 			chessNotation: "a1",
-			expectedRow: 7,
-			expectedCol: 0,
-			expectedErr: nil,
+			expectedRow:   7,
+			expectedCol:   0,
+			expectedErr:   nil,
 		},
 		{
-			name: "Valid Chess Notation - g6",
+			name:          "Valid Chess Notation - g6",
 			chessNotation: "g6",
-			expectedRow: 2,
-			expectedCol: 6,
-			expectedErr: nil,
+			expectedRow:   2,
+			expectedCol:   6,
+			expectedErr:   nil,
 		},
 		{
-			name: "Valid Chess Notation - e6",
+			name:          "Valid Chess Notation - e6",
 			chessNotation: "  e6  ",
-			expectedRow: 2,
-			expectedCol: 4,
-			expectedErr: nil,
+			expectedRow:   2,
+			expectedCol:   4,
+			expectedErr:   nil,
 		},
 		{
-			name: "Invalid Chess Notation - too short",
+			name:          "Invalid Chess Notation - too short",
 			chessNotation: "6",
-			expectedRow: -7,
-			expectedCol: -7,
-			expectedErr: errors.New("invalid chess notation"),
+			expectedRow:   -7,
+			expectedCol:   -7,
+			expectedErr:   errors.New("invalid chess notation"),
 		},
 		{
-			name: "Invalid Chess Notation - invalid char",
+			name:          "Invalid Chess Notation - invalid char",
 			chessNotation: "g2.",
-			expectedRow: -7,
-			expectedCol: -7,
-			expectedErr: errors.New("invalid character in chess notation"),
+			expectedRow:   -7,
+			expectedCol:   -7,
+			expectedErr:   errors.New("invalid character in chess notation"),
 		},
 		{
-			name: "Invalid Chess Notation - invalid format",
+			name:          "Invalid Chess Notation - invalid format",
 			chessNotation: "ff3",
-			expectedRow: -7,
-			expectedCol: -7,
-			expectedErr: errors.New("invalid chess notation format"),
+			expectedRow:   -7,
+			expectedCol:   -7,
+			expectedErr:   errors.New("invalid chess notation format"),
 		},
 		{
-			name: "Invalid Chess Notation - invalid letter",
+			name:          "Invalid Chess Notation - invalid letter",
 			chessNotation: "z5",
-			expectedRow: -7,
-			expectedCol: -7,
-			expectedErr: errors.New("invalid column letter"),
+			expectedRow:   -7,
+			expectedCol:   -7,
+			expectedErr:   errors.New("invalid column letter"),
 		},
 		{
-			name: "Invalid Chess Notation - invalid number",
+			name:          "Invalid Chess Notation - invalid number",
 			chessNotation: "c9",
-			expectedRow: -7,
-			expectedCol: -7,
-			expectedErr: errors.New("row number out of range"),
+			expectedRow:   -7,
+			expectedCol:   -7,
+			expectedErr:   errors.New("row number out of range"),
 		},
 	}
 

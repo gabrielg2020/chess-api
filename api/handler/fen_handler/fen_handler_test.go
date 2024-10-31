@@ -22,17 +22,17 @@ func Test_FENHandler_ValidateFEN(t *testing.T) {
 		expectedResponse   string
 	}{
 		{
-			name:               "Valid FEN",
-			fen:                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+			name: "Valid FEN",
+			fen:  "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
 			setupFENService: func(m *mocks.MockFENService) {
 				m.On("Validate", "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").Return(nil)
 			},
 			expectedStatusCode: http.StatusOK,
-			expectedResponse:   `{"valid":true}`,	
+			expectedResponse:   `{"valid":true}`,
 		},
 		{
-			name:               "Invalid FEN [FEN string doesn't pass regex]",
-			fen:                "fen",
+			name: "Invalid FEN [FEN string doesn't pass regex]",
+			fen:  "fen",
 			setupFENService: func(m *mocks.MockFENService) {
 				m.On("Validate", "fen").Return(errors.New("string is not a FEN"))
 			},
@@ -40,15 +40,14 @@ func Test_FENHandler_ValidateFEN(t *testing.T) {
 			expectedResponse:   `{"valid":false, "errorMessage":"string is not a FEN", "errorCode":400}`,
 		},
 		{
-			name:               "Invalid FEN [FEN string is empty]",
-			fen:                "",
+			name: "Invalid FEN [FEN string is empty]",
+			fen:  "",
 			setupFENService: func(m *mocks.MockFENService) {
 				m.On("Validate", "").Return(errors.New("FEN string empty"))
 			},
 			expectedStatusCode: http.StatusBadRequest,
 			expectedResponse:   `{"valid":false, "errorMessage":"FEN string empty", "errorCode":400}`,
 		},
-
 	}
 
 	for _, tc := range testCases {
@@ -57,7 +56,7 @@ func Test_FENHandler_ValidateFEN(t *testing.T) {
 			mockFENService := new(mocks.MockFENService)
 			handler := NewFENHandler(mockFENService)
 			tc.setupFENService(mockFENService)
-		
+
 			engine := gin.Default()
 			engine.GET("/validate/fen", handler.ValidateFEN)
 			req, err := http.NewRequest(http.MethodGet, "/validate/fen?fen="+tc.fen, nil)

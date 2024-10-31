@@ -20,7 +20,7 @@ func NewMoveService() *MoveService {
 
 func (service *MoveService) FindBestMove(chessboard entity.ChessboardEntityInterface) (entity.MoveEntityInterface, error) {
 	// 1. Find Pseudo Legal Moves // TODO move Pseudo Legal Moves into separate function
-		// a. Create a moves array
+	// a. Create a moves array
 	var moves []entity.MoveEntityInterface
 	board, err := chessboard.GetBoard()
 	if err != nil {
@@ -30,7 +30,7 @@ func (service *MoveService) FindBestMove(chessboard entity.ChessboardEntityInter
 	if err != nil {
 		return nil, errors.New("failed to retrieve active colour")
 	}
-		// b. Loop through the board
+	// b. Loop through the board
 	for row := 0; row < 8; row++ {
 		for col := 0; col < 8; col++ {
 			piece := board[row][col]
@@ -65,12 +65,12 @@ func (service *MoveService) FindBestMove(chessboard entity.ChessboardEntityInter
 			}
 		}
 	}
-		// c. For each piece, find all moves
+	// c. For each piece, find all moves
 	// 2. Filter for Legal Moves // TODO moveFilter for Legal Moves into separate function
-		// a. Remove any move that goes off the board
-		// b. Remove any move that place king in check
+	// a. Remove any move that goes off the board
+	// b. Remove any move that place king in check
 	// 3. Return Legal Moves
-		// a. Return moves array
+	// a. Return moves array
 	return moves[0], nil
 }
 
@@ -105,7 +105,7 @@ func getPawnMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEn
 				moves = append(moves, entity.NewMoveEntity(
 					HelperService.IntPtr(fromX), HelperService.IntPtr(fromY),
 					HelperService.IntPtr(toX), HelperService.IntPtr(toY),
-					HelperService.IntPtr(promotionPiece * (-1 * direction)),
+					HelperService.IntPtr(promotionPiece*(-1*direction)),
 					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
 					HelperService.IntPtr(0),
 				))
@@ -165,7 +165,7 @@ func getPawnMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEn
 					moves = append(moves, entity.NewMoveEntity(
 						HelperService.IntPtr(fromX), HelperService.IntPtr(fromY),
 						HelperService.IntPtr(toX), HelperService.IntPtr(toY),
-						HelperService.IntPtr(promotionPiece * (-1 * direction)),
+						HelperService.IntPtr(promotionPiece*(-1*direction)),
 						HelperService.BoolPtr(false), HelperService.BoolPtr(false),
 						HelperService.IntPtr(pieceCaptured),
 					))

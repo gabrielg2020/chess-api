@@ -48,13 +48,13 @@ type ChessboardEntity struct {
 
 func NewChessboardEntity(board *[8][8]int, fen *string, activeColour *string, castlingRights *string, enPassantSquare *string, halfmoveClock *string, fullmoveNumber *string) *ChessboardEntity {
 	return &ChessboardEntity{
-		board: board,
-		fen: fen,
-		activeColour: activeColour,
-		castlingRights: castlingRights,
+		board:           board,
+		fen:             fen,
+		activeColour:    activeColour,
+		castlingRights:  castlingRights,
 		enPassantSquare: enPassantSquare,
-		halfmoveClock: halfmoveClock,
-		fullmoveNumber: fullmoveNumber,
+		halfmoveClock:   halfmoveClock,
+		fullmoveNumber:  fullmoveNumber,
 	}
 }
 
@@ -148,7 +148,7 @@ func (entity *ChessboardEntity) IsOpponent(piece int, row int, col int) (bool, e
 	if !entity.isWithinBounds(row, col) {
 		return false, nil
 	}
-	
+
 	if entity.board == nil {
 		return false, errors.New("chessboard.board is not set")
 	}
@@ -165,7 +165,7 @@ func (entity *ChessboardEntity) IsOpponent(piece int, row int, col int) (bool, e
 			return false, nil
 		}
 
-		enPassantRow, enPassantCol, err := entity.convertChessNotation(enPassantSquare) 
+		enPassantRow, enPassantCol, err := entity.convertChessNotation(enPassantSquare)
 		if err != nil {
 			return false, errors.New("failed to convert chessboard.enPassantSquare")
 		}
@@ -179,14 +179,14 @@ func (entity *ChessboardEntity) IsOpponent(piece int, row int, col int) (bool, e
 		return false, nil
 	}
 
-	if (math.Signbit(float64(entity.board[row][col])) == math.Signbit(float64(piece))) {
+	if math.Signbit(float64(entity.board[row][col])) == math.Signbit(float64(piece)) {
 		return false, nil
 	}
 
 	return true, nil
 }
 
-func (entity *ChessboardEntity) isWithinBounds(toX int, toY int) (bool) {
+func (entity *ChessboardEntity) isWithinBounds(toX int, toY int) bool {
 	if (toX > 7) || (toX < 0) || (toY > 7) || (toY < 0) {
 		return false
 	} else {

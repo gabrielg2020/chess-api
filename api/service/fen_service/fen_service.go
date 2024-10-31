@@ -10,12 +10,12 @@ import (
 )
 
 type FENServiceInterface interface {
-	Validate(fen string) (error)
+	Validate(fen string) error
 	Parse(validFen string) (entity.ChessboardEntityInterface, error)
 	// ParseToBitboard(validFen string) (entity.ChessboardEntityInterface, error)
 }
 
-type FENService struct {}
+type FENService struct{}
 
 func NewFENService() *FENService {
 	return &FENService{}
@@ -23,14 +23,14 @@ func NewFENService() *FENService {
 
 // Methods
 
-func (service *FENService) Validate(fen string) (error) {
+func (service *FENService) Validate(fen string) error {
 	if fen == "" {
 		return errors.New("FEN string empty")
 	}
 
 	fenRegex := `^(([rnbqkpRNBQKP1-8]{1,8}/){7}[rnbqkpRNBQKP1-8]{1,8})\s([wb])\s(-|[KQkq]{1,4})\s(-|[a-h][36])\s(\d+)\s(\d+)$`
 	matched, err := regexp.MatchString(fenRegex, fen)
-	
+
 	if err != nil {
 		return errors.New("error validating FEN string. you most likely edited the RegEx string... ")
 	}
@@ -66,7 +66,7 @@ func (service *FENService) Parse(validFen string) (entity.ChessboardEntityInterf
 	}
 
 	board := [8][8]int{}
-	
+
 	for i := 0; i < 8; i++ {
 		row := rows[i]
 		col := 0
@@ -84,12 +84,12 @@ func (service *FENService) Parse(validFen string) (entity.ChessboardEntityInterf
 				if err != nil {
 					return nil, errors.New("invalid character in row")
 				}
-				if (col+emptySquares) > 8 {
+				if (col + emptySquares) > 8 {
 					return nil, errors.New("too many squares in row")
 				}
 				for k := 0; k < emptySquares; k++ {
 					board[i][col] = 0
-					col ++
+					col++
 				}
 			}
 		}
@@ -107,6 +107,6 @@ func (service *FENService) Parse(validFen string) (entity.ChessboardEntityInterf
 		&halfmoveClock,
 		&fullmoveNumber,
 	)
-	
+
 	return chessboard, nil
 }
