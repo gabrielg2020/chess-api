@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// FEAT Add a way to propagate error messages. Maybe add a logger like logrus?
 func main() {
 	engine := setUpEngine()
 
@@ -33,7 +34,7 @@ func main() {
 		validateGroup.GET("/fen", fenHandler.ValidateFEN)
 	}
 
-	engine.GET("/move", moveHandler.FindMove)
+	engine.GET("/move", moveHandler.FindBestMove)
 
 	// Start engine
 	if err := engine.Run(":8080"); err != nil {
