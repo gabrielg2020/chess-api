@@ -1,15 +1,15 @@
 package mocks
 
 import (
-	"github.com/stretchr/testify/mock"
 	"github.com/gabrielg2020/chess-api/api/entity"
+	"github.com/stretchr/testify/mock"
 )
 
 type MockFENService struct {
 	mock.Mock
 }
 
-func (m *MockFENService) Validate(fen string) (error) {
+func (m *MockFENService) Validate(fen string) error {
 	args := m.Called(fen)
 	return args.Error(0)
 }
