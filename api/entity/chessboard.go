@@ -2,6 +2,10 @@ package entity
 
 import (
 	"errors"
+	"math"
+	"strconv"
+	"strings"
+	"unicode"
 )
 
 type ChessboardEntityInterface interface {
@@ -12,12 +16,13 @@ type ChessboardEntityInterface interface {
 	GetEnPassantSquare() (string, error)
 	GetHalfmoveClock() (string, error)
 	GetFullmoveNumber() (string, error)
+	GetPiece(int, int) (int, error)
+	IsSquareEmpty(int, int) (bool, error)
+	IsOpponent(int, int, int) (bool, error)
 	// SetFen(fen string) (*ChessboardEntity, error)
 	// ResetBoard() (*ChessboardEntity, error)
-	// GetPiece(position string) (int, error)
 	// SetPiece(position string, peice int) error
 	// MovePiece(from string, to string) error
-	// IsSquareEmpty(position string) error
 	// IsCheckmate(colour string) error
 	// IsStalemate(colour string) error
 	// IsCastlingAllowed(color string, side string) error
@@ -32,16 +37,16 @@ type ChessboardEntity struct {
 	// White = +, Black = -
 	// Pawns = 1, Knights = 2, Bishops = 3, Rooks = 4, Queens = 5, King = 6
 	// e.g a white rook on square c5 -> board[2][4] = 4
-	board           [8][8]int
-	fen             string
-	activeColour    string
-	castlingRights  string
-	enPassantSquare string
-	halfmoveClock   string
-	fullmoveNumber  string
+	board           *[8][8]int
+	fen             *string
+	activeColour    *string
+	castlingRights  *string
+	enPassantSquare *string
+	halfmoveClock   *string
+	fullmoveNumber  *string
 }
 
-func NewChessboardEntity(board [8][8]int, fen string, activeColour string, castlingRights string, enPassantSquare string, halfmoveClock string, fullmoveNumber string) *ChessboardEntity {
+func NewChessboardEntity(board *[8][8]int, fen *string, activeColour *string, castlingRights *string, enPassantSquare *string, halfmoveClock *string, fullmoveNumber *string) *ChessboardEntity {
 	return &ChessboardEntity{
 		board: board,
 		fen: fen,
@@ -55,55 +60,181 @@ func NewChessboardEntity(board [8][8]int, fen string, activeColour string, castl
 
 // Methods
 
-func (entity *ChessboardEntity) GetBoard() ([8][8]int, error){
-	for row := 0; row < 8; row++ {
-		for col := 0; col < 8; col++ {
-			if entity.board[row][col] > 6 || entity.board[row][col] < -6 {
-				return [8][8]int{}, errors.New("chessboard.board is not set")
-			}
-		}
+func (entity *ChessboardEntity) GetBoard() ([8][8]int, error) {
+	if entity.board == nil {
+		return [8][8]int{}, errors.New("chessboard.board is not set")
 	}
-	return entity.board, nil
+	return *entity.board, nil
+}
+
+func (entity *ChessboardEntity) SetBoard(board *[8][8]int) {
+	entity.board = (*[8][8]int)(board)
 }
 
 func (entity *ChessboardEntity) GetFen() (string, error) {
-	if entity.fen == "" {
+	if entity.fen == nil {
 		return "", errors.New("chessboard.fen is not set")
 	}
-	return entity.fen, nil
+	return *entity.fen, nil
 }
 
-func (entity *ChessboardEntity) GetActiveColour() (string, error){
-	if entity.activeColour == "" {
+func (entity *ChessboardEntity) GetActiveColour() (string, error) {
+	if entity.activeColour == nil {
 		return "", errors.New("chessboard.activeColour is not set")
 	}
-	return entity.activeColour, nil
+	return *entity.activeColour, nil
 }
 
-func (entity *ChessboardEntity) GetCastlingRights() (string, error){
-	if entity.castlingRights == "" {
+func (entity *ChessboardEntity) GetCastlingRights() (string, error) {
+	if entity.castlingRights == nil {
 		return "", errors.New("chessboard.castlingRights is not set")
 	}
-	return entity.castlingRights, nil
+	return *entity.castlingRights, nil
 }
 
-func (entity *ChessboardEntity) GetEnPassantSquare() (string, error){
-	if entity.enPassantSquare == "" {
+func (entity *ChessboardEntity) GetEnPassantSquare() (string, error) {
+	if entity.enPassantSquare == nil {
 		return "", errors.New("chessboard.enPassantSquare is not set")
 	}
-	return entity.enPassantSquare, nil
+	return *entity.enPassantSquare, nil
 }
 
-func (entity *ChessboardEntity) GetHalfmoveClock() (string, error){
-	if entity.halfmoveClock == "" {
+func (entity *ChessboardEntity) SetEnPassantSquare(enPassantSquare *string) {
+	entity.enPassantSquare = (*string)(enPassantSquare)
+}
+
+func (entity *ChessboardEntity) GetHalfmoveClock() (string, error) {
+	if entity.halfmoveClock == nil {
 		return "", errors.New("chessboard.halfmoveClock is not set")
 	}
-	return entity.halfmoveClock, nil
+	return *entity.halfmoveClock, nil
 }
 
-func (entity *ChessboardEntity) GetFullmoveNumber() (string, error){
-	if entity.fullmoveNumber == "" {
+func (entity *ChessboardEntity) GetFullmoveNumber() (string, error) {
+	if entity.fullmoveNumber == nil {
 		return "", errors.New("chessboard.fullmoveNumber is not set")
 	}
-	return entity.fullmoveNumber, nil
+	return *entity.fullmoveNumber, nil
+}
+
+func (entity *ChessboardEntity) GetPiece(row int, col int) (int, error) {
+	if !entity.isWithinBounds(row, col) {
+		return -7, errors.New("row or col out of bounds")
+	}
+
+	if entity.board == nil {
+		return -7, errors.New("chessboard.board is not set")
+	}
+
+	return entity.board[row][col], nil
+}
+
+func (entity *ChessboardEntity) IsSquareEmpty(row int, col int) (bool, error) {
+	if !entity.isWithinBounds(row, col) {
+		return false, nil
+	}
+
+	if entity.board == nil {
+		return false, errors.New("chessboard.board is not set")
+	}
+
+	if entity.board[row][col] == 0 {
+		return true, nil
+	}
+	return false, nil
+}
+
+func (entity *ChessboardEntity) IsOpponent(piece int, row int, col int) (bool, error) {
+	if !entity.isWithinBounds(row, col) {
+		return false, nil
+	}
+	
+	if entity.board == nil {
+		return false, errors.New("chessboard.board is not set")
+	}
+
+	// Check En Passant
+	if piece == 1 || piece == -1 {
+		enPassantSquare, err := entity.GetEnPassantSquare()
+		if err != nil {
+			return false, errors.New("chessboard.enPassantSquare is not set")
+		}
+
+		// En Passant is not set
+		if enPassantSquare == "-" {
+			return false, nil
+		}
+
+		enPassantRow, enPassantCol, err := entity.convertChessNotation(enPassantSquare) 
+		if err != nil {
+			return false, errors.New("failed to convert chessboard.enPassantSquare")
+		}
+
+		if enPassantRow == row && enPassantCol == col {
+			return true, nil
+		}
+	}
+
+	if entity.board[row][col] == 0 {
+		return false, nil
+	}
+
+	if (math.Signbit(float64(entity.board[row][col])) == math.Signbit(float64(piece))) {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+func (entity *ChessboardEntity) isWithinBounds(toX int, toY int) (bool) {
+	if (toX > 7) || (toX < 0) || (toY > 7) || (toY < 0) {
+		return false
+	} else {
+		return true
+	}
+}
+
+func (entity *ChessboardEntity) convertChessNotation(chessNotation string) (int, int, error) {
+	// remove spaces
+	chessNotation = strings.TrimSpace(chessNotation)
+
+	if len(chessNotation) < 2 {
+		return -7, -7, errors.New("invalid chess notation")
+	}
+
+	var letter, digit string
+
+	// separate chess notation
+	for _, char := range chessNotation {
+		if unicode.IsLetter(char) {
+			letter += string(char)
+		} else if unicode.IsDigit(char) {
+			digit += string(char)
+		} else {
+			return -7, -7, errors.New("invalid character in chess notation")
+		}
+	}
+
+	if len(letter) != 1 || len(digit) != 1 {
+		return -7, -7, errors.New("invalid chess notation format")
+	}
+
+	rowLetter := unicode.ToLower(rune(letter[0]))
+
+	if rowLetter < 'a' || rowLetter > 'h' {
+		return -7, -7, errors.New("invalid column letter")
+	}
+	row := int(rowLetter - 'a')
+
+	colNumber, err := strconv.Atoi(digit)
+	if err != nil {
+		return -7, -7, errors.New("invalid row number")
+	}
+	if colNumber < 1 || colNumber > 8 {
+		return -7, -7, errors.New("row number out of range")
+	}
+
+	col := 8 - colNumber
+
+	return col, row, nil
 }
