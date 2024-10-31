@@ -16,16 +16,16 @@ func Test_MoveEntity_GetFromX(t *testing.T) {
 		expectedError    error
 	}{
 		{
-			name: "move.fromX is set",
-			fromX: HelperService.IntPtr(3),
+			name:             "move.fromX is set",
+			fromX:            HelperService.IntPtr(3),
 			expectedResponse: 3,
-			expectedError: nil,
+			expectedError:    nil,
 		},
 		{
-			name: "move.fromX is not set",
-			fromX: nil,
+			name:             "move.fromX is not set",
+			fromX:            nil,
 			expectedResponse: -1,
-			expectedError: errors.New("move.fromX is not set"),
+			expectedError:    errors.New("move.fromX is not set"),
 		},
 	}
 
@@ -54,8 +54,8 @@ func Test_MoveEntity_GetFromY(t *testing.T) {
 		expectedError    error
 	}{
 		{
-			name: "move.fromY is set",
-			fromY: HelperService.IntPtr(4),
+			name:             "move.fromY is set",
+			fromY:            HelperService.IntPtr(4),
 			expectedResponse: 4,
 			expectedError:    nil,
 		},
@@ -92,8 +92,8 @@ func Test_MoveEntity_GetToX(t *testing.T) {
 		expectedError    error
 	}{
 		{
-			name: "move.toX is set",
-			toX: HelperService.IntPtr(5),
+			name:             "move.toX is set",
+			toX:              HelperService.IntPtr(5),
 			expectedResponse: 5,
 			expectedError:    nil,
 		},
@@ -130,8 +130,8 @@ func Test_MoveEntity_GetToY(t *testing.T) {
 		expectedError    error
 	}{
 		{
-			name: "move.toY is set",
-			toY: HelperService.IntPtr(6),
+			name:             "move.toY is set",
+			toY:              HelperService.IntPtr(6),
 			expectedResponse: 6,
 			expectedError:    nil,
 		},
@@ -168,8 +168,8 @@ func Test_MoveEntity_GetPromotion(t *testing.T) {
 		expectedError    error
 	}{
 		{
-			name: "move.promotion is set",
-			promotion: HelperService.IntPtr(5), // Promoting to a Queen
+			name:             "move.promotion is set",
+			promotion:        HelperService.IntPtr(5), // Promoting to a Queen
 			expectedResponse: 5,
 			expectedError:    nil,
 		},
@@ -206,14 +206,14 @@ func Test_MoveEntity_IsCastling(t *testing.T) {
 		expectedError    error
 	}{
 		{
-			name: "move.isCastling is set to true",
-			isCastling: HelperService.BoolPtr(true),
+			name:             "move.isCastling is set to true",
+			isCastling:       HelperService.BoolPtr(true),
 			expectedResponse: true,
 			expectedError:    nil,
 		},
 		{
-			name: "move.isCastling is set to false",
-			isCastling: HelperService.BoolPtr(false),
+			name:             "move.isCastling is set to false",
+			isCastling:       HelperService.BoolPtr(false),
 			expectedResponse: false,
 			expectedError:    nil,
 		},
@@ -250,14 +250,14 @@ func Test_MoveEntity_IsEnPassant(t *testing.T) {
 		expectedError    error
 	}{
 		{
-			name: "move.isEnPassant is set to true",
-			isEnPassant: HelperService.BoolPtr(true),
+			name:             "move.isEnPassant is set to true",
+			isEnPassant:      HelperService.BoolPtr(true),
 			expectedResponse: true,
 			expectedError:    nil,
 		},
 		{
-			name: "move.isEnPassant is set to false",
-			isEnPassant: HelperService.BoolPtr(false),
+			name:             "move.isEnPassant is set to false",
+			isEnPassant:      HelperService.BoolPtr(false),
 			expectedResponse: false,
 			expectedError:    nil,
 		},
@@ -294,8 +294,8 @@ func Test_MoveEntity_GetCaptured(t *testing.T) {
 		expectedError    error
 	}{
 		{
-			name: "move.captured is set",
-			captured: HelperService.IntPtr(2), // Captured a Knight
+			name:             "move.captured is set",
+			captured:         HelperService.IntPtr(2), // Captured a Knight
 			expectedResponse: 2,
 			expectedError:    nil,
 		},
@@ -313,6 +313,79 @@ func Test_MoveEntity_GetCaptured(t *testing.T) {
 			entity := NewMoveEntity(nil, nil, nil, nil, nil, nil, nil, tc.captured)
 			// Act
 			response, err := entity.GetCaptured()
+			// Assert
+			assert.Equal(t, tc.expectedResponse, response)
+			if tc.expectedError != nil {
+				assert.EqualError(t, err, tc.expectedError.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func Test_MoveEntity_GetChessNotation(t *testing.T) {
+	testCases := []struct {
+		name             string
+		fromX            *int
+		fromY            *int
+		toX              *int
+		toY              *int
+		expectedResponse string
+		expectedError    error
+	}{
+		{
+			name:             "Valid move.fromX, move.fromY, move.toX, move.toY",
+			fromX:            HelperService.IntPtr(1),
+			fromY:            HelperService.IntPtr(2),
+			toX:              HelperService.IntPtr(3),
+			toY:              HelperService.IntPtr(4),
+			expectedResponse: "b6d4",
+			expectedError:    nil,
+		},
+		{
+			name:             "Invalid move.fromX",
+			fromX:            nil,
+			fromY:            HelperService.IntPtr(2),
+			toX:              HelperService.IntPtr(3),
+			toY:              HelperService.IntPtr(4),
+			expectedResponse: "",
+			expectedError:    errors.New("failed to get fromX"),
+		},
+		{
+			name:             "Invalid move.fromY",
+			fromX:            HelperService.IntPtr(1),
+			fromY:            nil,
+			toX:              HelperService.IntPtr(3),
+			toY:              HelperService.IntPtr(4),
+			expectedResponse: "",
+			expectedError:    errors.New("failed to get fromY"),
+		},
+		{
+			name:             "Invalid move.toX",
+			fromX:            HelperService.IntPtr(1),
+			fromY:            HelperService.IntPtr(2),
+			toX:              nil,
+			toY:              HelperService.IntPtr(4),
+			expectedResponse: "",
+			expectedError:    errors.New("failed to get toX"),
+		},
+		{
+			name:             "Invalid move.toY",
+			fromX:            HelperService.IntPtr(1),
+			fromY:            HelperService.IntPtr(2),
+			toX:              HelperService.IntPtr(4),
+			toY:              nil,
+			expectedResponse: "",
+			expectedError:    errors.New("failed to get toY"),
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Arrange
+			entity := NewMoveEntity(tc.fromX, tc.fromY, tc.toX, tc.toY, nil, nil, nil, nil)
+			// Act
+			response, err := entity.GetChessNotation()
 			// Assert
 			assert.Equal(t, tc.expectedResponse, response)
 			if tc.expectedError != nil {

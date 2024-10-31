@@ -118,8 +118,8 @@ func (entity *MoveEntity) GetChessNotation() (string, error) {
 		return "", errors.New("failed to get toY")
 	}
 
-	fromFile := string('a' + fromX)
-	toFile := string('a' + toX)
+	fromFile := string(rune('a' + fromX))
+	toFile := string(rune('a' + toX))
 
 	// We 'flip' the board, because board[0][0] represents top left, not bottom left like on a normal chessboard
 	fromRank := 8 - fromY
