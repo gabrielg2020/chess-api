@@ -25,7 +25,7 @@ func Test_MoveEntity_GetFromX(t *testing.T) {
 			name:             "move.fromX is not set",
 			fromX:            nil,
 			expectedResponse: -1,
-			expectedError:    errors.New("move.fromX is not set"),
+			expectedError:    errors.New("MoveEntity.GetFromX: fromX is not set"),
 		},
 	}
 
@@ -63,7 +63,7 @@ func Test_MoveEntity_GetFromY(t *testing.T) {
 			name:             "move.fromY is not set",
 			fromY:            nil,
 			expectedResponse: -1,
-			expectedError:    errors.New("move.fromY is not set"),
+			expectedError:    errors.New("MoveEntity.GetFromY: fromY is not set"),
 		},
 	}
 
@@ -101,7 +101,7 @@ func Test_MoveEntity_GetToX(t *testing.T) {
 			name:             "move.toX is not set",
 			toX:              nil,
 			expectedResponse: -1,
-			expectedError:    errors.New("move.toX is not set"),
+			expectedError:    errors.New("MoveEntity.GetToX: toX is not set"),
 		},
 	}
 
@@ -139,7 +139,7 @@ func Test_MoveEntity_GetToY(t *testing.T) {
 			name:             "move.toY is not set",
 			toY:              nil,
 			expectedResponse: -1,
-			expectedError:    errors.New("move.toY is not set"),
+			expectedError:    errors.New("MoveEntity.GetToY: toY is not set"),
 		},
 	}
 
@@ -177,7 +177,7 @@ func Test_MoveEntity_GetPromotion(t *testing.T) {
 			name:             "move.promotion is not set",
 			promotion:        nil,
 			expectedResponse: -1,
-			expectedError:    errors.New("move.promotion is not set"),
+			expectedError:    errors.New("MoveEntity.GetPromotion: promotion is not set"),
 		},
 	}
 
@@ -221,7 +221,7 @@ func Test_MoveEntity_IsCastling(t *testing.T) {
 			name:             "move.isCastling is not set",
 			isCastling:       nil,
 			expectedResponse: false,
-			expectedError:    errors.New("move.isCastling is not set"),
+			expectedError:    errors.New("MoveEntity.IsCastling: isCastling is not set"),
 		},
 	}
 
@@ -265,7 +265,7 @@ func Test_MoveEntity_IsEnPassant(t *testing.T) {
 			name:             "move.isEnPassant is not set",
 			isEnPassant:      nil,
 			expectedResponse: false,
-			expectedError:    errors.New("move.isEnPassant is not set"),
+			expectedError:    errors.New("MoveEntity.IsEnPassant: isEnPassant is not set"),
 		},
 	}
 
@@ -303,7 +303,7 @@ func Test_MoveEntity_GetCaptured(t *testing.T) {
 			name:             "move.captured is not set",
 			captured:         nil,
 			expectedResponse: -1,
-			expectedError:    errors.New("move.captured is not set"),
+			expectedError:    errors.New("MoveEntity.GetCaptured: captured is not set"),
 		},
 	}
 
@@ -350,7 +350,7 @@ func Test_MoveEntity_GetChessNotation(t *testing.T) {
 			toX:              HelperService.IntPtr(3),
 			toY:              HelperService.IntPtr(4),
 			expectedResponse: "",
-			expectedError:    errors.New("failed to get fromX"),
+			expectedError:    errors.New("MoveEntity.GetChessNotation: MoveEntity.GetFromX: fromX is not set"),
 		},
 		{
 			name:             "Invalid move.fromY",
@@ -359,7 +359,7 @@ func Test_MoveEntity_GetChessNotation(t *testing.T) {
 			toX:              HelperService.IntPtr(3),
 			toY:              HelperService.IntPtr(4),
 			expectedResponse: "",
-			expectedError:    errors.New("failed to get fromY"),
+			expectedError:    errors.New("MoveEntity.GetChessNotation: MoveEntity.GetFromY: fromY is not set"),
 		},
 		{
 			name:             "Invalid move.toX",
@@ -368,7 +368,7 @@ func Test_MoveEntity_GetChessNotation(t *testing.T) {
 			toX:              nil,
 			toY:              HelperService.IntPtr(4),
 			expectedResponse: "",
-			expectedError:    errors.New("failed to get toX"),
+			expectedError:    errors.New("MoveEntity.GetChessNotation: MoveEntity.GetToX: toX is not set"),
 		},
 		{
 			name:             "Invalid move.toY",
@@ -377,7 +377,7 @@ func Test_MoveEntity_GetChessNotation(t *testing.T) {
 			toX:              HelperService.IntPtr(4),
 			toY:              nil,
 			expectedResponse: "",
-			expectedError:    errors.New("failed to get toY"),
+			expectedError:    errors.New("MoveEntity.GetChessNotation: MoveEntity.GetToY: toY is not set"),
 		},
 	}
 	for _, tc := range testCases {
