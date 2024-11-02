@@ -28,7 +28,7 @@ func (handler *MoveHandler) FindBestMove(ctx *gin.Context) {
 
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"valid":        (err == nil),
+			"valid":        err == nil,
 			"errorMessage": err.Error(),
 			"errorCode":    http.StatusBadRequest,
 		})

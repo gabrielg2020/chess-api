@@ -16,7 +16,7 @@ func Test_FENService_Validate(t *testing.T) {
 		{
 			name:          "Empty FEN",
 			fen:           "",
-			expectedError: errors.New("FEN string empty"),
+			expectedError: errors.New("FENService.Validate: FEN string empty"),
 		},
 		{
 			name:          "Valid FEN",
@@ -71,37 +71,37 @@ func Test_FENService_Validate(t *testing.T) {
 		{
 			name:          "Invalid FEN",
 			fen:           "invalid_fen",
-			expectedError: errors.New("string is not a FEN"),
+			expectedError: errors.New("FENService.Validate: string is not a FEN"),
 		},
 		{
 			name:          "Invalid FEN [Remove a row]",
 			fen:           "pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-			expectedError: errors.New("string is not a FEN"),
+			expectedError: errors.New("FENService.Validate: string is not a FEN"),
 		},
 		{
 			name:          "Invalid FEN [Remove colour to play]",
 			fen:           "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR  KQkq - 0 1",
-			expectedError: errors.New("string is not a FEN"),
+			expectedError: errors.New("FENService.Validate: string is not a FEN"),
 		},
 		{
 			name:          "Invalid FEN [Remove castling rights]",
 			fen:           "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w  - 0 1",
-			expectedError: errors.New("string is not a FEN"),
+			expectedError: errors.New("FENService.Validate: string is not a FEN"),
 		},
 		{
 			name:          "Invalid FEN [Remove en passant]",
 			fen:           "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq  0 1",
-			expectedError: errors.New("string is not a FEN"),
+			expectedError: errors.New("FENService.Validate: string is not a FEN"),
 		},
 		{
 			name:          "Invalid FEN [Remove full turns]",
 			fen:           "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -  1",
-			expectedError: errors.New("string is not a FEN"),
+			expectedError: errors.New("FENService.Validate: string is not a FEN"),
 		},
 		{
 			name:          "Invalid FEN [Remove half turns]",
 			fen:           "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 ",
-			expectedError: errors.New("string is not a FEN"),
+			expectedError: errors.New("FENService.Validate: string is not a FEN"),
 		},
 	}
 
@@ -156,27 +156,27 @@ func Test_FENService_Parse(t *testing.T) {
 		{
 			name:          "Invalid FEN - Empty String",
 			fen:           "",
-			expectedError: errors.New("expected 6 fields in fenParts"),
+			expectedError: errors.New("FENService.Validate: expected 6 fields in fenParts"),
 		},
 		{
 			name:          "Invalid FEN - Not Enough Fields",
 			fen:           "8/8/8/8/8/8/8/8 w",
-			expectedError: errors.New("expected 6 fields in fenParts"),
+			expectedError: errors.New("FENService.Validate: expected 6 fields in fenParts"),
 		},
 		{
 			name:          "Invalid FEN - Too Many Fields",
 			fen:           "8/8/8/8/8/8/8/8 w KQkq - 0 1 extra",
-			expectedError: errors.New("expected 6 fields in fenParts"),
+			expectedError: errors.New("FENService.Validate: expected 6 fields in fenParts"),
 		},
 		{
 			name:          "Invalid Piece Placement - Too Many Pieces in Row",
 			fen:           "9/8/8/8/8/8/8/8 w KQkq - 0 1",
-			expectedError: errors.New("too many squares in row"),
+			expectedError: errors.New("FENService.Validate: too many squares in row"),
 		},
 		{
 			name:          "Invalid Character in Piece Placement",
 			fen:           "8/8/8/8/8/8/8/8x w KQkq - 0 1",
-			expectedError: errors.New("invalid character in row"),
+			expectedError: errors.New("FENService.Validate: invalid character in row"),
 		},
 		{
 			name:                    "Empty Board",
