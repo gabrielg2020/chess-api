@@ -490,10 +490,10 @@ func Test_MoveService_getPawnMove(t *testing.T) {
 			fromY: 6,
 			setupMock: func(m *mocks.MockChessboardEntity) {
 				// Fail on 1st square
-				m.On("IsSquareEmpty", 5, 3).Return(false, errors.New("chessboard.board is not set"))
+				m.On("IsSquareEmpty", 5, 3).Return(false, errors.New("ChessboardEntity.IsSquareEmpty: board is not set"))
 			},
 			expectedMoves: nil,
-			expectedError: errors.New("failed to check if square is empty"),
+			expectedError: errors.New("MoveService.getPawnMove: ChessboardEntity.IsSquareEmpty: board is not set"),
 		},
 		{
 			name:  "Failed To Check If Square Is Empty When Checking 2 Move Ahead",
@@ -504,10 +504,10 @@ func Test_MoveService_getPawnMove(t *testing.T) {
 				// Pass on 1st square
 				m.On("IsSquareEmpty", 5, 3).Return(true, nil)
 				// Fail on 2nd square
-				m.On("IsSquareEmpty", 4, 3).Return(false, errors.New("chessboard.board is not set"))
+				m.On("IsSquareEmpty", 4, 3).Return(false, errors.New("ChessboardEntity.IsSquareEmpty: board is not set"))
 			},
 			expectedMoves: nil,
-			expectedError: errors.New("failed to check if square is empty"),
+			expectedError: errors.New("MoveService.getPawnMove: ChessboardEntity.IsSquareEmpty: board is not set"),
 		},
 		{
 			name:  "Failed To Check If Is Opponent",
@@ -520,10 +520,10 @@ func Test_MoveService_getPawnMove(t *testing.T) {
 				// Pass on 2nd square
 				m.On("IsSquareEmpty", 4, 3).Return(true, nil)
 				// Fail Checking IsOpponent
-				m.On("IsOpponent", 1, 5, 2).Return(false, errors.New("chessboard.board is not set"))
+				m.On("IsOpponent", 1, 5, 2).Return(false, errors.New("ChessboardEntity.IsOpponent: board is not set"))
 			},
 			expectedMoves: nil,
-			expectedError: errors.New("failed to check if is opponent"),
+			expectedError: errors.New("MoveService.getPawnMove: ChessboardEntity.IsOpponent: board is not set"),
 		},
 		{
 			name:  "Failed To Get Captured Piece",
@@ -538,10 +538,10 @@ func Test_MoveService_getPawnMove(t *testing.T) {
 				// Pass Checking IsOpponent
 				m.On("IsOpponent", 1, 5, 2).Return(true, nil)
 				// Failed Getting Piece
-				m.On("GetPiece", 5, 2).Return(-7, errors.New("row or col out of bounds"))
+				m.On("GetPiece", 5, 2).Return(-7, errors.New("ChessboardEntity.GetPiece: row or col out of bounds"))
 			},
 			expectedMoves: nil,
-			expectedError: errors.New("failed to get captured piece"),
+			expectedError: errors.New("MoveService.getPawnMove: ChessboardEntity.GetPiece: row or col out of bounds"),
 		},
 		{
 			name:  "En Passant Capture",
@@ -558,7 +558,7 @@ func Test_MoveService_getPawnMove(t *testing.T) {
 				// Pass Getting Piece
 				m.On("GetPiece", 5, 2).Return(0, nil)
 				// Fail Checking IsOpponent
-				m.On("IsOpponent", 1, 5, 4).Return(false, errors.New("chessboard.board is not set"))
+				m.On("IsOpponent", 1, 5, 4).Return(false, errors.New("ChessboardEntity.IsOpponent: ChessboardEntity.GetEnPassantSquare: enPassantSquare is not set"))
 			},
 			expectedMoves: []entity.MoveEntityInterface{
 				entity.NewMoveEntity(
@@ -569,7 +569,7 @@ func Test_MoveService_getPawnMove(t *testing.T) {
 					HelperService.IntPtr(-1),
 				),
 			},
-			expectedError: errors.New("failed to check if is opponent"),
+			expectedError: errors.New("MoveService.getPawnMove: ChessboardEntity.IsOpponent: ChessboardEntity.GetEnPassantSquare: enPassantSquare is not set"),
 		},
 	}
 
