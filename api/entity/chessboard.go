@@ -62,7 +62,7 @@ func NewChessboardEntity(board *[8][8]int, fen *string, activeColour *string, ca
 
 func (entity *ChessboardEntity) GetBoard() ([8][8]int, error) {
 	if entity.board == nil {
-		return [8][8]int{}, errors.New("chessboard.board is not set")
+		return [8][8]int{}, errors.New("ChessboardEntity.GetBoard: board is not set")
 	}
 	return *entity.board, nil
 }
@@ -73,28 +73,28 @@ func (entity *ChessboardEntity) SetBoard(board *[8][8]int) {
 
 func (entity *ChessboardEntity) GetFen() (string, error) {
 	if entity.fen == nil {
-		return "", errors.New("chessboard.fen is not set")
+		return "", errors.New("ChessboardEntity.GetFen: fen is not set")
 	}
 	return *entity.fen, nil
 }
 
 func (entity *ChessboardEntity) GetActiveColour() (string, error) {
 	if entity.activeColour == nil {
-		return "", errors.New("chessboard.activeColour is not set")
+		return "", errors.New("ChessboardEntity.GetActiveColour: activeColour is not set")
 	}
 	return *entity.activeColour, nil
 }
 
 func (entity *ChessboardEntity) GetCastlingRights() (string, error) {
 	if entity.castlingRights == nil {
-		return "", errors.New("chessboard.castlingRights is not set")
+		return "", errors.New("ChessboardEntity.GetCastlingRights: castlingRights is not set")
 	}
 	return *entity.castlingRights, nil
 }
 
 func (entity *ChessboardEntity) GetEnPassantSquare() (string, error) {
 	if entity.enPassantSquare == nil {
-		return "", errors.New("chessboard.enPassantSquare is not set")
+		return "", errors.New("ChessboardEntity.GetEnPassantSquare: enPassantSquare is not set")
 	}
 	return *entity.enPassantSquare, nil
 }
@@ -105,25 +105,25 @@ func (entity *ChessboardEntity) SetEnPassantSquare(enPassantSquare *string) {
 
 func (entity *ChessboardEntity) GetHalfmoveClock() (string, error) {
 	if entity.halfmoveClock == nil {
-		return "", errors.New("chessboard.halfmoveClock is not set")
+		return "", errors.New("ChessboardEntity.GetHalfmoveClock: halfmoveClock is not set")
 	}
 	return *entity.halfmoveClock, nil
 }
 
 func (entity *ChessboardEntity) GetFullmoveNumber() (string, error) {
 	if entity.fullmoveNumber == nil {
-		return "", errors.New("chessboard.fullmoveNumber is not set")
+		return "", errors.New("ChessboardEntity.GetFullmoveNumber: fullmoveNumber is not set")
 	}
 	return *entity.fullmoveNumber, nil
 }
 
 func (entity *ChessboardEntity) GetPiece(row int, col int) (int, error) {
 	if !entity.isWithinBounds(row, col) {
-		return -7, errors.New("row or col out of bounds")
+		return -7, errors.New("ChessboardEntity.GetPiece: row or col out of bounds")
 	}
 
 	if entity.board == nil {
-		return -7, errors.New("chessboard.board is not set")
+		return -7, errors.New("ChessboardEntity.GetPiece: board is not set")
 	}
 
 	return entity.board[row][col], nil
@@ -135,7 +135,7 @@ func (entity *ChessboardEntity) IsSquareEmpty(row int, col int) (bool, error) {
 	}
 
 	if entity.board == nil {
-		return false, errors.New("chessboard.board is not set")
+		return false, errors.New("ChessboardEntity.IsSquareEmpty: board is not set")
 	}
 
 	if entity.board[row][col] == 0 {
@@ -150,14 +150,14 @@ func (entity *ChessboardEntity) IsOpponent(piece int, row int, col int) (bool, e
 	}
 
 	if entity.board == nil {
-		return false, errors.New("chessboard.board is not set")
+		return false, errors.New("ChessboardEntity.IsOpponent: board is not set")
 	}
 
 	// Check En Passant
 	if piece == 1 || piece == -1 {
 		enPassantSquare, err := entity.GetEnPassantSquare()
 		if err != nil {
-			return false, errors.New("chessboard.enPassantSquare is not set")
+			return false, errors.New("ChessboardEntity.IsOpponent: " + err.Error())
 		}
 
 		// En Passant is not set
@@ -167,7 +167,7 @@ func (entity *ChessboardEntity) IsOpponent(piece int, row int, col int) (bool, e
 
 		enPassantRow, enPassantCol, err := entity.convertChessNotation(enPassantSquare)
 		if err != nil {
-			return false, errors.New("failed to convert chessboard.enPassantSquare")
+			return false, errors.New("ChessboardEntity.IsOpponent: " + err.Error())
 		}
 
 		if enPassantRow == row && enPassantCol == col {
@@ -199,7 +199,7 @@ func (entity *ChessboardEntity) convertChessNotation(chessNotation string) (int,
 	chessNotation = strings.TrimSpace(chessNotation)
 
 	if len(chessNotation) < 2 {
-		return -7, -7, errors.New("invalid chess notation")
+		return -7, -7, errors.New("ChessboardEntity.convertChessNotation: invalid chess notation")
 	}
 
 	var letter, digit string
@@ -211,27 +211,27 @@ func (entity *ChessboardEntity) convertChessNotation(chessNotation string) (int,
 		} else if unicode.IsDigit(char) {
 			digit += string(char)
 		} else {
-			return -7, -7, errors.New("invalid character in chess notation")
+			return -7, -7, errors.New("ChessboardEntity.convertChessNotation: invalid character in chess notation")
 		}
 	}
 
 	if len(letter) != 1 || len(digit) != 1 {
-		return -7, -7, errors.New("invalid chess notation format")
+		return -7, -7, errors.New("ChessboardEntity.convertChessNotation: invalid chess notation format")
 	}
 
 	rowLetter := unicode.ToLower(rune(letter[0]))
 
 	if rowLetter < 'a' || rowLetter > 'h' {
-		return -7, -7, errors.New("invalid column letter")
+		return -7, -7, errors.New("ChessboardEntity.convertChessNotation: invalid column letter")
 	}
 	row := int(rowLetter - 'a')
 
 	colNumber, err := strconv.Atoi(digit)
 	if err != nil {
-		return -7, -7, errors.New("invalid row number")
+		return -7, -7, errors.New("ChessboardEntity.convertChessNotation: invalid row number")
 	}
 	if colNumber < 1 || colNumber > 8 {
-		return -7, -7, errors.New("row number out of range")
+		return -7, -7, errors.New("ChessboardEntity.convertChessNotation: row number out of range")
 	}
 
 	col := 8 - colNumber
