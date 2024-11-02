@@ -23,7 +23,7 @@ func (handler *FENHandler) ValidateFEN(ctx *gin.Context) {
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"valid":        err == nil,
-			"errorMessage": err.Error(),
+			"errorMessage": "FENHandler.ValidateFEN: " + err.Error(),
 			"errorCode":    http.StatusBadRequest,
 		})
 		return
