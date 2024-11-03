@@ -2,6 +2,7 @@ package MoveService
 
 import (
 	"errors"
+	"github.com/gabrielg2020/chess-api/pkg/logger"
 	"math"
 
 	"github.com/gabrielg2020/chess-api/api/entity"
@@ -109,6 +110,7 @@ func getPawnMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEn
 					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
 					HelperService.IntPtr(0),
 				))
+				logger.Log.Debugf("getPawnMove: move added. moves array now contains %v move/s", len(moves))
 			}
 		} else {
 			// Create move
@@ -119,6 +121,7 @@ func getPawnMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEn
 				HelperService.BoolPtr(false), HelperService.BoolPtr(false),
 				HelperService.IntPtr(0),
 			))
+			logger.Log.Debugf("getPawnMove: move added. moves array now contains %v move/s", len(moves))
 
 			// Move 2 forward
 			toY += direction
@@ -138,6 +141,7 @@ func getPawnMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEn
 					HelperService.BoolPtr(false), HelperService.BoolPtr(true),
 					HelperService.IntPtr(0),
 				))
+				logger.Log.Debugf("getPawnMove: move added. moves array now contains %v move/s", len(moves))
 			}
 		}
 	}
@@ -169,6 +173,7 @@ func getPawnMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEn
 						HelperService.BoolPtr(false), HelperService.BoolPtr(false),
 						HelperService.IntPtr(pieceCaptured),
 					))
+					logger.Log.Debugf("getPawnMove: move added. moves array now contains %v move/s", len(moves))
 				}
 			} else {
 				// Create move
@@ -179,6 +184,7 @@ func getPawnMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEn
 					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
 					HelperService.IntPtr(pieceCaptured),
 				))
+				logger.Log.Debugf("getPawnMove: move added. moves array now contains %v move/s", len(moves))
 			}
 		}
 	}
