@@ -3,6 +3,7 @@ package MoveService
 import (
 	"errors"
 	"github.com/gabrielg2020/chess-api/pkg/logger"
+	"github.com/sirupsen/logrus"
 	"math"
 
 	"github.com/gabrielg2020/chess-api/api/entity"
@@ -25,10 +26,12 @@ func (service *MoveService) FindBestMove(chessboard entity.ChessboardEntityInter
 	var moves []entity.MoveEntityInterface
 	board, err := chessboard.GetBoard()
 	if err != nil {
+		logger.Log.Error()
 		return nil, errors.New("MoveService.FindBestMove:" + err.Error())
 	}
 	activeColour, err := chessboard.GetActiveColour()
 	if err != nil {
+		logger.Log.Error()
 		return nil, errors.New("MoveService.FindBestMove:" + err.Error())
 	}
 	// b. Loop through the board
@@ -42,6 +45,10 @@ func (service *MoveService) FindBestMove(chessboard entity.ChessboardEntityInter
 			case 1: // Get Pawn Move
 				pawnMoves, err := getPawnMove(piece, row, col, chessboard)
 				if err != nil {
+					logger.Log.WithFields(logrus.Fields{
+						"board": board,
+						"row":   row, "col": col,
+					}).Error()
 					return nil, errors.New("MoveService.FindBestMove:" + err.Error())
 				}
 				moves = append(moves, pawnMoves...)
@@ -97,6 +104,10 @@ func getPawnMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEn
 	isSquareEmpty, err := chessboard.IsSquareEmpty(toY, toX)
 
 	if err != nil {
+		logger.Log.WithFields(logrus.Fields{
+			"fromX": fromX, "fromY": fromY,
+			"toX": toX, "toY": toY,
+		}).Error("failed checking 1 square forward")
 		return nil, errors.New("MoveService.getPawnMove: " + err.Error())
 	}
 
@@ -129,6 +140,10 @@ func getPawnMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEn
 			isSquareEmpty, err := chessboard.IsSquareEmpty(toY, toX)
 
 			if err != nil {
+				logger.Log.WithFields(logrus.Fields{
+					"fromX": fromX, "fromY": fromY,
+					"toX": toX, "toY": toY,
+				}).Error("failed checking 2 squares forward")
 				return nil, errors.New("MoveService.getPawnMove: " + err.Error())
 			}
 			if fromY == startRank && isSquareEmpty {
@@ -150,6 +165,11 @@ func getPawnMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEn
 		toX, toY := fromX+deltaX, fromY+direction
 		isOpponent, err := chessboard.IsOpponent(piece, toY, toX)
 		if err != nil {
+			logger.Log.WithFields(logrus.Fields{
+				"fromX": fromX, "fromY": fromY,
+				"toX": toX, "toY": toY,
+				"deltaX": deltaX,
+			}).Errorf("failed checking %v", deltaX)
 			return nil, errors.New("MoveService.getPawnMove: " + err.Error())
 		}
 
@@ -157,6 +177,11 @@ func getPawnMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEn
 			pieceCaptured, err := chessboard.GetPiece(toY, toX)
 
 			if err != nil {
+				logger.Log.WithFields(logrus.Fields{
+					"fromX": fromX, "fromY": fromY,
+					"toX": toX, "toY": toY,
+					"deltaX": deltaX,
+				}).Errorf("failed getting piece")
 				return nil, errors.New("MoveService.getPawnMove: " + err.Error())
 			}
 
