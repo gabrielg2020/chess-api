@@ -229,17 +229,58 @@ func getKnightMove(piece int, fromY int, fromX int, chessboard entity.Chessboard
 	// methods such as: IsSquareEmpty, GetPiece, IsOpponent
 	var moves []entity.MoveEntityInterface
 
-	// Find startRank, promotionRank and direction
-	var direction, startRank, promotionRank int
-	if piece > 0 { // White
-		direction = -1
-		startRank = 6
-		promotionRank = 0
-	} else { // Black
-		direction = 1
-		startRank = 1
-		promotionRank = 7
-	}
+	deltaX := []int{1, 1, -1, -1, 2, 2, -2, -2}
+	deltaY := []int{2, -2, 2, -2, 1, -1, 1, -1}
 
+	for i := 0; i < 8; i++ {
+		toX, toY := fromX+deltaX[i], fromY+deltaY[i]
+		isSquareEmpty, err := chessboard.IsSquareEmpty(toY, toX)
+		if err != nil {
+			logger.Log.WithFields(logrus.Fields{
+				"fromX": fromX, "fromY": fromY,
+				"toX": toX, "toY": toY,
+			}).Error("failed checking square")
+			return nil, errors.New("MoveService.getKnightMove: " + err.Error())
+		}
+
+		if isSquareEmpty {
+			// Create move
+			moves = append(moves, entity.NewMoveEntity(
+				HelperService.IntPtr(fromX), HelperService.IntPtr(fromY),
+				HelperService.IntPtr(toX), HelperService.IntPtr(toY),
+				HelperService.IntPtr(0),
+				HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+				HelperService.IntPtr(0),
+			))
+		} else {
+			isOpponent, err := chessboard.IsOpponent(piece, toY, toX)
+			if err != nil {
+				logger.Log.WithFields(logrus.Fields{
+					"fromX": fromX, "fromY": fromY,
+					"toX": toX, "toY": toY,
+				}).Error("failed checking square")
+				return nil, errors.New("MoveService.getKnightMove: " + err.Error())
+			}
+
+			if isOpponent {
+				// Create move
+				pieceCaptured, err := chessboard.GetPiece(toY, toX)
+				if err != nil {
+					logger.Log.WithFields(logrus.Fields{
+						"fromX": fromX, "fromY": fromY,
+						"toX": toX, "toY": toY,
+					}).Error("failed getting piece")
+					return nil, errors.New("MoveService.getKnightMove: " + err.Error())
+				}
+				moves = append(moves, entity.NewMoveEntity(
+					HelperService.IntPtr(fromX), HelperService.IntPtr(fromY),
+					HelperService.IntPtr(toX), HelperService.IntPtr(toY),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(pieceCaptured),
+				))
+			}
+		}
+	}
 	return moves, nil
 }
