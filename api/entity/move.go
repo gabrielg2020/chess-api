@@ -2,6 +2,7 @@ package entity
 
 import (
 	"errors"
+	"github.com/gabrielg2020/chess-api/api/service/helper_service"
 	"github.com/gabrielg2020/chess-api/pkg/logger"
 	"github.com/sirupsen/logrus"
 	"strconv"
@@ -32,11 +33,11 @@ type MoveEntity struct {
 
 func NewMoveEntity(fromX *int, fromY *int, toX *int, toY *int, promotion *int, isCastling *bool, isEnPassant *bool, captured *int) *MoveEntity {
 	logger.Log.WithFields(logrus.Fields{
-		"fromX": *fromX, "fromY": *fromY,
-		"toX": *toX, "toY": *toY,
-		"promotion":  *promotion,
-		"isCastling": *isCastling, "isEnPassant": *isEnPassant,
-		"captured": *captured,
+		"fromX": HelperService.IntValue(fromX), "fromY": HelperService.IntValue(fromY),
+		"toX": HelperService.IntValue(toX), "toY": HelperService.IntValue(toY),
+		"promotion":  HelperService.IntValue(promotion),
+		"isCastling": HelperService.BoolValue(isCastling), "isEnPassant": HelperService.BoolValue(isEnPassant),
+		"captured": HelperService.IntValue(captured),
 	}).Debug("NewMoveEntity: Created a new MoveEntity")
 
 	return &MoveEntity{
