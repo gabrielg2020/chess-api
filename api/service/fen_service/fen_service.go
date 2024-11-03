@@ -2,6 +2,8 @@ package FENService
 
 import (
 	"errors"
+	"github.com/gabrielg2020/chess-api/pkg/logger"
+	"github.com/sirupsen/logrus"
 	"regexp"
 	"strconv"
 	"strings"
@@ -25,6 +27,9 @@ func NewFENService() *FENService {
 
 func (service *FENService) Validate(fen string) error {
 	if fen == "" {
+		logger.Log.WithFields(logrus.Fields{
+			"input_fen": fen,
+		}).Error()
 		return errors.New("FENService.Validate: FEN string empty")
 	}
 
@@ -32,9 +37,15 @@ func (service *FENService) Validate(fen string) error {
 	matched, err := regexp.MatchString(fenRegex, fen)
 
 	if err != nil {
+		logger.Log.WithFields(logrus.Fields{
+			"input_fen": fen,
+		}).Error()
 		return errors.New("FENService.Validate: error validating FEN string. you most likely edited the RegEx string... ")
 	}
 	if !matched {
+		logger.Log.WithFields(logrus.Fields{
+			"input_fen": fen,
+		}).Error()
 		return errors.New("FENService.Validate: string is not a FEN")
 	}
 
@@ -62,6 +73,9 @@ func (service *FENService) Parse(validFen string) (entity.ChessboardEntityInterf
 
 	rows := strings.Split(piecePlacement, "/")
 	if len(rows) != 8 {
+		logger.Log.WithFields(logrus.Fields{
+			"input_fen": validFen,
+		}).Error()
 		return nil, errors.New("FENService.Validate: expected 8 rows in piece placement")
 	}
 
@@ -75,6 +89,9 @@ func (service *FENService) Parse(validFen string) (entity.ChessboardEntityInterf
 
 			if pieceAsInt, exists := pieceToIntMap[piece]; exists { // Add piece to board
 				if col >= 8 {
+					logger.Log.WithFields(logrus.Fields{
+						"input_fen": validFen,
+					}).Error()
 					return nil, errors.New("FENService.Validate: too many pieces in row")
 				}
 				board[i][col] = pieceAsInt
@@ -82,9 +99,15 @@ func (service *FENService) Parse(validFen string) (entity.ChessboardEntityInterf
 			} else { // Add spaces to board
 				emptySquares, err := strconv.Atoi(piece)
 				if err != nil {
+					logger.Log.WithFields(logrus.Fields{
+						"input_fen": validFen,
+					}).Error()
 					return nil, errors.New("FENService.Validate: invalid character in row")
 				}
 				if (col + emptySquares) > 8 {
+					logger.Log.WithFields(logrus.Fields{
+						"input_fen": validFen,
+					}).Error()
 					return nil, errors.New("FENService.Validate: too many squares in row")
 				}
 				for k := 0; k < emptySquares; k++ {
@@ -94,6 +117,9 @@ func (service *FENService) Parse(validFen string) (entity.ChessboardEntityInterf
 			}
 		}
 		if col != 8 {
+			logger.Log.WithFields(logrus.Fields{
+				"input_fen": validFen,
+			}).Error()
 			return nil, errors.New("FENService.Validate: row does not have exactly 8 squares")
 		}
 	}
