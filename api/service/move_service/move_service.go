@@ -52,8 +52,16 @@ func (service *MoveService) FindBestMove(chessboard entity.ChessboardEntityInter
 					return nil, errors.New("MoveService.FindBestMove:" + err.Error())
 				}
 				moves = append(moves, pawnMoves...)
-			// case 2: // Get Knight Move
-			// 	getKnightMove(piece, row, col, chessboard)
+			case 2: // Get Knight Move
+				knightMoves, err := getKnightMove(piece, row, col, chessboard)
+				if err != nil {
+					logger.Log.WithFields(logrus.Fields{
+						"board": board,
+						"row":   row, "col": col,
+					}).Error()
+					return nil, errors.New("MoveService.FindBestMove:" + err.Error())
+				}
+				moves = append(moves, knightMoves...)
 			// case 3: // Get Bishop Move
 			// 	getBishopMove(piece, row, col, chessboard)
 			// case 4: // Get Rook Move
@@ -213,5 +221,25 @@ func getPawnMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEn
 			}
 		}
 	}
+	return moves, nil
+}
+
+func getKnightMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEntityInterface) ([]entity.MoveEntityInterface, error) {
+	// NOTE: When calling any methods from `chessboard` that interact with board, we must flip toX and toY as fromX=col and fromY=row
+	// methods such as: IsSquareEmpty, GetPiece, IsOpponent
+	var moves []entity.MoveEntityInterface
+
+	// Find startRank, promotionRank and direction
+	var direction, startRank, promotionRank int
+	if piece > 0 { // White
+		direction = -1
+		startRank = 6
+		promotionRank = 0
+	} else { // Black
+		direction = 1
+		startRank = 1
+		promotionRank = 7
+	}
+
 	return moves, nil
 }
