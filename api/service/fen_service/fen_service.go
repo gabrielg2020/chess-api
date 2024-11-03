@@ -2,6 +2,8 @@ package FENService
 
 import (
 	"errors"
+	"github.com/gabrielg2020/chess-api/pkg/logger"
+	"github.com/sirupsen/logrus"
 	"regexp"
 	"strconv"
 	"strings"
@@ -25,17 +27,26 @@ func NewFENService() *FENService {
 
 func (service *FENService) Validate(fen string) error {
 	if fen == "" {
-		return errors.New("FEN string empty")
+		logger.Log.WithFields(logrus.Fields{
+			"input_fen": fen,
+		}).Error()
+		return errors.New("FENService.Validate: FEN string empty")
 	}
 
 	fenRegex := `^(([rnbqkpRNBQKP1-8]{1,8}/){7}[rnbqkpRNBQKP1-8]{1,8})\s([wb])\s(-|[KQkq]{1,4})\s(-|[a-h][36])\s(\d+)\s(\d+)$`
 	matched, err := regexp.MatchString(fenRegex, fen)
 
 	if err != nil {
-		return errors.New("error validating FEN string. you most likely edited the RegEx string... ")
+		logger.Log.WithFields(logrus.Fields{
+			"input_fen": fen,
+		}).Error()
+		return errors.New("FENService.Validate: error validating FEN string. you most likely edited the RegEx string... ")
 	}
 	if !matched {
-		return errors.New("string is not a FEN")
+		logger.Log.WithFields(logrus.Fields{
+			"input_fen": fen,
+		}).Error()
+		return errors.New("FENService.Validate: string is not a FEN")
 	}
 
 	return nil
@@ -46,7 +57,7 @@ func (service *FENService) Parse(validFen string) (entity.ChessboardEntityInterf
 	// REFRENCE: rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
 	fenParts := strings.Fields(strings.TrimSpace(validFen))
 	if len(fenParts) != 6 {
-		return nil, errors.New("expected 6 fields in fenParts")
+		return nil, errors.New("FENService.Validate: expected 6 fields in fenParts")
 	}
 
 	piecePlacement, activeColour, castlingRights, enPassantSquare, halfmoveClock, fullmoveNumber := fenParts[0], fenParts[1], fenParts[2], fenParts[3], fenParts[4], fenParts[5]
@@ -62,7 +73,10 @@ func (service *FENService) Parse(validFen string) (entity.ChessboardEntityInterf
 
 	rows := strings.Split(piecePlacement, "/")
 	if len(rows) != 8 {
-		return nil, errors.New("expected 8 rows in piece placement")
+		logger.Log.WithFields(logrus.Fields{
+			"input_fen": validFen,
+		}).Error()
+		return nil, errors.New("FENService.Validate: expected 8 rows in piece placement")
 	}
 
 	board := [8][8]int{}
@@ -75,17 +89,26 @@ func (service *FENService) Parse(validFen string) (entity.ChessboardEntityInterf
 
 			if pieceAsInt, exists := pieceToIntMap[piece]; exists { // Add piece to board
 				if col >= 8 {
-					return nil, errors.New("too many pieces in row")
+					logger.Log.WithFields(logrus.Fields{
+						"input_fen": validFen,
+					}).Error()
+					return nil, errors.New("FENService.Validate: too many pieces in row")
 				}
 				board[i][col] = pieceAsInt
 				col++
 			} else { // Add spaces to board
 				emptySquares, err := strconv.Atoi(piece)
 				if err != nil {
-					return nil, errors.New("invalid character in row")
+					logger.Log.WithFields(logrus.Fields{
+						"input_fen": validFen,
+					}).Error()
+					return nil, errors.New("FENService.Validate: invalid character in row")
 				}
 				if (col + emptySquares) > 8 {
-					return nil, errors.New("too many squares in row")
+					logger.Log.WithFields(logrus.Fields{
+						"input_fen": validFen,
+					}).Error()
+					return nil, errors.New("FENService.Validate: too many squares in row")
 				}
 				for k := 0; k < emptySquares; k++ {
 					board[i][col] = 0
@@ -94,7 +117,10 @@ func (service *FENService) Parse(validFen string) (entity.ChessboardEntityInterf
 			}
 		}
 		if col != 8 {
-			return nil, errors.New("row does not have exactly 8 squares")
+			logger.Log.WithFields(logrus.Fields{
+				"input_fen": validFen,
+			}).Error()
+			return nil, errors.New("FENService.Validate: row does not have exactly 8 squares")
 		}
 	}
 

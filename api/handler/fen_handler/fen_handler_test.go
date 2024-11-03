@@ -34,19 +34,19 @@ func Test_FENHandler_ValidateFEN(t *testing.T) {
 			name: "Invalid FEN [FEN string doesn't pass regex]",
 			fen:  "fen",
 			setupFENService: func(m *mocks.MockFENService) {
-				m.On("Validate", "fen").Return(errors.New("string is not a FEN"))
+				m.On("Validate", "fen").Return(errors.New("FENService.Validate: string is not a FEN"))
 			},
 			expectedStatusCode: http.StatusBadRequest,
-			expectedResponse:   `{"valid":false, "errorMessage":"string is not a FEN", "errorCode":400}`,
+			expectedResponse:   `{"valid":false, "errorMessage":"inputted fen is invalid", "errorCode":400}`,
 		},
 		{
 			name: "Invalid FEN [FEN string is empty]",
 			fen:  "",
 			setupFENService: func(m *mocks.MockFENService) {
-				m.On("Validate", "").Return(errors.New("FEN string empty"))
+				m.On("Validate", "").Return(errors.New("FENService.Validate: FEN string empty"))
 			},
 			expectedStatusCode: http.StatusBadRequest,
-			expectedResponse:   `{"valid":false, "errorMessage":"FEN string empty", "errorCode":400}`,
+			expectedResponse:   `{"valid":false, "errorMessage":"inputted fen is invalid", "errorCode":400}`,
 		},
 	}
 
