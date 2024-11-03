@@ -1,6 +1,7 @@
 package MoveHandler
 
 import (
+	"github.com/gabrielg2020/chess-api/pkg/logger"
 	"net/http"
 
 	"github.com/gabrielg2020/chess-api/api/service/fen_service"
@@ -27,10 +28,11 @@ func (handler *MoveHandler) FindBestMove(ctx *gin.Context) {
 	err := handler.fenService.Validate(fen)
 
 	if err != nil {
+		logger.Log.WithError(err).Error()
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"valid":        err == nil,
-			"errorMessage": "MoveHandler.FindBestMove" + err.Error(),
-			"errorCode":    http.StatusBadRequest,
+			"valid":     err == nil,
+			"error":     "inputted fen is invalid",
+			"errorCode": http.StatusBadRequest,
 		})
 		return
 	}
@@ -39,8 +41,9 @@ func (handler *MoveHandler) FindBestMove(ctx *gin.Context) {
 	chessboard, err := handler.fenService.Parse(fen)
 
 	if err != nil {
+		logger.Log.WithError(err).Error()
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"errorMessage": "MoveHandler.FindBestMove" + err.Error(),
+			"errorMessage": "inputted fen failed to parsed",
 			"errorCode":    http.StatusBadRequest,
 			"chessboard":   chessboard,
 		})
@@ -49,11 +52,22 @@ func (handler *MoveHandler) FindBestMove(ctx *gin.Context) {
 
 	// Find best move
 	bestMove, boardErr := handler.moveService.FindBestMove(chessboard)
+
+	if boardErr != nil {
+		logger.Log.WithError(err).Error()
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"errorMessage": "failed to find best move",
+			"errorCode":    http.StatusBadRequest,
+		})
+		return
+	}
+
 	chessNotation, chessNotationErr := bestMove.GetChessNotation()
 
-	if boardErr != nil || chessNotationErr != nil {
+	if chessNotationErr != nil {
+		logger.Log.WithError(err).Error()
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"errorMessage": "MoveHandler.FindBestMove" + err.Error(),
+			"errorMessage": "failed to convert best move to chess notation",
 			"errorCode":    http.StatusBadRequest,
 		})
 		return

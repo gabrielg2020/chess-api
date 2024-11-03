@@ -1,6 +1,7 @@
 package FENHandler
 
 import (
+	"github.com/gabrielg2020/chess-api/pkg/logger"
 	"net/http"
 
 	"github.com/gabrielg2020/chess-api/api/service/fen_service"
@@ -21,9 +22,10 @@ func (handler *FENHandler) ValidateFEN(ctx *gin.Context) {
 	err := handler.fenService.Validate(fen)
 
 	if err != nil {
+		logger.Log.WithError(err).Error()
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"valid":        err == nil,
-			"errorMessage": "FENHandler.ValidateFEN: " + err.Error(),
+			"errorMessage": "inputted fen is invalid",
 			"errorCode":    http.StatusBadRequest,
 		})
 		return
