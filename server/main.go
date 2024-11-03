@@ -6,6 +6,7 @@ import (
 	"github.com/gabrielg2020/chess-api/api/service/fen_service"
 	"github.com/gabrielg2020/chess-api/api/service/move_service"
 	"github.com/gabrielg2020/chess-api/pkg/logger"
+	"github.com/gabrielg2020/chess-api/pkg/middleware"
 	"github.com/gin-gonic/gin"
 )
 
@@ -43,8 +44,7 @@ func main() {
 
 func setUpEngine() *gin.Engine {
 	engine := gin.New()
-	engine.Use(gin.Logger())
-	engine.Use(gin.Recovery())
+	engine.Use(middleware.LogrusMiddleware(logger.Log), gin.Recovery())
 	err := engine.SetTrustedProxies([]string{"127.0.0.1"})
 	if err != nil {
 		logger.Log.WithError(err).Fatal("Failed to set trusted proxies")

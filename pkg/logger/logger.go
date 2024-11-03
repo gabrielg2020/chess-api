@@ -22,5 +22,5 @@ func init() {
 			logrus.FieldKeyMsg:   "@message",
 		},
 	})
-	Log.SetLevel(logrus.InfoLevel)
+	Log.SetLevel(logrus.DebugLevel)
 }
