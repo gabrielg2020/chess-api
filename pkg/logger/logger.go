@@ -2,9 +2,11 @@ package logger
 
 import (
 	"fmt"
+	"github.com/joho/godotenv"
 	"os"
 	"path"
 	"runtime"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 )
@@ -13,6 +15,12 @@ import (
 var Log *logrus.Logger
 
 func init() {
+	// Load env variables
+	err := godotenv.Load()
+	if err != nil {
+		logrus.Warn("Error loading .env file")
+	}
+
 	Log = logrus.New()
 
 	Log.SetOutput(os.Stdout)
@@ -34,5 +42,17 @@ func init() {
 		},
 		FullTimestamp: true,
 	})
-	Log.SetLevel(logrus.DebugLevel)
+
+	// Set log level
+	levelStr := os.Getenv("LOG_LEVEL")
+	if levelStr == "" {
+		levelStr = "info" // default log level
+	}
+
+	level, err := logrus.ParseLevel(strings.ToLower(levelStr))
+	if err != nil {
+		Log.Warn("Error setting log level")
+		level = logrus.InfoLevel
+	}
+	Log.SetLevel(level)
 }
