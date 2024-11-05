@@ -387,12 +387,12 @@ func getRookMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEn
 					"fromX": fromX, "fromY": fromY,
 					"toX": toX, "toY": toY,
 				}).Error("failed checking square")
-				return nil, errors.New("MoveService.getBishopMove: " + err.Error())
+				return nil, errors.New("MoveService.getRookMove: " + err.Error())
 			}
 
 			if isSquareEmpty {
 				// Create move
-				logger.Log.Debugf("getBishopMove: move added. moves array now contains %v move/s", len(moves))
+				logger.Log.Debugf("getRookMove: move added. moves array now contains %v move/s", len(moves))
 				moves = append(moves, entity.NewMoveEntity(
 					HelperService.IntPtr(fromX), HelperService.IntPtr(fromY),
 					HelperService.IntPtr(toX), HelperService.IntPtr(toY),
@@ -407,7 +407,7 @@ func getRookMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEn
 						"fromX": fromX, "fromY": fromY,
 						"toX": toX, "toY": toY,
 					}).Error("failed checking square")
-					return nil, errors.New("MoveService.getBishopMove: " + err.Error())
+					return nil, errors.New("MoveService.getRookMove: " + err.Error())
 				}
 
 				if isOpponent {
@@ -418,9 +418,9 @@ func getRookMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEn
 							"fromX": fromX, "fromY": fromY,
 							"toX": toX, "toY": toY,
 						}).Error("failed getting piece")
-						return nil, errors.New("MoveService.getBishopMove: " + err.Error())
+						return nil, errors.New("MoveService.getRookMove: " + err.Error())
 					}
-					logger.Log.Debugf("getBishopMove: move added. moves array now contains %v move/s", len(moves))
+					logger.Log.Debugf("getRookMove: move added. moves array now contains %v move/s", len(moves))
 					moves = append(moves, entity.NewMoveEntity(
 						HelperService.IntPtr(fromX), HelperService.IntPtr(fromY),
 						HelperService.IntPtr(toX), HelperService.IntPtr(toY),
