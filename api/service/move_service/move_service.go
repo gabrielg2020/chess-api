@@ -92,8 +92,16 @@ func (service *MoveService) FindBestMove(chessboard entity.ChessboardEntityInter
 					return nil, errors.New("MoveService.FindBestMove:" + err.Error())
 				}
 				moves = append(moves, queenMoves...)
-			// case 6: // Get King Move
-			// 	getKingMove(piece, row, col, chessboard)
+			case 6: // Get King Move
+				kingMoves, err := getKingMove(piece, row, col, chessboard)
+				if err != nil {
+					logger.Log.WithFields(logrus.Fields{
+						"board": board,
+						"row":   row, "col": col,
+					}).Error()
+					return nil, errors.New("MoveService.FindBestMove:" + err.Error())
+				}
+				moves = append(moves, kingMoves...)
 			default: // NOTE: Error on default when rest of cases are completed. for now add random move
 				logger.Log.Debug("Default case hit. Adding random move")
 				moves = append(moves, entity.NewMoveEntity(
@@ -461,6 +469,68 @@ func getQueenMove(piece int, fromY int, fromX int, chessboard entity.ChessboardE
 		return nil, errors.New("MoveService.getQueenMove: " + err.Error())
 	}
 	moves = append(moves, verticalMoves...)
+
+	return moves, nil
+}
+
+func getKingMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEntityInterface) ([]entity.MoveEntityInterface, error) {
+	var moves []entity.MoveEntityInterface
+
+	deltaX := []int{1, 1, 1, 0, 0, -1, -1, -1}
+	deltaY := []int{1, 0, -1, 1, -1, 1, 0, -1}
+
+	for i := 0; i < 8; i++ {
+		toX, toY := fromX+deltaX[i], fromY+deltaY[i]
+		isSquareEmpty, err := chessboard.IsSquareEmpty(toY, toX)
+		if err != nil {
+			logger.Log.WithFields(logrus.Fields{
+				"fromX": fromX, "fromY": fromY,
+				"toX": toX, "toY": toY,
+			}).Error("failed checking square")
+			return nil, errors.New("MoveService.getKingMove: " + err.Error())
+		}
+
+		if isSquareEmpty {
+			// Create move
+			logger.Log.Debugf("getKingMove: move added. moves array now contains %v move/s", len(moves))
+			moves = append(moves, entity.NewMoveEntity(
+				HelperService.IntPtr(fromX), HelperService.IntPtr(fromY),
+				HelperService.IntPtr(toX), HelperService.IntPtr(toY),
+				HelperService.IntPtr(0),
+				HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+				HelperService.IntPtr(0),
+			))
+		} else {
+			isOpponent, err := chessboard.IsOpponent(piece, toY, toX)
+			if err != nil {
+				logger.Log.WithFields(logrus.Fields{
+					"fromX": fromX, "fromY": fromY,
+					"toX": toX, "toY": toY,
+				}).Error("failed checking square")
+				return nil, errors.New("MoveService.getKingMove: " + err.Error())
+			}
+
+			if isOpponent {
+				// Create move
+				pieceCaptured, err := chessboard.GetPiece(toY, toX)
+				if err != nil {
+					logger.Log.WithFields(logrus.Fields{
+						"fromX": fromX, "fromY": fromY,
+						"toX": toX, "toY": toY,
+					}).Error("failed getting piece")
+					return nil, errors.New("MoveService.getKingMove: " + err.Error())
+				}
+				logger.Log.Debugf("getKingMove: move added. moves array now contains %v move/s", len(moves))
+				moves = append(moves, entity.NewMoveEntity(
+					HelperService.IntPtr(fromX), HelperService.IntPtr(fromY),
+					HelperService.IntPtr(toX), HelperService.IntPtr(toY),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(pieceCaptured),
+				))
+			}
+		}
+	}
 
 	return moves, nil
 }
