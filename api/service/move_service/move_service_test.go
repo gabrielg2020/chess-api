@@ -1465,7 +1465,7 @@ func Test_MoveService_getRookMove(t *testing.T) {
 			fromX: 3,
 			fromY: 3,
 			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Fail on Diagonal Bottom Right
+				// Right
 				m.On("IsWithinBounds", 3, 4).Return(true)
 				m.On("IsSquareEmpty", 3, 4).Return(false, errors.New("ChessboardEntity.IsSquareEmpty: board is not set"))
 			},
@@ -1478,7 +1478,7 @@ func Test_MoveService_getRookMove(t *testing.T) {
 			fromX: 3,
 			fromY: 3,
 			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Fail on Diagonal Bottom Right
+				// Right
 				m.On("IsWithinBounds", 3, 4).Return(true)
 				m.On("IsSquareEmpty", 3, 4).Return(false, nil)
 				m.On("IsOpponent", 4, 3, 4).Return(false, errors.New("ChessboardEntity.IsOpponent: board is not set"))
@@ -1492,7 +1492,7 @@ func Test_MoveService_getRookMove(t *testing.T) {
 			fromX: 3,
 			fromY: 3,
 			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Fail on Diagonal Bottom Right
+				// Right
 				m.On("IsWithinBounds", 3, 4).Return(true)
 				m.On("IsSquareEmpty", 3, 4).Return(false, nil)
 				m.On("IsOpponent", 4, 3, 4).Return(true, nil)
