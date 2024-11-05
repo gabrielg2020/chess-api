@@ -62,8 +62,16 @@ func (service *MoveService) FindBestMove(chessboard entity.ChessboardEntityInter
 					return nil, errors.New("MoveService.FindBestMove:" + err.Error())
 				}
 				moves = append(moves, knightMoves...)
-			// case 3: // Get Bishop Move
-			// 	getBishopMove(piece, row, col, chessboard)
+			case 3: // Get Bishop Move
+				bishopMoves, err := getBishopMove(piece, row, col, chessboard)
+				if err != nil {
+					logger.Log.WithFields(logrus.Fields{
+						"board": board,
+						"row":   row, "col": col,
+					}).Error()
+					return nil, errors.New("MoveService.FindBestMove:" + err.Error())
+				}
+				moves = append(moves, bishopMoves...)
 			// case 4: // Get Rook Move
 			// 	getRookMove(piece, row, col, chessboard)
 			// case 5: // Get Queen Move
@@ -88,12 +96,14 @@ func (service *MoveService) FindBestMove(chessboard entity.ChessboardEntityInter
 	// b. Remove any move that place king in check
 	// 3. Return Legal Moves
 	// a. Return moves array
+	logger.Log.Debugf("FindBestMove: moves array contains %v move/s", len(moves))
 	return moves[0], nil
 }
 
+// NOTE: When calling any methods from `chessboard` that interact with board, we must flip toX and toY as fromX=col and fromY=row
+// methods such as: IsSquareEmpty, GetPiece, IsOpponent
+
 func getPawnMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEntityInterface) ([]entity.MoveEntityInterface, error) {
-	// NOTE: When calling any methods from `chessboard` that interact with board, we must flip toX and toY as fromX=col and fromY=row
-	// methods such as: IsSquareEmpty, GetPiece, IsOpponent
 	var moves []entity.MoveEntityInterface
 
 	// Find startRank, promotionRank and direction
@@ -226,8 +236,6 @@ func getPawnMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEn
 }
 
 func getKnightMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEntityInterface) ([]entity.MoveEntityInterface, error) {
-	// NOTE: When calling any methods from `chessboard` that interact with board, we must flip toX and toY as fromX=col and fromY=row
-	// methods such as: IsSquareEmpty, GetPiece, IsOpponent
 	var moves []entity.MoveEntityInterface
 
 	deltaX := []int{1, 1, -1, -1, 2, 2, -2, -2}
@@ -283,6 +291,72 @@ func getKnightMove(piece int, fromY int, fromX int, chessboard entity.Chessboard
 					HelperService.IntPtr(pieceCaptured),
 				))
 			}
+		}
+	}
+	return moves, nil
+}
+
+func getBishopMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEntityInterface) ([]entity.MoveEntityInterface, error) {
+	var moves []entity.MoveEntityInterface
+
+	deltaX := []int{1, -1, 1, -1}
+	deltaY := []int{1, 1, -1, -1}
+
+	for i := 0; i < 4; i++ {
+		toX, toY := fromX+deltaX[i], fromY+deltaY[i]
+		for chessboard.IsWithinBounds(toY, toX) {
+			isSquareEmpty, err := chessboard.IsSquareEmpty(toY, toX)
+			if err != nil {
+				logger.Log.WithFields(logrus.Fields{
+					"fromX": fromX, "fromY": fromY,
+					"toX": toX, "toY": toY,
+				}).Error("failed checking square")
+				return nil, errors.New("MoveService.getBishopMove: " + err.Error())
+			}
+
+			if isSquareEmpty {
+				// Create move
+				logger.Log.Debugf("getBishopMove: move added. moves array now contains %v move/s", len(moves))
+				moves = append(moves, entity.NewMoveEntity(
+					HelperService.IntPtr(fromX), HelperService.IntPtr(fromY),
+					HelperService.IntPtr(toX), HelperService.IntPtr(toY),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(0),
+				))
+			} else {
+				isOpponent, err := chessboard.IsOpponent(piece, toY, toX)
+				if err != nil {
+					logger.Log.WithFields(logrus.Fields{
+						"fromX": fromX, "fromY": fromY,
+						"toX": toX, "toY": toY,
+					}).Error("failed checking square")
+					return nil, errors.New("MoveService.getBishopMove: " + err.Error())
+				}
+
+				if isOpponent {
+					// Create move
+					pieceCaptured, err := chessboard.GetPiece(toY, toX)
+					if err != nil {
+						logger.Log.WithFields(logrus.Fields{
+							"fromX": fromX, "fromY": fromY,
+							"toX": toX, "toY": toY,
+						}).Error("failed getting piece")
+						return nil, errors.New("MoveService.getBishopMove: " + err.Error())
+					}
+					logger.Log.Debugf("getBishopMove: move added. moves array now contains %v move/s", len(moves))
+					moves = append(moves, entity.NewMoveEntity(
+						HelperService.IntPtr(fromX), HelperService.IntPtr(fromY),
+						HelperService.IntPtr(toX), HelperService.IntPtr(toY),
+						HelperService.IntPtr(0),
+						HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+						HelperService.IntPtr(pieceCaptured),
+					))
+				}
+				break
+			}
+			toX += deltaX[i]
+			toY += deltaY[i]
 		}
 	}
 	return moves, nil
