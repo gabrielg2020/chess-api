@@ -1525,3 +1525,564 @@ func Test_MoveService_getRookMove(t *testing.T) {
 		}
 	}
 }
+
+func Test_MoveService_getQueenMove(t *testing.T) {
+	testCases := []struct {
+		name          string
+		piece         int
+		fromX         int // col
+		fromY         int // row
+		setupMock     func(m *mocks.MockChessboardEntity)
+		expectedMoves []entity.MoveEntityInterface
+		expectedError error
+	}{
+		{
+			name:  "White Queen In Middle Of Board",
+			piece: 5,
+			fromX: 3,
+			fromY: 3,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				// Diagonal Bottom Right
+				m.On("IsWithinBounds", 4, 4).Return(true)
+				m.On("IsSquareEmpty", 4, 4).Return(true, nil)
+				m.On("IsWithinBounds", 5, 5).Return(true)
+				m.On("IsSquareEmpty", 5, 5).Return(true, nil)
+				m.On("IsWithinBounds", 6, 6).Return(true)
+				m.On("IsSquareEmpty", 6, 6).Return(true, nil)
+				m.On("IsWithinBounds", 7, 7).Return(true)
+				m.On("IsSquareEmpty", 7, 7).Return(true, nil)
+				m.On("IsWithinBounds", 8, 8).Return(false)
+				// Diagonal Bottom Left
+				m.On("IsWithinBounds", 4, 2).Return(true)
+				m.On("IsSquareEmpty", 4, 2).Return(true, nil)
+				m.On("IsWithinBounds", 5, 1).Return(true)
+				m.On("IsSquareEmpty", 5, 1).Return(true, nil)
+				m.On("IsWithinBounds", 6, 0).Return(true)
+				m.On("IsSquareEmpty", 6, 0).Return(true, nil)
+				m.On("IsWithinBounds", 7, -1).Return(false)
+				// Diagonal Top Right
+				m.On("IsWithinBounds", 2, 4).Return(true)
+				m.On("IsSquareEmpty", 2, 4).Return(true, nil)
+				m.On("IsWithinBounds", 1, 5).Return(true)
+				m.On("IsSquareEmpty", 1, 5).Return(true, nil)
+				m.On("IsWithinBounds", 0, 6).Return(true)
+				m.On("IsSquareEmpty", 0, 6).Return(true, nil)
+				m.On("IsWithinBounds", -1, 7).Return(false)
+				// Diagonal Top Left
+				m.On("IsWithinBounds", 2, 2).Return(true)
+				m.On("IsSquareEmpty", 2, 2).Return(true, nil)
+				m.On("IsWithinBounds", 1, 1).Return(true)
+				m.On("IsSquareEmpty", 1, 1).Return(true, nil)
+				m.On("IsWithinBounds", 0, 0).Return(true)
+				m.On("IsSquareEmpty", 0, 0).Return(true, nil)
+				m.On("IsWithinBounds", -1, -1).Return(false)
+				// Right
+				m.On("IsWithinBounds", 3, 4).Return(true)
+				m.On("IsSquareEmpty", 3, 4).Return(true, nil)
+				m.On("IsWithinBounds", 3, 5).Return(true)
+				m.On("IsSquareEmpty", 3, 5).Return(true, nil)
+				m.On("IsWithinBounds", 3, 6).Return(true)
+				m.On("IsSquareEmpty", 3, 6).Return(true, nil)
+				m.On("IsWithinBounds", 3, 7).Return(true)
+				m.On("IsSquareEmpty", 3, 7).Return(true, nil)
+				m.On("IsWithinBounds", 3, 8).Return(false)
+				// Left
+				m.On("IsWithinBounds", 3, 2).Return(true)
+				m.On("IsSquareEmpty", 3, 2).Return(true, nil)
+				m.On("IsWithinBounds", 3, 1).Return(true)
+				m.On("IsSquareEmpty", 3, 1).Return(true, nil)
+				m.On("IsWithinBounds", 3, 0).Return(true)
+				m.On("IsSquareEmpty", 3, 0).Return(true, nil)
+				m.On("IsWithinBounds", 3, -1).Return(false)
+				// Down
+				m.On("IsWithinBounds", 4, 3).Return(true)
+				m.On("IsSquareEmpty", 4, 3).Return(true, nil)
+				m.On("IsWithinBounds", 5, 3).Return(true)
+				m.On("IsSquareEmpty", 5, 3).Return(true, nil)
+				m.On("IsWithinBounds", 6, 3).Return(true)
+				m.On("IsSquareEmpty", 6, 3).Return(true, nil)
+				m.On("IsWithinBounds", 7, 3).Return(true)
+				m.On("IsSquareEmpty", 7, 3).Return(true, nil)
+				m.On("IsWithinBounds", 8, 3).Return(false)
+				// Up
+				m.On("IsWithinBounds", 2, 3).Return(true)
+				m.On("IsSquareEmpty", 2, 3).Return(true, nil)
+				m.On("IsWithinBounds", 1, 3).Return(true)
+				m.On("IsSquareEmpty", 1, 3).Return(true, nil)
+				m.On("IsWithinBounds", 0, 3).Return(true)
+				m.On("IsSquareEmpty", 0, 3).Return(true, nil)
+				m.On("IsWithinBounds", -1, 3).Return(false)
+			},
+			expectedMoves: []entity.MoveEntityInterface{
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(4), HelperService.IntPtr(4),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(0),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(5), HelperService.IntPtr(5),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(0),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(6), HelperService.IntPtr(6),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(0),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(7), HelperService.IntPtr(7),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(0),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(2), HelperService.IntPtr(4),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(0),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(1), HelperService.IntPtr(5),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(0),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(0), HelperService.IntPtr(6),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(0),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(4), HelperService.IntPtr(2),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(0),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(5), HelperService.IntPtr(1),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(0),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(6), HelperService.IntPtr(0),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(0),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(2), HelperService.IntPtr(2),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(0),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(1), HelperService.IntPtr(1),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(0),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(0), HelperService.IntPtr(0),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(0),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(4), HelperService.IntPtr(3),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(0),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(5), HelperService.IntPtr(3),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(0),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(6), HelperService.IntPtr(3),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(0),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(7), HelperService.IntPtr(3),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(0),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(2), HelperService.IntPtr(3),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(0),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(1), HelperService.IntPtr(3),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(0),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(0), HelperService.IntPtr(3),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(0),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(3), HelperService.IntPtr(4),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(0),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(3), HelperService.IntPtr(5),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(0),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(3), HelperService.IntPtr(6),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(0),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(3), HelperService.IntPtr(7),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(0),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(3), HelperService.IntPtr(2),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(0),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(3), HelperService.IntPtr(1),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(0),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(3), HelperService.IntPtr(0),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(0),
+				),
+			},
+			expectedError: nil,
+		},
+		{
+			name:  "White Queen Surrounded By Opponents",
+			piece: 5,
+			fromX: 3,
+			fromY: 3,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				// Diagonal Bottom Right
+				m.On("IsWithinBounds", 4, 4).Return(true)
+				m.On("IsSquareEmpty", 4, 4).Return(false, nil)
+				m.On("IsOpponent", 5, 4, 4).Return(true, nil)
+				m.On("GetPiece", 4, 4).Return(-5, nil)
+				// Diagonal Bottom Left
+				m.On("IsWithinBounds", 4, 2).Return(true)
+				m.On("IsSquareEmpty", 4, 2).Return(false, nil)
+				m.On("IsOpponent", 5, 4, 2).Return(true, nil)
+				m.On("GetPiece", 4, 2).Return(-5, nil)
+				// Diagonal Top Right
+				m.On("IsWithinBounds", 2, 4).Return(true)
+				m.On("IsSquareEmpty", 2, 4).Return(false, nil)
+				m.On("IsOpponent", 5, 2, 4).Return(true, nil)
+				m.On("GetPiece", 2, 4).Return(-5, nil)
+				// Diagonal Top Left
+				m.On("IsWithinBounds", 2, 2).Return(true)
+				m.On("IsSquareEmpty", 2, 2).Return(false, nil)
+				m.On("IsOpponent", 5, 2, 2).Return(true, nil)
+				m.On("GetPiece", 2, 2).Return(-5, nil)
+				// Right
+				m.On("IsWithinBounds", 3, 4).Return(true)
+				m.On("IsSquareEmpty", 3, 4).Return(false, nil)
+				m.On("IsOpponent", 5, 3, 4).Return(true, nil)
+				m.On("GetPiece", 3, 4).Return(-5, nil)
+				// Left
+				m.On("IsWithinBounds", 3, 2).Return(true)
+				m.On("IsSquareEmpty", 3, 2).Return(false, nil)
+				m.On("IsOpponent", 5, 3, 2).Return(true, nil)
+				m.On("GetPiece", 3, 2).Return(-5, nil)
+				// Down
+				m.On("IsWithinBounds", 4, 3).Return(true)
+				m.On("IsSquareEmpty", 4, 3).Return(false, nil)
+				m.On("IsOpponent", 5, 4, 3).Return(true, nil)
+				m.On("GetPiece", 4, 3).Return(-5, nil)
+				// Up
+				m.On("IsWithinBounds", 2, 3).Return(true)
+				m.On("IsSquareEmpty", 2, 3).Return(false, nil)
+				m.On("IsOpponent", 5, 2, 3).Return(true, nil)
+				m.On("GetPiece", 2, 3).Return(-5, nil)
+			},
+			expectedMoves: []entity.MoveEntityInterface{
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(4), HelperService.IntPtr(4),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(-5),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(2), HelperService.IntPtr(4),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(-5),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(4), HelperService.IntPtr(2),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(-5),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(2), HelperService.IntPtr(2),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(-5),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(4), HelperService.IntPtr(3),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(-5),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(2), HelperService.IntPtr(3),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(-5),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(3), HelperService.IntPtr(4),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(-5),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(3), HelperService.IntPtr(2),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(-5),
+				),
+			},
+			expectedError: nil,
+		},
+		{
+			name:  "Black Queen Surrounded By Opponents",
+			piece: -5,
+			fromX: 3,
+			fromY: 3,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				// Diagonal Bottom Right
+				m.On("IsWithinBounds", 4, 4).Return(true)
+				m.On("IsSquareEmpty", 4, 4).Return(false, nil)
+				m.On("IsOpponent", -5, 4, 4).Return(true, nil)
+				m.On("GetPiece", 4, 4).Return(5, nil)
+				// Diagonal Bottom Left
+				m.On("IsWithinBounds", 4, 2).Return(true)
+				m.On("IsSquareEmpty", 4, 2).Return(false, nil)
+				m.On("IsOpponent", -5, 4, 2).Return(true, nil)
+				m.On("GetPiece", 4, 2).Return(5, nil)
+				// Diagonal Top Right
+				m.On("IsWithinBounds", 2, 4).Return(true)
+				m.On("IsSquareEmpty", 2, 4).Return(false, nil)
+				m.On("IsOpponent", -5, 2, 4).Return(true, nil)
+				m.On("GetPiece", 2, 4).Return(5, nil)
+				// Diagonal Top Left
+				m.On("IsWithinBounds", 2, 2).Return(true)
+				m.On("IsSquareEmpty", 2, 2).Return(false, nil)
+				m.On("IsOpponent", -5, 2, 2).Return(true, nil)
+				m.On("GetPiece", 2, 2).Return(5, nil)
+				// Right
+				m.On("IsWithinBounds", 3, 4).Return(true)
+				m.On("IsSquareEmpty", 3, 4).Return(false, nil)
+				m.On("IsOpponent", -5, 3, 4).Return(true, nil)
+				m.On("GetPiece", 3, 4).Return(5, nil)
+				// Left
+				m.On("IsWithinBounds", 3, 2).Return(true)
+				m.On("IsSquareEmpty", 3, 2).Return(false, nil)
+				m.On("IsOpponent", -5, 3, 2).Return(true, nil)
+				m.On("GetPiece", 3, 2).Return(5, nil)
+				// Down
+				m.On("IsWithinBounds", 4, 3).Return(true)
+				m.On("IsSquareEmpty", 4, 3).Return(false, nil)
+				m.On("IsOpponent", -5, 4, 3).Return(true, nil)
+				m.On("GetPiece", 4, 3).Return(5, nil)
+				// Up
+				m.On("IsWithinBounds", 2, 3).Return(true)
+				m.On("IsSquareEmpty", 2, 3).Return(false, nil)
+				m.On("IsOpponent", -5, 2, 3).Return(true, nil)
+				m.On("GetPiece", 2, 3).Return(5, nil)
+			},
+			expectedMoves: []entity.MoveEntityInterface{
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(4), HelperService.IntPtr(4),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(5),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(2), HelperService.IntPtr(4),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(5),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(4), HelperService.IntPtr(2),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(5),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(2), HelperService.IntPtr(2),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(5),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(4), HelperService.IntPtr(3),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(5),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(2), HelperService.IntPtr(3),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(5),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(3), HelperService.IntPtr(4),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(5),
+				),
+				entity.NewMoveEntity(
+					HelperService.IntPtr(3), HelperService.IntPtr(3),
+					HelperService.IntPtr(3), HelperService.IntPtr(2),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(5),
+				),
+			},
+			expectedError: nil,
+		},
+		{
+			name:  "Failed To Check If Square Is Empty",
+			piece: 5,
+			fromX: 3,
+			fromY: 3,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				// Fail on Diagonal Bottom Right
+				m.On("IsWithinBounds", 4, 4).Return(true)
+				m.On("IsSquareEmpty", 4, 4).Return(false, errors.New("ChessboardEntity.IsSquareEmpty: board is not set"))
+			},
+			expectedMoves: nil,
+			expectedError: errors.New("MoveService.getQueenMove: MoveService.getBishopMove: ChessboardEntity.IsSquareEmpty: board is not set"),
+		},
+		{
+			name:  "Failed To Check If Is Opponent",
+			piece: 5,
+			fromX: 3,
+			fromY: 3,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				// Fail on Diagonal Bottom Right
+				m.On("IsWithinBounds", 4, 4).Return(true)
+				m.On("IsSquareEmpty", 4, 4).Return(false, nil)
+				m.On("IsOpponent", 5, 4, 4).Return(false, errors.New("ChessboardEntity.IsOpponent: board is not set"))
+			},
+			expectedMoves: nil,
+			expectedError: errors.New("MoveService.getQueenMove: MoveService.getBishopMove: ChessboardEntity.IsOpponent: board is not set"),
+		},
+		{
+			name:  "Failed To Get Captured Piece",
+			piece: 5,
+			fromX: 3,
+			fromY: 3,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				// Fail on Diagonal Bottom Right
+				m.On("IsWithinBounds", 4, 4).Return(true)
+				m.On("IsSquareEmpty", 4, 4).Return(false, nil)
+				m.On("IsOpponent", 5, 4, 4).Return(true, nil)
+				m.On("GetPiece", 4, 4).Return(0, errors.New("ChessboardEntity.GetPiece: row or col out of bounds"))
+			},
+			expectedMoves: nil,
+			expectedError: errors.New("MoveService.getQueenMove: MoveService.getBishopMove: ChessboardEntity.GetPiece: row or col out of bounds"),
+		},
+	}
+
+	for _, tc := range testCases {
+		// Arrange
+		mockChessboard := new(mocks.MockChessboardEntity)
+		tc.setupMock(mockChessboard)
+
+		// Act
+		moves, err := getQueenMove(tc.piece, tc.fromY, tc.fromX, mockChessboard)
+
+		// Assert
+		if tc.expectedError != nil {
+			assert.EqualError(t, err, tc.expectedError.Error())
+		} else {
+			assert.NoError(t, err)
+			assert.Len(t, moves, len(tc.expectedMoves))
+
+			for index, move := range moves {
+				expectedMove := tc.expectedMoves[index]
+				compareMoves(t, expectedMove, move)
+			}
+		}
+	}
+}
