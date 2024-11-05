@@ -102,15 +102,12 @@ func (service *MoveService) FindBestMove(chessboard entity.ChessboardEntityInter
 					return nil, errors.New("MoveService.FindBestMove:" + err.Error())
 				}
 				moves = append(moves, kingMoves...)
-			default: // NOTE: Error on default when rest of cases are completed. for now add random move
-				logger.Log.Debug("Default case hit. Adding random move")
-				moves = append(moves, entity.NewMoveEntity(
-					HelperService.IntPtr(0), HelperService.IntPtr(0),
-					HelperService.IntPtr(7), HelperService.IntPtr(7),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				))
+			default: // Error if piece not found
+				logger.Log.WithFields(logrus.Fields{
+					"board": board,
+					"row":   row, "col": col,
+				}).Error()
+				return nil, errors.New("MoveService.FindBestMove: piece not found")
 			}
 		}
 	}
