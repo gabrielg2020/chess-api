@@ -451,14 +451,14 @@ func getQueenMove(piece int, fromY int, fromX int, chessboard entity.ChessboardE
 
 	diagonalMoves, err := getBishopMove(piece, fromY, fromX, chessboard)
 	if err != nil {
-		logger.Log.Error("getQueenMove: failed getting bishop moves")
-		return nil, errors.New("MoveService.getQueenMove:" + err.Error())
+		logger.Log.Error()
+		return nil, errors.New("MoveService.getQueenMove: " + err.Error())
 	}
 	moves = append(moves, diagonalMoves...)
 	verticalMoves, err := getRookMove(piece, fromY, fromX, chessboard)
 	if err != nil {
-		logger.Log.Error("getQueenMove: failed getting rook moves")
-		return nil, errors.New("MoveService.getQueenMove:" + err.Error())
+		logger.Log.Error()
+		return nil, errors.New("MoveService.getQueenMove: " + err.Error())
 	}
 	moves = append(moves, verticalMoves...)
 
