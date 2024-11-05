@@ -57,3 +57,8 @@ func (m *MockChessboardEntity) IsOpponent(piece int, row int, col int) (bool, er
 	args := m.Called(piece, row, col)
 	return args.Bool(0), args.Error(1)
 }
+
+func (m *MockChessboardEntity) IsWithinBounds(row int, col int) bool {
+	args := m.Called(row, col)
+	return args.Bool(0)
+}
