@@ -19,6 +19,7 @@ type ChessboardEntityInterface interface {
 	GetPiece(int, int) (int, error)
 	IsSquareEmpty(int, int) (bool, error)
 	IsOpponent(int, int, int) (bool, error)
+	IsWithinBounds(int, int) bool
 	// SetFen(fen string) (*ChessboardEntity, error)
 	// ResetBoard() (*ChessboardEntity, error)
 	// SetPiece(position string, peice int) error
