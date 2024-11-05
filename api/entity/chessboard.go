@@ -19,6 +19,7 @@ type ChessboardEntityInterface interface {
 	GetPiece(int, int) (int, error)
 	IsSquareEmpty(int, int) (bool, error)
 	IsOpponent(int, int, int) (bool, error)
+	IsWithinBounds(int, int) bool
 	// SetFen(fen string) (*ChessboardEntity, error)
 	// ResetBoard() (*ChessboardEntity, error)
 	// SetPiece(position string, peice int) error
@@ -118,7 +119,7 @@ func (entity *ChessboardEntity) GetFullmoveNumber() (string, error) {
 }
 
 func (entity *ChessboardEntity) GetPiece(row int, col int) (int, error) {
-	if !entity.isWithinBounds(row, col) {
+	if !entity.IsWithinBounds(row, col) {
 		return -7, errors.New("ChessboardEntity.GetPiece: row or col out of bounds")
 	}
 
@@ -130,7 +131,7 @@ func (entity *ChessboardEntity) GetPiece(row int, col int) (int, error) {
 }
 
 func (entity *ChessboardEntity) IsSquareEmpty(row int, col int) (bool, error) {
-	if !entity.isWithinBounds(row, col) {
+	if !entity.IsWithinBounds(row, col) {
 		return false, nil
 	}
 
@@ -145,7 +146,7 @@ func (entity *ChessboardEntity) IsSquareEmpty(row int, col int) (bool, error) {
 }
 
 func (entity *ChessboardEntity) IsOpponent(piece int, row int, col int) (bool, error) {
-	if !entity.isWithinBounds(row, col) {
+	if !entity.IsWithinBounds(row, col) {
 		return false, nil
 	}
 
@@ -186,7 +187,7 @@ func (entity *ChessboardEntity) IsOpponent(piece int, row int, col int) (bool, e
 	return true, nil
 }
 
-func (entity *ChessboardEntity) isWithinBounds(toX int, toY int) bool {
+func (entity *ChessboardEntity) IsWithinBounds(toX int, toY int) bool {
 	if (toX > 7) || (toX < 0) || (toY > 7) || (toY < 0) {
 		return false
 	} else {
