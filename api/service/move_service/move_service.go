@@ -82,8 +82,16 @@ func (service *MoveService) FindBestMove(chessboard entity.ChessboardEntityInter
 					return nil, errors.New("MoveService.FindBestMove:" + err.Error())
 				}
 				moves = append(moves, rookMoves...)
-			// case 5: // Get Queen Move
-			// 	getQueenMove(piece, row, col, chessboard)
+			case 5: // Get Queen Move
+				queenMoves, err := getQueenMove(piece, row, col, chessboard)
+				if err != nil {
+					logger.Log.WithFields(logrus.Fields{
+						"board": board,
+						"row":   row, "col": col,
+					}).Error()
+					return nil, errors.New("MoveService.FindBestMove:" + err.Error())
+				}
+				moves = append(moves, queenMoves...)
 			// case 6: // Get King Move
 			// 	getKingMove(piece, row, col, chessboard)
 			default: // NOTE: Error on default when rest of cases are completed. for now add random move
@@ -435,5 +443,24 @@ func getRookMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEn
 			toY += deltaY[i]
 		}
 	}
+	return moves, nil
+}
+
+func getQueenMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEntityInterface) ([]entity.MoveEntityInterface, error) {
+	var moves []entity.MoveEntityInterface
+
+	diagonalMoves, err := getBishopMove(piece, fromY, fromX, chessboard)
+	if err != nil {
+		logger.Log.Error("getQueenMove: failed getting bishop moves")
+		return nil, errors.New("MoveService.getQueenMove:" + err.Error())
+	}
+	moves = append(moves, diagonalMoves...)
+	verticalMoves, err := getRookMove(piece, fromY, fromX, chessboard)
+	if err != nil {
+		logger.Log.Error("getQueenMove: failed getting rook moves")
+		return nil, errors.New("MoveService.getQueenMove:" + err.Error())
+	}
+	moves = append(moves, verticalMoves...)
+
 	return moves, nil
 }
