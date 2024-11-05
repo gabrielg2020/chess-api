@@ -72,8 +72,16 @@ func (service *MoveService) FindBestMove(chessboard entity.ChessboardEntityInter
 					return nil, errors.New("MoveService.FindBestMove:" + err.Error())
 				}
 				moves = append(moves, bishopMoves...)
-			// case 4: // Get Rook Move
-			// 	getRookMove(piece, row, col, chessboard)
+			case 4: // Get Rook Move
+				rookMoves, err := getRookMove(piece, row, col, chessboard)
+				if err != nil {
+					logger.Log.WithFields(logrus.Fields{
+						"board": board,
+						"row":   row, "col": col,
+					}).Error()
+					return nil, errors.New("MoveService.FindBestMove:" + err.Error())
+				}
+				moves = append(moves, rookMoves...)
 			// case 5: // Get Queen Move
 			// 	getQueenMove(piece, row, col, chessboard)
 			// case 6: // Get King Move
@@ -235,6 +243,8 @@ func getPawnMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEn
 	return moves, nil
 }
 
+// FEAT can create a move gen with delta's as input
+
 func getKnightMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEntityInterface) ([]entity.MoveEntityInterface, error) {
 	var moves []entity.MoveEntityInterface
 
@@ -301,6 +311,72 @@ func getBishopMove(piece int, fromY int, fromX int, chessboard entity.Chessboard
 
 	deltaX := []int{1, -1, 1, -1}
 	deltaY := []int{1, 1, -1, -1}
+
+	for i := 0; i < 4; i++ {
+		toX, toY := fromX+deltaX[i], fromY+deltaY[i]
+		for chessboard.IsWithinBounds(toY, toX) {
+			isSquareEmpty, err := chessboard.IsSquareEmpty(toY, toX)
+			if err != nil {
+				logger.Log.WithFields(logrus.Fields{
+					"fromX": fromX, "fromY": fromY,
+					"toX": toX, "toY": toY,
+				}).Error("failed checking square")
+				return nil, errors.New("MoveService.getBishopMove: " + err.Error())
+			}
+
+			if isSquareEmpty {
+				// Create move
+				logger.Log.Debugf("getBishopMove: move added. moves array now contains %v move/s", len(moves))
+				moves = append(moves, entity.NewMoveEntity(
+					HelperService.IntPtr(fromX), HelperService.IntPtr(fromY),
+					HelperService.IntPtr(toX), HelperService.IntPtr(toY),
+					HelperService.IntPtr(0),
+					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+					HelperService.IntPtr(0),
+				))
+			} else {
+				isOpponent, err := chessboard.IsOpponent(piece, toY, toX)
+				if err != nil {
+					logger.Log.WithFields(logrus.Fields{
+						"fromX": fromX, "fromY": fromY,
+						"toX": toX, "toY": toY,
+					}).Error("failed checking square")
+					return nil, errors.New("MoveService.getBishopMove: " + err.Error())
+				}
+
+				if isOpponent {
+					// Create move
+					pieceCaptured, err := chessboard.GetPiece(toY, toX)
+					if err != nil {
+						logger.Log.WithFields(logrus.Fields{
+							"fromX": fromX, "fromY": fromY,
+							"toX": toX, "toY": toY,
+						}).Error("failed getting piece")
+						return nil, errors.New("MoveService.getBishopMove: " + err.Error())
+					}
+					logger.Log.Debugf("getBishopMove: move added. moves array now contains %v move/s", len(moves))
+					moves = append(moves, entity.NewMoveEntity(
+						HelperService.IntPtr(fromX), HelperService.IntPtr(fromY),
+						HelperService.IntPtr(toX), HelperService.IntPtr(toY),
+						HelperService.IntPtr(0),
+						HelperService.BoolPtr(false), HelperService.BoolPtr(false),
+						HelperService.IntPtr(pieceCaptured),
+					))
+				}
+				break
+			}
+			toX += deltaX[i]
+			toY += deltaY[i]
+		}
+	}
+	return moves, nil
+}
+
+func getRookMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEntityInterface) ([]entity.MoveEntityInterface, error) {
+	var moves []entity.MoveEntityInterface
+
+	deltaX := []int{1, -1, 0, 0}
+	deltaY := []int{0, 0, 1, -1}
 
 	for i := 0; i < 4; i++ {
 		toX, toY := fromX+deltaX[i], fromY+deltaY[i]
