@@ -2,6 +2,7 @@ package entity
 
 import (
 	"errors"
+	MoveService "github.com/gabrielg2020/chess-api/api/service/move_service"
 	"math"
 	"strconv"
 	"strings"
@@ -20,6 +21,7 @@ type ChessboardEntityInterface interface {
 	IsSquareEmpty(int, int) (bool, error)
 	IsOpponent(int, int, int) (bool, error)
 	IsWithinBounds(int, int) bool
+	IsSquareUnderAttack(int, int, int) (bool, error)
 	// SetFen(fen string) (*ChessboardEntity, error)
 	// ResetBoard() (*ChessboardEntity, error)
 	// SetPiece(position string, peice int) error
@@ -193,6 +195,43 @@ func (entity *ChessboardEntity) IsWithinBounds(toX int, toY int) bool {
 	} else {
 		return true
 	}
+}
+
+// TODO needs testing :(
+func (entity *ChessboardEntity) IsSquareUnderAttack(piece int, row int, col int) (bool, error) {
+	if piece == 0 {
+		return false, nil
+	}
+
+	var opponentColour string
+	if piece > 0 {
+		opponentColour = "b"
+	} else {
+		opponentColour = "w"
+	}
+
+	moveService := MoveService.NewMoveService()
+	opponentMoves, err := moveService.FindPseudoLegalMoves(opponentColour, entity)
+	if err != nil {
+		return false, errors.New("ChessboardEntity.IsSquareUnderAttack: " + err.Error())
+	}
+
+	for _, move := range opponentMoves {
+		toX, err := move.GetToX()
+		if err != nil {
+			return false, errors.New("ChessboardEntity.IsSquareUnderAttack: " + err.Error())
+		}
+
+		toY, err := move.GetToY()
+		if err != nil {
+			return false, errors.New("ChessboardEntity.IsSquareUnderAttack: " + err.Error())
+		}
+
+		if toX == row && toY == col {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func (entity *ChessboardEntity) convertChessNotation(chessNotation string) (int, int, error) {
