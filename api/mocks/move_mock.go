@@ -47,3 +47,8 @@ func (m *MockMoveEntity) GetCaptured() (int, error) {
 	args := m.Called()
 	return args.Int(0), args.Error(1)
 }
+
+func (m *MockMoveEntity) GetChessNotation() (string, error) {
+	args := m.Called()
+	return args.String(0), args.Error(1)
+}
