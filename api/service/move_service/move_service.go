@@ -12,6 +12,7 @@ import (
 
 type MoveServiceInterface interface {
 	FindBestMove(chessboard entity.ChessboardEntityInterface) (entity.MoveEntityInterface, error)
+	FindPseudoLegalMoves(colour string, chessboard entity.ChessboardEntityInterface) ([]entity.MoveEntityInterface, error)
 }
 
 type MoveService struct{}
@@ -21,24 +22,41 @@ func NewMoveService() *MoveService {
 }
 
 func (service *MoveService) FindBestMove(chessboard entity.ChessboardEntityInterface) (entity.MoveEntityInterface, error) {
-	// 1. Find Pseudo Legal Moves // TODO move Pseudo Legal Moves into separate function
-	// a. Create a moves array
-	var moves []entity.MoveEntityInterface
-	board, err := chessboard.GetBoard()
-	if err != nil {
-		logger.Log.Error()
-		return nil, errors.New("MoveService.FindBestMove:" + err.Error())
-	}
+	// 1. Find Pseudo Legal Moves
 	activeColour, err := chessboard.GetActiveColour()
 	if err != nil {
 		logger.Log.Error()
 		return nil, errors.New("MoveService.FindBestMove:" + err.Error())
 	}
-	// b. Loop through the board
+
+	pseudoLegalMoves, err := service.FindPseudoLegalMoves(activeColour, chessboard)
+	if err != nil {
+		logger.Log.Error()
+		return nil, errors.New("MoveService.FindBestMove:" + err.Error())
+	}
+
+	// 2. Filter for Legal Moves // TODO moveFilter for Legal Moves into separate function
+	// a. Remove any move that goes off the board
+	// b. Remove any move that place king in check
+	// 3. Return Legal Moves
+	// a. Return moves array
+	logger.Log.Debugf("FindBestMove: moves array contains %v move/s", len(pseudoLegalMoves))
+	return pseudoLegalMoves[0], nil
+}
+
+func (service *MoveService) FindPseudoLegalMoves(colour string, chessboard entity.ChessboardEntityInterface) ([]entity.MoveEntityInterface, error) {
+	var moves []entity.MoveEntityInterface
+
+	board, err := chessboard.GetBoard()
+	if err != nil {
+		logger.Log.Error()
+		return nil, errors.New("MoveService.findPseudoLegalMoves:" + err.Error())
+	}
+
 	for row := 0; row < 8; row++ {
 		for col := 0; col < 8; col++ {
 			piece := board[row][col]
-			if piece == 0 || (activeColour == "w" && math.Signbit(float64(piece))) || (activeColour == "b" && !math.Signbit(float64(piece))) {
+			if piece == 0 || (colour == "w" && math.Signbit(float64(piece))) || (colour == "b" && !math.Signbit(float64(piece))) {
 				continue
 			}
 			switch math.Abs(float64(piece)) {
@@ -49,7 +67,7 @@ func (service *MoveService) FindBestMove(chessboard entity.ChessboardEntityInter
 						"board": board,
 						"row":   row, "col": col,
 					}).Error()
-					return nil, errors.New("MoveService.FindBestMove:" + err.Error())
+					return nil, errors.New("MoveService.findPseudoLegalMoves:" + err.Error())
 				}
 				moves = append(moves, pawnMoves...)
 			case 2: // Get Knight Move
@@ -59,7 +77,7 @@ func (service *MoveService) FindBestMove(chessboard entity.ChessboardEntityInter
 						"board": board,
 						"row":   row, "col": col,
 					}).Error()
-					return nil, errors.New("MoveService.FindBestMove:" + err.Error())
+					return nil, errors.New("MoveService.findPseudoLegalMoves:" + err.Error())
 				}
 				moves = append(moves, knightMoves...)
 			case 3: // Get Bishop Move
@@ -69,7 +87,7 @@ func (service *MoveService) FindBestMove(chessboard entity.ChessboardEntityInter
 						"board": board,
 						"row":   row, "col": col,
 					}).Error()
-					return nil, errors.New("MoveService.FindBestMove:" + err.Error())
+					return nil, errors.New("MoveService.findPseudoLegalMoves:" + err.Error())
 				}
 				moves = append(moves, bishopMoves...)
 			case 4: // Get Rook Move
@@ -79,7 +97,7 @@ func (service *MoveService) FindBestMove(chessboard entity.ChessboardEntityInter
 						"board": board,
 						"row":   row, "col": col,
 					}).Error()
-					return nil, errors.New("MoveService.FindBestMove:" + err.Error())
+					return nil, errors.New("MoveService.findPseudoLegalMoves:" + err.Error())
 				}
 				moves = append(moves, rookMoves...)
 			case 5: // Get Queen Move
@@ -89,7 +107,7 @@ func (service *MoveService) FindBestMove(chessboard entity.ChessboardEntityInter
 						"board": board,
 						"row":   row, "col": col,
 					}).Error()
-					return nil, errors.New("MoveService.FindBestMove:" + err.Error())
+					return nil, errors.New("MoveService.findPseudoLegalMoves:" + err.Error())
 				}
 				moves = append(moves, queenMoves...)
 			case 6: // Get King Move
@@ -99,7 +117,7 @@ func (service *MoveService) FindBestMove(chessboard entity.ChessboardEntityInter
 						"board": board,
 						"row":   row, "col": col,
 					}).Error()
-					return nil, errors.New("MoveService.FindBestMove:" + err.Error())
+					return nil, errors.New("MoveService.findPseudoLegalMoves:" + err.Error())
 				}
 				moves = append(moves, kingMoves...)
 			default: // Error if piece not found
@@ -107,21 +125,14 @@ func (service *MoveService) FindBestMove(chessboard entity.ChessboardEntityInter
 					"board": board,
 					"row":   row, "col": col,
 				}).Error()
-				return nil, errors.New("MoveService.FindBestMove: piece not found")
+				return nil, errors.New("MoveService.findPseudoLegalMoves: piece not found")
 			}
 		}
 	}
-	// c. For each piece, find all moves
-	// 2. Filter for Legal Moves // TODO moveFilter for Legal Moves into separate function
-	// a. Remove any move that goes off the board
-	// b. Remove any move that place king in check
-	// 3. Return Legal Moves
-	// a. Return moves array
-	logger.Log.Debugf("FindBestMove: moves array contains %v move/s", len(moves))
-	return moves[0], nil
+
+	return moves, nil
 }
 
-// TODO needs testing
 func generateMoves(piece int, fromY int, fromX int, deltaXs []int, deltaYs []int, isSliding bool, chessboard entity.ChessboardEntityInterface) ([]entity.MoveEntityInterface, error) {
 	var moves []entity.MoveEntityInterface
 
@@ -309,8 +320,6 @@ func getPawnMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEn
 	return moves, nil
 }
 
-// FEAT can create a move gen with delta's as input
-
 func getKnightMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEntityInterface) ([]entity.MoveEntityInterface, error) {
 	deltaXs := []int{1, 1, -1, -1, 2, 2, -2, -2}
 	deltaYs := []int{2, -2, 2, -2, 1, -1, 1, -1}
@@ -323,6 +332,7 @@ func getBishopMove(piece int, fromY int, fromX int, chessboard entity.Chessboard
 	return generateMoves(piece, fromY, fromX, deltaXs, deltaYs, true, chessboard)
 }
 
+// TODO castling logic is missing
 func getRookMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEntityInterface) ([]entity.MoveEntityInterface, error) {
 	deltaXs := []int{1, -1, 0, 0}
 	deltaYs := []int{0, 0, 1, -1}
