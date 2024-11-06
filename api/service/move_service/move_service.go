@@ -166,24 +166,12 @@ func getPawnMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEn
 		if toY == promotionRank {
 			for _, promotionPiece := range []int{2, 3, 4, 5} { // Create a move for each piece it can promote too
 				logger.Log.Debugf("getPawnMove: move added. moves array now contains %v move/s", len(moves))
-				moves = append(moves, entity.NewMoveEntity(
-					HelperService.IntPtr(fromX), HelperService.IntPtr(fromY),
-					HelperService.IntPtr(toX), HelperService.IntPtr(toY),
-					HelperService.IntPtr(promotionPiece*(-1*direction)),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				))
+				addMove(fromX, fromY, toX, toY, promotionPiece*(-1*direction), false, false, 0, &moves)
 			}
 		} else {
 			// Create move
 			logger.Log.Debugf("getPawnMove: move added. moves array now contains %v move/s", len(moves))
-			moves = append(moves, entity.NewMoveEntity(
-				HelperService.IntPtr(fromX), HelperService.IntPtr(fromY),
-				HelperService.IntPtr(toX), HelperService.IntPtr(toY),
-				HelperService.IntPtr(0),
-				HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-				HelperService.IntPtr(0),
-			))
+			addMove(fromX, fromY, toX, toY, 0, false, false, 0, &moves)
 
 			// Move 2 forward
 			toY += direction
@@ -201,13 +189,7 @@ func getPawnMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEn
 				// Don't check if can promote because a pawn can never promote off first move
 				// Create move
 				logger.Log.Debugf("getPawnMove: move added. moves array now contains %v move/s", len(moves))
-				moves = append(moves, entity.NewMoveEntity(
-					HelperService.IntPtr(fromX), HelperService.IntPtr(fromY),
-					HelperService.IntPtr(toX), HelperService.IntPtr(toY),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(true),
-					HelperService.IntPtr(0),
-				))
+				addMove(fromX, fromY, toX, toY, 0, false, true, 0, &moves)
 			}
 		}
 	}
@@ -243,24 +225,12 @@ func getPawnMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEn
 			if toY == promotionRank {
 				for _, promotionPiece := range []int{2, 3, 4, 5} { // Create a move for each piece it can promote too
 					logger.Log.Debugf("getPawnMove: move added. moves array now contains %v move/s", len(moves))
-					moves = append(moves, entity.NewMoveEntity(
-						HelperService.IntPtr(fromX), HelperService.IntPtr(fromY),
-						HelperService.IntPtr(toX), HelperService.IntPtr(toY),
-						HelperService.IntPtr(promotionPiece*(-1*direction)),
-						HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-						HelperService.IntPtr(pieceCaptured),
-					))
+					addMove(fromX, fromY, toX, toY, promotionPiece*(-1*direction), false, false, pieceCaptured, &moves)
 				}
 			} else {
 				// Create move
 				logger.Log.Debugf("getPawnMove: move added. moves array now contains %v move/s", len(moves))
-				moves = append(moves, entity.NewMoveEntity(
-					HelperService.IntPtr(fromX), HelperService.IntPtr(fromY),
-					HelperService.IntPtr(toX), HelperService.IntPtr(toY),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(pieceCaptured),
-				))
+				addMove(fromX, fromY, toX, toY, 0, false, false, pieceCaptured, &moves)
 			}
 		}
 	}
@@ -289,13 +259,7 @@ func getKnightMove(piece int, fromY int, fromX int, chessboard entity.Chessboard
 		if isSquareEmpty {
 			// Create move
 			logger.Log.Debugf("getKnightMove: move added. moves array now contains %v move/s", len(moves))
-			moves = append(moves, entity.NewMoveEntity(
-				HelperService.IntPtr(fromX), HelperService.IntPtr(fromY),
-				HelperService.IntPtr(toX), HelperService.IntPtr(toY),
-				HelperService.IntPtr(0),
-				HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-				HelperService.IntPtr(0),
-			))
+			addMove(fromX, fromY, toX, toY, 0, false, false, 0, &moves)
 		} else {
 			isOpponent, err := chessboard.IsOpponent(piece, toY, toX)
 			if err != nil {
@@ -317,13 +281,7 @@ func getKnightMove(piece int, fromY int, fromX int, chessboard entity.Chessboard
 					return nil, errors.New("MoveService.getKnightMove: " + err.Error())
 				}
 				logger.Log.Debugf("getKnightMove: move added. moves array now contains %v move/s", len(moves))
-				moves = append(moves, entity.NewMoveEntity(
-					HelperService.IntPtr(fromX), HelperService.IntPtr(fromY),
-					HelperService.IntPtr(toX), HelperService.IntPtr(toY),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(pieceCaptured),
-				))
+				addMove(fromX, fromY, toX, toY, 0, false, false, pieceCaptured, &moves)
 			}
 		}
 	}
@@ -351,13 +309,7 @@ func getBishopMove(piece int, fromY int, fromX int, chessboard entity.Chessboard
 			if isSquareEmpty {
 				// Create move
 				logger.Log.Debugf("getBishopMove: move added. moves array now contains %v move/s", len(moves))
-				moves = append(moves, entity.NewMoveEntity(
-					HelperService.IntPtr(fromX), HelperService.IntPtr(fromY),
-					HelperService.IntPtr(toX), HelperService.IntPtr(toY),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				))
+				addMove(fromX, fromY, toX, toY, 0, false, false, 0, &moves)
 			} else {
 				isOpponent, err := chessboard.IsOpponent(piece, toY, toX)
 				if err != nil {
@@ -379,13 +331,7 @@ func getBishopMove(piece int, fromY int, fromX int, chessboard entity.Chessboard
 						return nil, errors.New("MoveService.getBishopMove: " + err.Error())
 					}
 					logger.Log.Debugf("getBishopMove: move added. moves array now contains %v move/s", len(moves))
-					moves = append(moves, entity.NewMoveEntity(
-						HelperService.IntPtr(fromX), HelperService.IntPtr(fromY),
-						HelperService.IntPtr(toX), HelperService.IntPtr(toY),
-						HelperService.IntPtr(0),
-						HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-						HelperService.IntPtr(pieceCaptured),
-					))
+					addMove(fromX, fromY, toX, toY, 0, false, false, pieceCaptured, &moves)
 				}
 				break
 			}
@@ -417,13 +363,7 @@ func getRookMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEn
 			if isSquareEmpty {
 				// Create move
 				logger.Log.Debugf("getRookMove: move added. moves array now contains %v move/s", len(moves))
-				moves = append(moves, entity.NewMoveEntity(
-					HelperService.IntPtr(fromX), HelperService.IntPtr(fromY),
-					HelperService.IntPtr(toX), HelperService.IntPtr(toY),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				))
+				addMove(fromX, fromY, toX, toY, 0, false, false, 0, &moves)
 			} else {
 				isOpponent, err := chessboard.IsOpponent(piece, toY, toX)
 				if err != nil {
@@ -445,13 +385,7 @@ func getRookMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEn
 						return nil, errors.New("MoveService.getRookMove: " + err.Error())
 					}
 					logger.Log.Debugf("getRookMove: move added. moves array now contains %v move/s", len(moves))
-					moves = append(moves, entity.NewMoveEntity(
-						HelperService.IntPtr(fromX), HelperService.IntPtr(fromY),
-						HelperService.IntPtr(toX), HelperService.IntPtr(toY),
-						HelperService.IntPtr(0),
-						HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-						HelperService.IntPtr(pieceCaptured),
-					))
+					addMove(fromX, fromY, toX, toY, 0, false, false, pieceCaptured, &moves)
 				}
 				break
 			}
@@ -501,13 +435,7 @@ func getKingMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEn
 		if isSquareEmpty {
 			// Create move
 			logger.Log.Debugf("getKingMove: move added. moves array now contains %v move/s", len(moves))
-			moves = append(moves, entity.NewMoveEntity(
-				HelperService.IntPtr(fromX), HelperService.IntPtr(fromY),
-				HelperService.IntPtr(toX), HelperService.IntPtr(toY),
-				HelperService.IntPtr(0),
-				HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-				HelperService.IntPtr(0),
-			))
+			addMove(fromX, fromY, toX, toY, 0, false, false, 0, &moves)
 		} else {
 			isOpponent, err := chessboard.IsOpponent(piece, toY, toX)
 			if err != nil {
@@ -529,16 +457,9 @@ func getKingMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEn
 					return nil, errors.New("MoveService.getKingMove: " + err.Error())
 				}
 				logger.Log.Debugf("getKingMove: move added. moves array now contains %v move/s", len(moves))
-				moves = append(moves, entity.NewMoveEntity(
-					HelperService.IntPtr(fromX), HelperService.IntPtr(fromY),
-					HelperService.IntPtr(toX), HelperService.IntPtr(toY),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(pieceCaptured),
-				))
+				addMove(fromX, fromY, toX, toY, 0, false, false, pieceCaptured, &moves)
 			}
 		}
 	}
-
 	return moves, nil
 }
