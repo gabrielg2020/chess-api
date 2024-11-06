@@ -107,6 +107,123 @@ func compareMoves(t *testing.T, expected entity.MoveEntityInterface, actual enti
 	assert.Equal(t, capturedExpected, capturedActual)
 }
 
+func Test_MoveService_tryAddMove(t *testing.T) {
+	testCases := []struct {
+		name             string
+		piece            int
+		fromX            int // col
+		fromY            int // row
+		toX              int // col
+		toY              int // row
+		moves            *[]entity.MoveEntityInterface
+		setupMock        func(m *mocks.MockChessboardEntity)
+		expectedResponse bool
+		expectedError    error
+	}{
+		{
+			name:  "Add A Non-Capture Move",
+			piece: 5,
+			fromX: 3,
+			fromY: 3,
+			toX:   4,
+			toY:   4,
+			moves: &[]entity.MoveEntityInterface{},
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("IsSquareEmpty", 4, 4).Return(true, nil)
+			},
+			expectedResponse: true,
+			expectedError:    nil,
+		},
+		{
+			name:  "Add A Capture Move",
+			piece: 5,
+			fromX: 3,
+			fromY: 3,
+			toX:   4,
+			toY:   4,
+			moves: &[]entity.MoveEntityInterface{},
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("IsSquareEmpty", 4, 4).Return(false, nil)
+				m.On("IsOpponent", 5, 4, 4).Return(true, nil)
+				m.On("GetPiece", 4, 4).Return(-5, nil)
+			},
+			expectedResponse: true,
+			expectedError:    nil,
+		},
+		{
+			name:  "Failed To Check If Square Is Empty",
+			piece: 5,
+			fromX: 3,
+			fromY: 3,
+			toX:   4,
+			toY:   4,
+			moves: &[]entity.MoveEntityInterface{},
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				// Fail on IsSquareEmpty
+				m.On("IsSquareEmpty", 4, 4).Return(false, errors.New("ChessboardEntity.IsSquareEmpty: board is not set"))
+			},
+			expectedResponse: false,
+			expectedError:    errors.New("MoveService.tryAddMove: ChessboardEntity.IsSquareEmpty: board is not set"),
+		},
+		{
+			name:  "Failed To Check If Opponent",
+			piece: 5,
+			fromX: 3,
+			fromY: 3,
+			toX:   4,
+			toY:   4,
+			moves: &[]entity.MoveEntityInterface{},
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				// Pass on IsSquareEmpty
+				m.On("IsSquareEmpty", 4, 4).Return(false, nil)
+				// Fail on IsOpponent
+				m.On("IsOpponent", 5, 4, 4).Return(false, errors.New("ChessboardEntity.IsOpponent: board is not set"))
+			},
+			expectedResponse: false,
+			expectedError:    errors.New("MoveService.tryAddMove: ChessboardEntity.IsOpponent: board is not set"),
+		},
+		{
+			name:  "Failed To Get Captured Piece",
+			piece: 5,
+			fromX: 3,
+			fromY: 3,
+			toX:   4,
+			toY:   4,
+			moves: &[]entity.MoveEntityInterface{},
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				// Pass on IsSquareEmpty
+				m.On("IsSquareEmpty", 4, 4).Return(false, nil)
+				// Pass on IsOpponent
+				m.On("IsOpponent", 5, 4, 4).Return(true, nil)
+				// Fail on GetPiece
+				m.On("GetPiece", 4, 4).Return(0, errors.New("ChessboardEntity.GetPiece: row or col out of bounds"))
+			},
+			expectedResponse: false,
+			expectedError:    errors.New("MoveService.tryAddMove: ChessboardEntity.GetPiece: row or col out of bounds"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Arrange
+			mockChessboard := new(mocks.MockChessboardEntity)
+			tc.setupMock(mockChessboard)
+
+			// Act
+			response, err := tryAddMove(tc.piece, tc.fromY, tc.fromX, tc.toY, tc.toX, tc.moves, mockChessboard)
+
+			// Assert
+			if tc.expectedError != nil {
+				assert.EqualError(t, err, tc.expectedError.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedResponse, response)
+			}
+		})
+	}
+
+}
+
 func Test_MoveService_getPawnMove(t *testing.T) {
 	testCases := []struct {
 		name          string
