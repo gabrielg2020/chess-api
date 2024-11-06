@@ -107,6 +107,106 @@ func compareMoves(t *testing.T, expected entity.MoveEntityInterface, actual enti
 	assert.Equal(t, capturedExpected, capturedActual)
 }
 
+func Test_MoveService_generateMoves(t *testing.T) {
+	testCases := []struct {
+		name           string
+		deltaXs        []int
+		deltaYs        []int
+		isSliding      bool
+		setupMock      func(m *mocks.MockChessboardEntity)
+		expectedLength int
+		expectedError  error
+	}{
+		{
+			name:      "Sliding Piece",
+			deltaXs:   []int{1},
+			deltaYs:   []int{1},
+			isSliding: true,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("IsWithinBounds", 4, 4).Return(true, nil)
+				m.On("IsSquareEmpty", 4, 4).Return(true, nil)
+				m.On("IsWithinBounds", 5, 5).Return(true, nil)
+				m.On("IsSquareEmpty", 5, 5).Return(true, nil)
+				m.On("IsWithinBounds", 6, 6).Return(true, nil)
+				m.On("IsSquareEmpty", 6, 6).Return(true, nil)
+				m.On("IsWithinBounds", 7, 7).Return(true, nil)
+				m.On("IsSquareEmpty", 7, 7).Return(true, nil)
+				m.On("IsWithinBounds", 8, 8).Return(false, nil)
+			},
+			expectedLength: 4,
+			expectedError:  nil,
+		},
+		{
+			name:      "Non-Sliding Piece",
+			deltaXs:   []int{1},
+			deltaYs:   []int{2},
+			isSliding: false,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("IsWithinBounds", 5, 4).Return(true, nil)
+				m.On("IsSquareEmpty", 5, 4).Return(true, nil)
+			},
+			expectedLength: 1,
+			expectedError:  nil,
+		},
+		{
+			name:      "Sliding Piece When Out Of Bounds",
+			deltaXs:   []int{1},
+			deltaYs:   []int{1},
+			isSliding: true,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("IsWithinBounds", 4, 4).Return(true, nil)
+				m.On("IsSquareEmpty", 4, 4).Return(false, errors.New("MoveService.tryAddMove: ChessboardEntity.IsSquareEmpty: board is not set"))
+			},
+			expectedLength: 0,
+			expectedError:  errors.New("MoveService.generateMove: MoveService.tryAddMove: ChessboardEntity.IsSquareEmpty: board is not set"),
+		},
+		{
+			name:      "Sliding Piece When Other Piece Blocks",
+			deltaXs:   []int{1},
+			deltaYs:   []int{1},
+			isSliding: true,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("IsWithinBounds", 4, 4).Return(true, nil)
+				m.On("IsSquareEmpty", 4, 4).Return(false, nil)
+				m.On("IsOpponent", 5, 4, 4).Return(false, nil)
+			},
+			expectedLength: 0,
+			expectedError:  nil,
+		},
+		{
+			name:      "Non-Sliding Piece When Out Of Bounds",
+			deltaXs:   []int{1},
+			deltaYs:   []int{2},
+			isSliding: false,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("IsWithinBounds", 5, 4).Return(true, nil)
+				m.On("IsSquareEmpty", 5, 4).Return(false, errors.New("MoveService.tryAddMove: ChessboardEntity.IsSquareEmpty: board is not set"))
+			},
+			expectedLength: 0,
+			expectedError:  errors.New("MoveService.generateMove: MoveService.tryAddMove: ChessboardEntity.IsSquareEmpty: board is not set"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Arrange
+			mockChessboard := new(mocks.MockChessboardEntity)
+			tc.setupMock(mockChessboard)
+
+			// Act
+			moves, err := generateMoves(5, 3, 3, tc.deltaXs, tc.deltaYs, tc.isSliding, mockChessboard)
+
+			// Assert
+			if tc.expectedError != nil {
+				assert.EqualError(t, err, tc.expectedError.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Len(t, moves, tc.expectedLength)
+			}
+		})
+	}
+}
+
 func Test_MoveService_tryAddMove(t *testing.T) {
 	testCases := []struct {
 		name             string
