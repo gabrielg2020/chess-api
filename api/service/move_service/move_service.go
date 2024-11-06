@@ -215,6 +215,128 @@ func addMove(fromX int, fromY int, toX int, toY int, promotionPiece int, isCastl
 	))
 }
 
+func getCastlingMoves(piece int, fromY int, fromX int, chessboard entity.ChessboardEntityInterface) ([]entity.MoveEntityInterface, error) {
+	var moves []entity.MoveEntityInterface
+
+	// Get castling rights
+	castlingRights, err := chessboard.GetCastlingRights()
+	if err != nil {
+		logger.Log.Error()
+		return nil, errors.New("MoveService.getCastlingMoves: " + err.Error())
+	}
+
+	var kingSideRight, queenSideRight rune
+	var kingSideX, queenSideX int
+
+	if piece > 0 {
+		kingSideRight, queenSideRight = 'K', 'Q'
+		kingSideX, queenSideX = fromX+2, fromX-2
+	} else {
+		kingSideRight, queenSideRight = 'k', 'q'
+		kingSideX, queenSideX = fromX-2, fromX+3
+	}
+
+	// King Side Castling
+	if strings.ContainsRune(castlingRights, kingSideRight) {
+		canCastle, err := canCastleKingSide(piece, fromY, fromX, chessboard)
+		if err != nil {
+			logger.Log.Error()
+			return nil, errors.New("MoveService.getCastlingMoves: " + err.Error())
+		}
+		if canCastle {
+			addMove(fromX, fromY, kingSideX, fromY, 0, true, false, 0, &moves)
+		}
+	}
+
+	// Queen Side Castling
+	if strings.ContainsRune(castlingRights, queenSideRight) {
+		canCastle, err := canCastleQueenSide(piece, fromY, fromX, chessboard)
+		if err != nil {
+			logger.Log.Error()
+			return nil, errors.New("MoveService.getCastlingMoves: " + err.Error())
+		}
+		if canCastle {
+			addMove(fromX, fromY, queenSideX, fromY, 0, true, false, 0, &moves)
+		}
+	}
+
+	return moves, nil
+}
+
+func canCastleKingSide(piece int, fromY int, fromX int, chessboard entity.ChessboardEntityInterface) (bool, error) {
+	pathX := []int{fromX + 1, fromX + 2}
+
+	for _, x := range pathX {
+		isSquareEmpty, err := chessboard.IsSquareEmpty(fromY, x)
+		if err != nil {
+			logger.Log.WithFields(logrus.Fields{
+				"fromX": fromX, "fromY": fromY,
+				"x": x,
+			}).Error("failed checking square")
+			return false, errors.New("MoveService.canCastleKingSide: " + err.Error())
+		}
+		if !isSquareEmpty {
+			return false, nil
+		}
+	}
+
+	rookX := fromX + 3
+	rookPiece, err := chessboard.GetPiece(fromY, rookX)
+	if err != nil {
+		logger.Log.WithFields(logrus.Fields{
+			"fromX": fromX, "fromY": fromY,
+			"rookX": rookX,
+		}).Error("failed getting rook piece")
+		return false, errors.New("MoveService.canCastleKingSide: " + err.Error())
+	}
+	expectedRook := 4
+	if piece < 0 {
+		expectedRook = -4
+	}
+	if rookPiece != expectedRook {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+func canCastleQueenSide(piece int, fromY int, fromX int, chessboard entity.ChessboardEntityInterface) (bool, error) {
+	pathX := []int{fromX - 1, fromX - 2, fromX - 3}
+
+	for _, x := range pathX {
+		isSquareEmpty, err := chessboard.IsSquareEmpty(fromY, x)
+		if err != nil {
+			logger.Log.WithFields(logrus.Fields{
+				"fromX": fromX, "fromY": fromY,
+				"x": x,
+			}).Error("failed checking square")
+			return false, errors.New("MoveService.canCastleKingSide: " + err.Error())
+		}
+		if !isSquareEmpty {
+			return false, nil
+		}
+	}
+
+	rookX := fromX - 4
+	rookPiece, err := chessboard.GetPiece(fromY, rookX)
+	if err != nil {
+		logger.Log.WithFields(logrus.Fields{
+			"fromX": fromX, "fromY": fromY,
+			"rookX": rookX,
+		}).Error("failed getting rook piece")
+		return false, errors.New("MoveService.canCastleKingSide: " + err.Error())
+	}
+	expectedRook := 4
+	if piece < 0 {
+		expectedRook = -4
+	}
+	if rookPiece != expectedRook {
+		return false, nil
+	}
+
+	return true, nil
+}
+
 // NOTE: When calling any methods from `chessboard` that interact with board, we must flip toX and toY as fromX=col and fromY=row
 // methods such as: IsSquareEmpty, GetPiece, IsOpponent
 
