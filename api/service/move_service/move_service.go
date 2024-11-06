@@ -121,6 +121,17 @@ func (service *MoveService) FindBestMove(chessboard entity.ChessboardEntityInter
 	return moves[0], nil
 }
 
+func addMove(fromX int, fromY int, toX int, toY int, piece int, isCastling bool, isDoublePawn bool, pieceCaptured int, moves *[]entity.MoveEntityInterface) {
+	// Add and create move
+	*moves = append(*moves, entity.NewMoveEntity(
+		HelperService.IntPtr(fromX), HelperService.IntPtr(fromY),
+		HelperService.IntPtr(toX), HelperService.IntPtr(toY),
+		HelperService.IntPtr(piece),
+		HelperService.BoolPtr(isCastling), HelperService.BoolPtr(isDoublePawn),
+		HelperService.IntPtr(pieceCaptured),
+	))
+}
+
 // NOTE: When calling any methods from `chessboard` that interact with board, we must flip toX and toY as fromX=col and fromY=row
 // methods such as: IsSquareEmpty, GetPiece, IsOpponent
 
