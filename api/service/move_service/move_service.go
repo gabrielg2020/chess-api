@@ -121,6 +121,40 @@ func (service *MoveService) FindBestMove(chessboard entity.ChessboardEntityInter
 	return moves[0], nil
 }
 
+// TODO needs testing
+func generateMoves(piece int, fromY int, fromX int, deltaXs []int, deltaYs []int, isSliding bool, chessboard entity.ChessboardEntityInterface) ([]entity.MoveEntityInterface, error) {
+	var moves []entity.MoveEntityInterface
+
+	for i := 0; i < len(deltaXs); i++ {
+		deltaX, deltaY := deltaXs[i], deltaYs[i]
+		toX, toY := fromX+deltaX, fromY+deltaY
+
+		if isSliding {
+			for chessboard.IsWithinBounds(toY, toX) {
+				moveAdded, err := tryAddMove(piece, fromY, fromX, toY, toX, &moves, chessboard)
+				if err != nil {
+					logger.Log.Error()
+					return nil, errors.New("MoveService.generateMoves: " + err.Error())
+				}
+				if !moveAdded {
+					break
+				}
+				toX += deltaX
+				toY += deltaY
+			}
+		} else {
+			if chessboard.IsWithinBounds(toY, toX) {
+				_, err := tryAddMove(piece, fromY, fromX, toY, toX, &moves, chessboard)
+				if err != nil {
+					logger.Log.Error()
+					return nil, errors.New("MoveService.generateMoves: " + err.Error())
+				}
+			}
+		}
+	}
+	return moves, nil
+}
+
 func tryAddMove(piece int, fromY int, fromX int, toY int, toX int, moves *[]entity.MoveEntityInterface, chessboard entity.ChessboardEntityInterface) (bool, error) {
 	isSquareEmpty, err := chessboard.IsSquareEmpty(toY, toX)
 	if err != nil {
