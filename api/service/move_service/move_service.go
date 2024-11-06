@@ -5,6 +5,7 @@ import (
 	"github.com/gabrielg2020/chess-api/pkg/logger"
 	"github.com/sirupsen/logrus"
 	"math"
+	"strings"
 
 	"github.com/gabrielg2020/chess-api/api/entity"
 	"github.com/gabrielg2020/chess-api/api/service/helper_service"
@@ -454,7 +455,6 @@ func getBishopMove(piece int, fromY int, fromX int, chessboard entity.Chessboard
 	return generateMoves(piece, fromY, fromX, deltaXs, deltaYs, true, chessboard)
 }
 
-// TODO castling logic is missing
 func getRookMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEntityInterface) ([]entity.MoveEntityInterface, error) {
 	deltaXs := []int{1, -1, 0, 0}
 	deltaYs := []int{0, 0, 1, -1}
@@ -468,7 +468,23 @@ func getQueenMove(piece int, fromY int, fromX int, chessboard entity.ChessboardE
 }
 
 func getKingMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEntityInterface) ([]entity.MoveEntityInterface, error) {
+	var moves []entity.MoveEntityInterface
+
 	deltaXs := []int{1, 1, 1, 0, 0, -1, -1, -1}
 	deltaYs := []int{1, 0, -1, 1, -1, 1, 0, -1}
-	return generateMoves(piece, fromY, fromX, deltaXs, deltaYs, false, chessboard)
+	normalMoves, err := generateMoves(piece, fromY, fromX, deltaXs, deltaYs, false, chessboard)
+	if err != nil {
+		logger.Log.Error()
+		return nil, errors.New("MoveService.getKingMove: " + err.Error())
+	}
+	moves = append(moves, normalMoves...)
+
+	castlingMoves, err := getCastlingMoves(piece, fromY, fromX, chessboard)
+	if err != nil {
+		logger.Log.Error()
+		return nil, errors.New("MoveService.getKingMove: " + err.Error())
+	}
+	moves = append(moves, castlingMoves...)
+
+	return moves, nil
 }
