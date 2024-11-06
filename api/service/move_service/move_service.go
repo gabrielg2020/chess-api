@@ -64,68 +64,47 @@ func (service *MoveService) FindPseudoLegalMoves(colour string, chessboard entit
 			case 1: // Get Pawn Move
 				pawnMoves, err := getPawnMove(piece, row, col, chessboard)
 				if err != nil {
-					logger.Log.WithFields(logrus.Fields{
-						"board": board,
-						"row":   row, "col": col,
-					}).Error()
+					logger.Log.Error()
 					return nil, errors.New("MoveService.findPseudoLegalMoves:" + err.Error())
 				}
 				moves = append(moves, pawnMoves...)
 			case 2: // Get Knight Move
 				knightMoves, err := getKnightMove(piece, row, col, chessboard)
 				if err != nil {
-					logger.Log.WithFields(logrus.Fields{
-						"board": board,
-						"row":   row, "col": col,
-					}).Error()
+					logger.Log.Error()
 					return nil, errors.New("MoveService.findPseudoLegalMoves:" + err.Error())
 				}
 				moves = append(moves, knightMoves...)
 			case 3: // Get Bishop Move
 				bishopMoves, err := getBishopMove(piece, row, col, chessboard)
 				if err != nil {
-					logger.Log.WithFields(logrus.Fields{
-						"board": board,
-						"row":   row, "col": col,
-					}).Error()
+					logger.Log.Error()
 					return nil, errors.New("MoveService.findPseudoLegalMoves:" + err.Error())
 				}
 				moves = append(moves, bishopMoves...)
 			case 4: // Get Rook Move
 				rookMoves, err := getRookMove(piece, row, col, chessboard)
 				if err != nil {
-					logger.Log.WithFields(logrus.Fields{
-						"board": board,
-						"row":   row, "col": col,
-					}).Error()
+					logger.Log.Error()
 					return nil, errors.New("MoveService.findPseudoLegalMoves:" + err.Error())
 				}
 				moves = append(moves, rookMoves...)
 			case 5: // Get Queen Move
 				queenMoves, err := getQueenMove(piece, row, col, chessboard)
 				if err != nil {
-					logger.Log.WithFields(logrus.Fields{
-						"board": board,
-						"row":   row, "col": col,
-					}).Error()
+					logger.Log.Error()
 					return nil, errors.New("MoveService.findPseudoLegalMoves:" + err.Error())
 				}
 				moves = append(moves, queenMoves...)
 			case 6: // Get King Move
 				kingMoves, err := getKingMove(piece, row, col, chessboard)
 				if err != nil {
-					logger.Log.WithFields(logrus.Fields{
-						"board": board,
-						"row":   row, "col": col,
-					}).Error()
+					logger.Log.Error()
 					return nil, errors.New("MoveService.findPseudoLegalMoves:" + err.Error())
 				}
 				moves = append(moves, kingMoves...)
 			default: // Error if piece not found
-				logger.Log.WithFields(logrus.Fields{
-					"board": board,
-					"row":   row, "col": col,
-				}).Error()
+				logger.Log.Error()
 				return nil, errors.New("MoveService.findPseudoLegalMoves: piece not found")
 			}
 		}
@@ -170,10 +149,7 @@ func generateMoves(piece int, fromY int, fromX int, deltaXs []int, deltaYs []int
 func tryAddMove(piece int, fromY int, fromX int, toY int, toX int, moves *[]entity.MoveEntityInterface, chessboard entity.ChessboardEntityInterface) (bool, error) {
 	isSquareEmpty, err := chessboard.IsSquareEmpty(toY, toX)
 	if err != nil {
-		logger.Log.WithFields(logrus.Fields{
-			"fromX": fromX, "fromY": fromY,
-			"toX": toX, "toY": toY,
-		}).Error("failed checking square")
+		logger.Log.Error()
 		return false, errors.New("MoveService.tryAddMove: " + err.Error())
 	}
 
@@ -183,20 +159,14 @@ func tryAddMove(piece int, fromY int, fromX int, toY int, toX int, moves *[]enti
 	} else {
 		isOpponent, err := chessboard.IsOpponent(piece, toY, toX)
 		if err != nil {
-			logger.Log.WithFields(logrus.Fields{
-				"fromX": fromX, "fromY": fromY,
-				"toX": toX, "toY": toY,
-			}).Error("failed checking is opponent")
+			logger.Log.Error("failed checking is opponent")
 			return false, errors.New("MoveService.tryAddMove: " + err.Error())
 		}
 
 		if isOpponent {
 			pieceCaptured, err := chessboard.GetPiece(toY, toX)
 			if err != nil {
-				logger.Log.WithFields(logrus.Fields{
-					"fromX": fromX, "fromY": fromY,
-					"toX": toX, "toY": toY,
-				}).Error("failed getting piece")
+				logger.Log.Error("failed getting piece")
 				return false, errors.New("MoveService.tryAddMove: " + err.Error())
 			}
 			addMove(fromX, fromY, toX, toY, 0, false, false, pieceCaptured, moves)
@@ -270,10 +240,7 @@ func canCastleKingSide(piece int, fromY int, fromX int, chessboard entity.Chessb
 	for _, x := range pathX {
 		isSquareEmpty, err := chessboard.IsSquareEmpty(fromY, x)
 		if err != nil {
-			logger.Log.WithFields(logrus.Fields{
-				"fromX": fromX, "fromY": fromY,
-				"x": x,
-			}).Error("failed checking square")
+			logger.Log.Error("failed checking square")
 			return false, errors.New("MoveService.canCastleKingSide: " + err.Error())
 		}
 		if !isSquareEmpty {
@@ -284,10 +251,7 @@ func canCastleKingSide(piece int, fromY int, fromX int, chessboard entity.Chessb
 	rookX := fromX + 3
 	rookPiece, err := chessboard.GetPiece(fromY, rookX)
 	if err != nil {
-		logger.Log.WithFields(logrus.Fields{
-			"fromX": fromX, "fromY": fromY,
-			"rookX": rookX,
-		}).Error("failed getting rook piece")
+		logger.Log.Error("failed getting rook piece")
 		return false, errors.New("MoveService.canCastleKingSide: " + err.Error())
 	}
 	expectedRook := 4
@@ -307,10 +271,7 @@ func canCastleQueenSide(piece int, fromY int, fromX int, chessboard entity.Chess
 	for _, x := range pathX {
 		isSquareEmpty, err := chessboard.IsSquareEmpty(fromY, x)
 		if err != nil {
-			logger.Log.WithFields(logrus.Fields{
-				"fromX": fromX, "fromY": fromY,
-				"x": x,
-			}).Error("failed checking square")
+			logger.Log.Error("failed checking square")
 			return false, errors.New("MoveService.canCastleKingSide: " + err.Error())
 		}
 		if !isSquareEmpty {
@@ -321,10 +282,7 @@ func canCastleQueenSide(piece int, fromY int, fromX int, chessboard entity.Chess
 	rookX := fromX - 4
 	rookPiece, err := chessboard.GetPiece(fromY, rookX)
 	if err != nil {
-		logger.Log.WithFields(logrus.Fields{
-			"fromX": fromX, "fromY": fromY,
-			"rookX": rookX,
-		}).Error("failed getting rook piece")
+		logger.Log.Error("failed getting rook piece")
 		return false, errors.New("MoveService.canCastleKingSide: " + err.Error())
 	}
 	expectedRook := 4
