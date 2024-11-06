@@ -121,8 +121,46 @@ func (service *MoveService) FindBestMove(chessboard entity.ChessboardEntityInter
 	return moves[0], nil
 }
 
+func tryAddMove(piece int, fromY int, fromX int, toY int, toX int, moves *[]entity.MoveEntityInterface, chessboard entity.ChessboardEntityInterface) (bool, error) {
+	isSquareEmpty, err := chessboard.IsSquareEmpty(toY, toX)
+	if err != nil {
+		logger.Log.WithFields(logrus.Fields{
+			"fromX": fromX, "fromY": fromY,
+			"toX": toX, "toY": toY,
+		}).Error("failed checking square")
+		return false, errors.New("MoveService.tryAddMove: " + err.Error())
+	}
+
+	if isSquareEmpty {
+		addMove(fromX, fromY, toX, toY, 0, false, false, 0, moves)
+		return true, nil
+	} else {
+		isOpponent, err := chessboard.IsOpponent(piece, toY, toX)
+		if err != nil {
+			logger.Log.WithFields(logrus.Fields{
+				"fromX": fromX, "fromY": fromY,
+				"toX": toX, "toY": toY,
+			}).Error("failed checking is opponent")
+			return false, errors.New("MoveService.tryAddMove: " + err.Error())
+		}
+
+		if isOpponent {
+			pieceCaptured, err := chessboard.GetPiece(toY, toX)
+			if err != nil {
+				logger.Log.WithFields(logrus.Fields{
+					"fromX": fromX, "fromY": fromY,
+					"toX": toX, "toY": toY,
+				}).Error("failed getting piece")
+				return false, errors.New("MoveService.tryAddMove: " + err.Error())
+			}
+			addMove(fromX, fromY, toX, toY, 0, false, false, pieceCaptured, moves)
+			return true, nil // Stop checking after capturing a piece
+		}
+		return false, nil // Blocked by own piece
+	}
+}
+
 func addMove(fromX int, fromY int, toX int, toY int, piece int, isCastling bool, isDoublePawn bool, pieceCaptured int, moves *[]entity.MoveEntityInterface) {
-	// Add and create move
 	*moves = append(*moves, entity.NewMoveEntity(
 		HelperService.IntPtr(fromX), HelperService.IntPtr(fromY),
 		HelperService.IntPtr(toX), HelperService.IntPtr(toY),
