@@ -55,6 +55,82 @@ func Test_MoveService_FindBestMove(t *testing.T) {
 	}
 }
 
+func Test_MoveService_generateMoves(t *testing.T) {
+	testCases := []struct {
+		name             string
+		piece            int
+		fromY, fromX     int
+		deltaXs, deltaYs []int
+		isSliding        bool
+		setupMock        func(m *mocks.MockChessboardEntity)
+		expectedMoves    []entity.MoveEntityInterface
+		expectedError    error
+	}{
+		{
+			name:  "Knight moves to empty squares",
+			piece: 2,
+			fromY: 4, fromX: 4,
+			deltaXs:   []int{1, 1, -1, -1, 2, 2, -2, -2},
+			deltaYs:   []int{2, -2, 2, -2, 1, -1, 1, -1},
+			isSliding: false,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				positions := []struct{ toY, toX int }{
+					{6, 5}, {2, 5}, {6, 3}, {2, 3}, {5, 6}, {3, 6}, {5, 2}, {3, 2},
+				}
+				for _, pos := range positions {
+					toY, toX := pos.toY, pos.toX
+					m.On("IsWithinBounds", toY, toX).Return(true)
+					m.On("IsSquareEmpty", toY, toX).Return(true, nil)
+				}
+			},
+			expectedMoves: []entity.MoveEntityInterface{
+				newMockMoveEntity(4, 4, 5, 6, 0, false, false, 0),
+				newMockMoveEntity(4, 4, 5, 2, 0, false, false, 0),
+				newMockMoveEntity(4, 4, 3, 6, 0, false, false, 0),
+				newMockMoveEntity(4, 4, 3, 2, 0, false, false, 0),
+				newMockMoveEntity(4, 4, 6, 5, 0, false, false, 0),
+				newMockMoveEntity(4, 4, 6, 3, 0, false, false, 0),
+				newMockMoveEntity(4, 4, 2, 5, 0, false, false, 0),
+				newMockMoveEntity(4, 4, 2, 3, 0, false, false, 0),
+			},
+			expectedError: nil,
+		},
+		{
+			name:  "Bishop movement blocked by own piece",
+			piece: 3,
+			fromY: 4, fromX: 4,
+			deltaXs:   []int{1, -1, 1, -1},
+			deltaYs:   []int{1, 1, -1, -1},
+			isSliding: true,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+
+			},
+			expectedMoves: []entity.MoveEntityInterface{},
+			expectedError: nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Arrange
+			mockChessboard := new(mocks.MockChessboardEntity)
+			tc.setupMock(mockChessboard)
+			var moves []entity.MoveEntityInterface
+
+			// Act
+			moves, err := generateMoves(tc.piece, tc.fromY, tc.fromX, tc.deltaXs, tc.deltaYs, tc.isSliding, mockChessboard)
+
+			// Assert
+			if tc.expectedError != nil {
+				assert.EqualError(t, err, tc.expectedError.Error())
+			} else {
+				assert.NoError(t, err)
+				assertMovesEqual(t, tc.expectedMoves, moves)
+			}
+		})
+	}
+}
+
 func Test_MoveService_tryAddMove(t *testing.T) {
 	testCases := []struct {
 		name             string
