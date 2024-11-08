@@ -325,12 +325,10 @@ func getPawnMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEn
 	if isSquareEmpty {
 		if toY == promotionRank {
 			for _, promotionPiece := range []int{2, 3, 4, 5} { // Create a move for each piece it can promote too
-				logger.Log.Debugf("getPawnMove: move added. moves array now contains %v move/s", len(moves))
 				addMove(fromX, fromY, toX, toY, promotionPiece*(-1*direction), false, false, 0, &moves)
 			}
 		} else {
 			// Create move
-			logger.Log.Debugf("getPawnMove: move added. moves array now contains %v move/s", len(moves))
 			addMove(fromX, fromY, toX, toY, 0, false, false, 0, &moves)
 
 			// Move 2 forward
@@ -373,12 +371,10 @@ func getPawnMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEn
 
 			if toY == promotionRank {
 				for _, promotionPiece := range []int{2, 3, 4, 5} { // Create a move for each piece it can promote too
-					logger.Log.Debugf("getPawnMove: move added. moves array now contains %v move/s", len(moves))
 					addMove(fromX, fromY, toX, toY, promotionPiece*(-1*direction), false, false, pieceCaptured, &moves)
 				}
 			} else {
 				// Create move
-				logger.Log.Debugf("getPawnMove: move added. moves array now contains %v move/s", len(moves))
 				addMove(fromX, fromY, toX, toY, 0, false, false, pieceCaptured, &moves)
 			}
 		}
