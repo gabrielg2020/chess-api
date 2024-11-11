@@ -96,17 +96,69 @@ func Test_MoveService_generateMoves(t *testing.T) {
 			expectedError: nil,
 		},
 		{
-			name:  "Bishop movement blocked by own piece",
+			name:  "Bishop moves to empty squares (Blocked by own piece)",
 			piece: 3,
-			fromY: 4, fromX: 4,
+			fromY: 4, fromX: 3,
 			deltaXs:   []int{1, -1, 1, -1},
 			deltaYs:   []int{1, 1, -1, -1},
 			isSliding: true,
 			setupMock: func(m *mocks.MockChessboardEntity) {
-
+				positions := []struct{ toY, toX int }{
+					{5, 4}, {6, 5}, {5, 2}, {6, 1},
+					{3, 4}, {2, 5}, {3, 2}, {2, 1},
+				}
+				for i := 1; i < len(positions); i += 2 {
+					pos1 := positions[i-1]
+					pos2 := positions[i]
+					toY1, toX1 := pos1.toY, pos1.toX
+					m.On("IsWithinBounds", toY1, toX1).Return(true)
+					m.On("IsSquareEmpty", toY1, toX1).Return(true, nil)
+					toY2, toX2 := pos2.toY, pos2.toX
+					m.On("IsWithinBounds", toY2, toX2).Return(true)
+					m.On("IsSquareEmpty", toY2, toX2).Return(false, nil)
+					m.On("IsOpponent", 3, toY2, toX2).Return(true, nil)
+					m.On("GetPiece", toY2, toX2).Return(-1, nil)
+				}
+			},
+			expectedMoves: []entity.MoveEntityInterface{
+				newMockMoveEntity(3, 4, 4, 5, 0, false, false, 0),
+				newMockMoveEntity(3, 4, 5, 6, 0, false, false, -1),
+				newMockMoveEntity(3, 4, 2, 5, 0, false, false, 0),
+				newMockMoveEntity(3, 4, 1, 6, 0, false, false, -1),
+				newMockMoveEntity(3, 4, 4, 3, 0, false, false, 0),
+				newMockMoveEntity(3, 4, 5, 2, 0, false, false, -1),
+				newMockMoveEntity(3, 4, 2, 3, 0, false, false, 0),
+				newMockMoveEntity(3, 4, 1, 2, 0, false, false, -1),
+			},
+			expectedError: nil,
+		},
+		{
+			name:  "Fail to add move when is NOT sliding",
+			piece: 2,
+			fromY: 4, fromX: 4,
+			deltaXs:   []int{1, 1, -1, -1, 2, 2, -2, -2},
+			deltaYs:   []int{2, -2, 2, -2, 1, -1, 1, -1},
+			isSliding: false,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("IsWithinBounds", 6, 5).Return(true)
+				m.On("IsSquareEmpty", 6, 5).Return(false, errors.New("test error in IsSquareEmpty"))
 			},
 			expectedMoves: []entity.MoveEntityInterface{},
-			expectedError: nil,
+			expectedError: errors.New("MoveService.generateMoves: MoveService.tryAddMove: test error in IsSquareEmpty"),
+		},
+		{
+			name:  "Fail to add move when is sliding",
+			piece: 3,
+			fromY: 4, fromX: 3,
+			deltaXs:   []int{1, -1, 1, -1},
+			deltaYs:   []int{1, 1, -1, -1},
+			isSliding: true,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("IsWithinBounds", 5, 4).Return(true)
+				m.On("IsSquareEmpty", 5, 4).Return(false, errors.New("test error in IsSquareEmpty"))
+			},
+			expectedMoves: []entity.MoveEntityInterface{},
+			expectedError: errors.New("MoveService.generateMoves: MoveService.tryAddMove: test error in IsSquareEmpty"),
 		},
 	}
 
@@ -169,7 +221,7 @@ func Test_MoveService_tryAddMove(t *testing.T) {
 			expectedMoves: []entity.MoveEntityInterface{
 				newMockMoveEntity(1, 1, 1, 2, 0, false, false, -3),
 			},
-			expectedResponse: true,
+			expectedResponse: false,
 			expectedError:    nil,
 		},
 		{
