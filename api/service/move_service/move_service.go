@@ -169,7 +169,7 @@ func tryAddMove(piece int, fromY int, fromX int, toY int, toX int, moves *[]enti
 				return false, errors.New("MoveService.tryAddMove: " + err.Error())
 			}
 			addMove(fromX, fromY, toX, toY, 0, false, false, pieceCaptured, moves)
-			return true, nil // Stop checking after capturing a piece
+			return false, nil // Stop checking after capturing a piece
 		}
 		return false, nil // Blocked by own piece
 	}
