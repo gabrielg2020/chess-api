@@ -78,9 +78,8 @@ func Test_MoveService_generateMoves(t *testing.T) {
 					{6, 5}, {2, 5}, {6, 3}, {2, 3}, {5, 6}, {3, 6}, {5, 2}, {3, 2},
 				}
 				for _, pos := range positions {
-					toY, toX := pos.toY, pos.toX
-					m.On("IsWithinBounds", toY, toX).Return(true)
-					m.On("IsSquareEmpty", toY, toX).Return(true, nil)
+					m.On("IsWithinBounds", pos.toY, pos.toX).Return(true)
+					m.On("IsSquareEmpty", pos.toY, pos.toX).Return(true, nil)
 				}
 			},
 			expectedMoves: []entity.MoveEntityInterface{
@@ -776,9 +775,8 @@ func Test_MoveService_getKnightMove(t *testing.T) {
 					{6, 5}, {2, 5}, {6, 3}, {2, 3}, {5, 6}, {3, 6}, {5, 2}, {3, 2},
 				}
 				for _, pos := range positions {
-					toY, toX := pos.toY, pos.toX
-					m.On("IsWithinBounds", toY, toX).Return(true)
-					m.On("IsSquareEmpty", toY, toX).Return(true, nil)
+					m.On("IsWithinBounds", pos.toY, pos.toX).Return(true)
+					m.On("IsSquareEmpty", pos.toY, pos.toX).Return(true, nil)
 				}
 			},
 			expectedMoves: []entity.MoveEntityInterface{
@@ -802,12 +800,11 @@ func Test_MoveService_getKnightMove(t *testing.T) {
 					{2, 1}, {-2, 1}, {2, -1}, {-2, -1}, {1, 2}, {-1, 2}, {1, -2}, {-1, -2},
 				}
 				for _, pos := range positions {
-					toY, toX := pos.toY, pos.toX
-					if toY < 0 || toX < 0 {
-						m.On("IsWithinBounds", toY, toX).Return(false)
+					if pos.toY < 0 || pos.toX < 0 {
+						m.On("IsWithinBounds", pos.toY, pos.toX).Return(false)
 					} else {
-						m.On("IsWithinBounds", toY, toX).Return(true)
-						m.On("IsSquareEmpty", toY, toX).Return(true, nil)
+						m.On("IsWithinBounds", pos.toY, pos.toX).Return(true)
+						m.On("IsSquareEmpty", pos.toY, pos.toX).Return(true, nil)
 					}
 				}
 			},
@@ -826,14 +823,13 @@ func Test_MoveService_getKnightMove(t *testing.T) {
 					{6, 5}, {2, 5}, {6, 3}, {2, 3}, {5, 6}, {3, 6}, {5, 2}, {3, 2},
 				}
 				for _, pos := range positions {
-					toY, toX := pos.toY, pos.toX
-					m.On("IsWithinBounds", toY, toX).Return(true)
-					m.On("IsSquareEmpty", toY, toX).Return(false, nil)
+					m.On("IsWithinBounds", pos.toY, pos.toX).Return(true)
+					m.On("IsSquareEmpty", pos.toY, pos.toX).Return(false, nil)
 					if pos.toX < 4 {
-						m.On("IsOpponent", 2, toY, toX).Return(false, nil)
+						m.On("IsOpponent", 2, pos.toY, pos.toX).Return(false, nil)
 					} else {
-						m.On("IsOpponent", 2, toY, toX).Return(true, nil)
-						m.On("GetPiece", toY, toX).Return(-1, nil)
+						m.On("IsOpponent", 2, pos.toY, pos.toX).Return(true, nil)
+						m.On("GetPiece", pos.toY, pos.toX).Return(-1, nil)
 					}
 				}
 			},
