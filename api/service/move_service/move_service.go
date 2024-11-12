@@ -203,7 +203,7 @@ func getCastlingMoves(piece int, fromY int, fromX int, chessboard entity.Chessbo
 		kingSideX, queenSideX = fromX+2, fromX-2
 	} else {
 		kingSideRight, queenSideRight = 'k', 'q'
-		kingSideX, queenSideX = fromX-2, fromX+3
+		kingSideX, queenSideX = fromX-2, fromX+2
 	}
 
 	// King Side Castling

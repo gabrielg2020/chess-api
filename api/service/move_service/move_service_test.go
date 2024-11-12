@@ -344,7 +344,7 @@ func Test_MoveService_getCastlingMoves(t *testing.T) {
 			},
 			expectedMoves: []entity.MoveEntityInterface{
 				newMockMoveEntity(4, 0, 2, 0, 0, true, false, 0),
-				newMockMoveEntity(4, 0, 7, 0, 0, true, false, 0),
+				newMockMoveEntity(4, 0, 6, 0, 0, true, false, 0),
 			},
 			expectedError: nil,
 		},
