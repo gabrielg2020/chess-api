@@ -341,7 +341,7 @@ func getPawnMove(piece int, fromY int, fromX int, chessboard entity.ChessboardEn
 				return nil, errors.New("MoveService.getPawnMove: " + err.Error())
 			}
 			if fromY == startRank && isSquareEmpty {
-				// Don't check if can promote because a pawn can never promote off first move
+				// Don't check if it can promote because a pawn can never promote off first move
 				// Create move
 				logger.Log.Debugf("getPawnMove: move added. moves array now contains %v move/s", len(moves))
 				addMove(fromX, fromY, toX, toY, 0, false, true, 0, &moves)
