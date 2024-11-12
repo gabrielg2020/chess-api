@@ -271,7 +271,7 @@ func canCastleQueenSide(piece int, fromY int, fromX int, chessboard entity.Chess
 		isSquareEmpty, err := chessboard.IsSquareEmpty(fromY, x)
 		if err != nil {
 			logger.Log.Error("failed checking square")
-			return false, errors.New("MoveService.canCastleKingSide: " + err.Error())
+			return false, errors.New("MoveService.canCastleQueenSide: " + err.Error())
 		}
 		if !isSquareEmpty {
 			return false, nil
@@ -282,7 +282,7 @@ func canCastleQueenSide(piece int, fromY int, fromX int, chessboard entity.Chess
 	rookPiece, err := chessboard.GetPiece(fromY, rookX)
 	if err != nil {
 		logger.Log.Error("failed getting rook piece")
-		return false, errors.New("MoveService.canCastleKingSide: " + err.Error())
+		return false, errors.New("MoveService.canCastleQueenSide: " + err.Error())
 	}
 	expectedRook := 4
 	if piece < 0 {
