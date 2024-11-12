@@ -1255,6 +1255,14 @@ func assertMoveEqual(t *testing.T, expected, actual entity.MoveEntityInterface) 
 	assert.Equal(t, expectedCaptured, actualCaptured, "Captured piece should be equal")
 }
 
+func massCreateMoveEntities(fromX int, fromY int, positions []struct{ toY, toX int }, promotion int, isCastling bool, isEnPassant bool, captured int) []entity.MoveEntityInterface {
+	moves := make([]entity.MoveEntityInterface, len(positions))
+	for i, pos := range positions {
+		moves[i] = newMockMoveEntity(fromX, fromY, pos.toX, pos.toY, promotion, isCastling, isEnPassant, captured)
+	}
+	return moves
+}
+
 func newMockMoveEntity(fromX, fromY, toX, toY, promotion int, isCastling, isEnPassant bool, captured int) entity.MoveEntityInterface {
 	mockMove := new(mocks.MockMoveEntity)
 
