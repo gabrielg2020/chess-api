@@ -300,6 +300,112 @@ func Test_MoveService_tryAddMove(t *testing.T) {
 	}
 }
 
+func Test_MoveService_getCastlingMoves(t *testing.T) {
+	testCases := []struct {
+		name          string
+		piece         int
+		fromY, fromX  int
+		setupMock     func(m *mocks.MockChessboardEntity)
+		expectedMoves []entity.MoveEntityInterface
+		expectedError error
+	}{
+		{
+			name:  "White king can castle king side and queen side",
+			piece: 6,
+			fromY: 7, fromX: 4,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("GetCastlingRights").Return("KQkq", nil)
+				m.On("IsSquareEmpty", 7, 5).Return(true, nil)
+				m.On("IsSquareEmpty", 7, 6).Return(true, nil)
+				m.On("GetPiece", 7, 7).Return(4, nil)
+				m.On("IsSquareEmpty", 7, 3).Return(true, nil)
+				m.On("IsSquareEmpty", 7, 2).Return(true, nil)
+				m.On("IsSquareEmpty", 7, 1).Return(true, nil)
+				m.On("GetPiece", 7, 0).Return(4, nil)
+			},
+			expectedMoves: []entity.MoveEntityInterface{
+				newMockMoveEntity(4, 7, 6, 7, 0, true, false, 0),
+				newMockMoveEntity(4, 7, 2, 7, 0, true, false, 0),
+			},
+			expectedError: nil,
+		},
+		{
+			name:  "Black king can castle king side and queen side",
+			piece: -6,
+			fromY: 0, fromX: 4,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("GetCastlingRights").Return("KQkq", nil)
+				m.On("IsSquareEmpty", 0, 5).Return(true, nil)
+				m.On("IsSquareEmpty", 0, 6).Return(true, nil)
+				m.On("GetPiece", 0, 7).Return(-4, nil)
+				m.On("IsSquareEmpty", 0, 3).Return(true, nil)
+				m.On("IsSquareEmpty", 0, 2).Return(true, nil)
+				m.On("IsSquareEmpty", 0, 1).Return(true, nil)
+				m.On("GetPiece", 0, 0).Return(-4, nil)
+			},
+			expectedMoves: []entity.MoveEntityInterface{
+				newMockMoveEntity(4, 0, 2, 0, 0, true, false, 0),
+				newMockMoveEntity(4, 0, 7, 0, 0, true, false, 0),
+			},
+			expectedError: nil,
+		},
+		{
+			name:  "Error in GetCastlingRights",
+			piece: 6,
+			fromY: 7, fromX: 4,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("GetCastlingRights").Return("", errors.New("test error in GetCastlingRights"))
+			},
+			expectedMoves: nil,
+			expectedError: errors.New("MoveService.getCastlingMoves: test error in GetCastlingRights"),
+		},
+		{
+			name:  "Error in canCastleKingSide",
+			piece: 6,
+			fromY: 7, fromX: 4,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("GetCastlingRights").Return("KQkq", nil)
+				m.On("IsSquareEmpty", 7, 5).Return(false, errors.New("test error in IsSquareEmpty"))
+			},
+			expectedMoves: nil,
+			expectedError: errors.New("MoveService.getCastlingMoves: MoveService.canCastleKingSide: test error in IsSquareEmpty"),
+		},
+		{
+			name:  "Error in canCastleQueenSide",
+			piece: 6,
+			fromY: 7, fromX: 4,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("GetCastlingRights").Return("KQkq", nil)
+				m.On("IsSquareEmpty", 7, 5).Return(true, nil)
+				m.On("IsSquareEmpty", 7, 6).Return(true, nil)
+				m.On("GetPiece", 7, 7).Return(4, nil)
+				m.On("IsSquareEmpty", 7, 3).Return(false, errors.New("test error in IsSquareEmpty"))
+			},
+			expectedMoves: nil,
+			expectedError: errors.New("MoveService.getCastlingMoves: MoveService.canCastleQueenSide: test error in IsSquareEmpty"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Arrange
+			mockChessboard := new(mocks.MockChessboardEntity)
+			tc.setupMock(mockChessboard)
+
+			// Act
+			moves, err := getCastlingMoves(tc.piece, tc.fromY, tc.fromX, mockChessboard)
+
+			// Assert
+			if tc.expectedError != nil {
+				assert.EqualError(t, err, tc.expectedError.Error())
+			} else {
+				assert.NoError(t, err)
+				assertMovesEqual(t, tc.expectedMoves, moves)
+			}
+		})
+	}
+}
+
 func Test_MoveService_canCastleKingSide(t *testing.T) {
 	testCases := []struct {
 		name             string
