@@ -759,6 +759,218 @@ func Test_MoveService_getPawnMove(t *testing.T) {
 	}
 }
 
+func Test_MoveService_getKnightMove(t *testing.T) {
+	testCases := []struct {
+		name          string
+		fromY, fromX  int
+		setupMock     func(m *mocks.MockChessboardEntity)
+		expectedMoves []entity.MoveEntityInterface
+		expectedError error
+	}{
+		{
+			name:  "Knight in the middle of the board",
+			fromY: 4,
+			fromX: 4,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				positions := []struct{ toY, toX int }{
+					{6, 5}, {2, 5}, {6, 3}, {2, 3}, {5, 6}, {3, 6}, {5, 2}, {3, 2},
+				}
+				for _, pos := range positions {
+					toY, toX := pos.toY, pos.toX
+					m.On("IsWithinBounds", toY, toX).Return(true)
+					m.On("IsSquareEmpty", toY, toX).Return(true, nil)
+				}
+			},
+			expectedMoves: []entity.MoveEntityInterface{
+				newMockMoveEntity(4, 4, 5, 6, 0, false, false, 0),
+				newMockMoveEntity(4, 4, 5, 2, 0, false, false, 0),
+				newMockMoveEntity(4, 4, 3, 6, 0, false, false, 0),
+				newMockMoveEntity(4, 4, 3, 2, 0, false, false, 0),
+				newMockMoveEntity(4, 4, 6, 5, 0, false, false, 0),
+				newMockMoveEntity(4, 4, 6, 3, 0, false, false, 0),
+				newMockMoveEntity(4, 4, 2, 5, 0, false, false, 0),
+				newMockMoveEntity(4, 4, 2, 3, 0, false, false, 0),
+			},
+			expectedError: nil,
+		},
+		{
+			name:  "Knight in corner",
+			fromY: 0,
+			fromX: 0,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				positions := []struct{ toY, toX int }{
+					{2, 1}, {-2, 1}, {2, -1}, {-2, -1}, {1, 2}, {-1, 2}, {1, -2}, {-1, -2},
+				}
+				for _, pos := range positions {
+					toY, toX := pos.toY, pos.toX
+					if toY < 0 || toX < 0 {
+						m.On("IsWithinBounds", toY, toX).Return(false)
+					} else {
+						m.On("IsWithinBounds", toY, toX).Return(true)
+						m.On("IsSquareEmpty", toY, toX).Return(true, nil)
+					}
+				}
+			},
+			expectedMoves: []entity.MoveEntityInterface{
+				newMockMoveEntity(0, 0, 1, 2, 0, false, false, 0),
+				newMockMoveEntity(0, 0, 2, 1, 0, false, false, 0),
+			},
+			expectedError: nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Arrange
+			mockChessboard := new(mocks.MockChessboardEntity)
+			tc.setupMock(mockChessboard)
+
+			// Act
+			moves, err := getKnightMove(2, tc.fromY, tc.fromX, mockChessboard)
+
+			// Assert
+			if tc.expectedError != nil {
+				assert.EqualError(t, err, tc.expectedError.Error())
+			} else {
+				assert.NoError(t, err)
+				assertMovesEqual(t, tc.expectedMoves, moves)
+			}
+		})
+	}
+}
+
+//func Test_MoveService_getBishopMove(t *testing.T) {
+//	testCases := []struct {
+//		name          string
+//		fromY, fromX  int
+//		setupMock     func(m *mocks.MockChessboardEntity)
+//		expectedMoves []entity.MoveEntityInterface
+//		expectedError error
+//	}{
+//		{
+//
+//		},
+//	}
+//
+//	for _, tc := range testCases {
+//		t.Run(tc.name, func(t *testing.T) {
+//			// Arrange
+//			mockChessboard := new(mocks.MockChessboardEntity)
+//			tc.setupMock(mockChessboard)
+//
+//			// Act
+//			moves, err := getBishopMove(3, tc.fromY, tc.fromX, mockChessboard)
+//
+//			// Assert
+//			if tc.expectedError != nil {
+//				assert.EqualError(t, err, tc.expectedError.Error())
+//			} else {
+//				assert.NoError(t, err)
+//				assertMovesEqual(t, tc.expectedMoves, moves)
+//			}
+//		})
+//	}
+//}
+
+//func Test_MoveService_getRookMove(t *testing.T) {
+//	testCases := []struct {
+//		name          string
+//		fromY, fromX  int
+//		setupMock     func(m *mocks.MockChessboardEntity)
+//		expectedMoves []entity.MoveEntityInterface
+//		expectedError error
+//	}{
+//		{
+//
+//		},
+//	}
+//
+//	for _, tc := range testCases {
+//		t.Run(tc.name, func(t *testing.T) {
+//			// Arrange
+//			mockChessboard := new(mocks.MockChessboardEntity)
+//			tc.setupMock(mockChessboard)
+//
+//			// Act
+//			moves, err := getRookMove(4, tc.fromY, tc.fromX, mockChessboard)
+//
+//			// Assert
+//			if tc.expectedError != nil {
+//				assert.EqualError(t, err, tc.expectedError.Error())
+//			} else {
+//				assert.NoError(t, err)
+//				assertMovesEqual(t, tc.expectedMoves, moves)
+//			}
+//		})
+//	}
+//}
+
+//func Test_MoveService_getQueenMove(t *testing.T) {
+//	testCases := []struct {
+//		name          string
+//		fromY, fromX  int
+//		setupMock     func(m *mocks.MockChessboardEntity)
+//		expectedMoves []entity.MoveEntityInterface
+//		expectedError error
+//	}{
+//		{
+//
+//		},
+//	}
+//
+//	for _, tc := range testCases {
+//		t.Run(tc.name, func(t *testing.T) {
+//			// Arrange
+//			mockChessboard := new(mocks.MockChessboardEntity)
+//			tc.setupMock(mockChessboard)
+//
+//			// Act
+//			moves, err := getQueenMove(5, tc.fromY, tc.fromX, mockChessboard)
+//
+//			// Assert
+//			if tc.expectedError != nil {
+//				assert.EqualError(t, err, tc.expectedError.Error())
+//			} else {
+//				assert.NoError(t, err)
+//				assertMovesEqual(t, tc.expectedMoves, moves)
+//			}
+//		})
+//	}
+//}
+
+//func Test_MoveService_getKingMove(t *testing.T) {
+//	testCases := []struct {
+//		name          string
+//		fromY, fromX  int
+//		setupMock     func(m *mocks.MockChessboardEntity)
+//		expectedMoves []entity.MoveEntityInterface
+//		expectedError error
+//	}{
+//		{
+//
+//		},
+//	}
+//
+//	for _, tc := range testCases {
+//		t.Run(tc.name, func(t *testing.T) {
+//			// Arrange
+//			mockChessboard := new(mocks.MockChessboardEntity)
+//			tc.setupMock(mockChessboard)
+//
+//			// Act
+//			moves, err := getKingMove(6, tc.fromY, tc.fromX, mockChessboard)
+//
+//			// Assert
+//			if tc.expectedError != nil {
+//				assert.EqualError(t, err, tc.expectedError.Error())
+//			} else {
+//				assert.NoError(t, err)
+//				assertMovesEqual(t, tc.expectedMoves, moves)
+//			}
+//		})
+//	}
+//}
+
 // Helper functions
 func assertMovesEqual(t *testing.T, expected, actual []entity.MoveEntityInterface) {
 	assert.Equal(t, len(expected), len(actual), "Number of moves should be equal")
