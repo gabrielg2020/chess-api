@@ -989,38 +989,139 @@ func Test_MoveService_getBishopMove(t *testing.T) {
 	}
 }
 
-//func Test_MoveService_getRookMove(t *testing.T) {
-//	testCases := []struct {
-//		name          string
-//		fromY, fromX  int
-//		setupMock     func(m *mocks.MockChessboardEntity)
-//		expectedMoves []entity.MoveEntityInterface
-//		expectedError error
-//	}{
-//		{
-//
-//		},
-//	}
-//
-//	for _, tc := range testCases {
-//		t.Run(tc.name, func(t *testing.T) {
-//			// Arrange
-//			mockChessboard := new(mocks.MockChessboardEntity)
-//			tc.setupMock(mockChessboard)
-//
-//			// Act
-//			moves, err := getRookMove(4, tc.fromY, tc.fromX, mockChessboard)
-//
-//			// Assert
-//			if tc.expectedError != nil {
-//				assert.EqualError(t, err, tc.expectedError.Error())
-//			} else {
-//				assert.NoError(t, err)
-//				assertMovesEqual(t, tc.expectedMoves, moves)
-//			}
-//		})
-//	}
-//}
+func Test_MoveService_getRookMove(t *testing.T) {
+	testCases := []struct {
+		name          string
+		fromY, fromX  int
+		setupMock     func(m *mocks.MockChessboardEntity)
+		expectedMoves []entity.MoveEntityInterface
+		expectedError error
+	}{
+		{
+			name:  "Rook in the middle of the board",
+			fromY: 4,
+			fromX: 4,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				positions := []struct{ toY, toX int }{
+					{4, 5}, {4, 6}, {4, 7}, {4, 8}, // Right
+					{4, 3}, {4, 2}, {4, 1}, {4, 0}, {4, -1}, // Left
+					{5, 4}, {6, 4}, {7, 4}, {8, 4}, // Down
+					{3, 4}, {2, 4}, {1, 4}, {0, 4}, {-1, 4}, // Up
+				}
+				for _, pos := range positions {
+					if pos.toY < 0 || pos.toX < 0 || pos.toY > 7 || pos.toX > 7 {
+						m.On("IsWithinBounds", pos.toY, pos.toX).Return(false)
+					} else {
+						m.On("IsWithinBounds", pos.toY, pos.toX).Return(true)
+						m.On("IsSquareEmpty", pos.toY, pos.toX).Return(true, nil)
+					}
+				}
+			},
+			expectedMoves: []entity.MoveEntityInterface{
+				newMockMoveEntity(4, 4, 5, 4, 0, false, false, 0),
+				newMockMoveEntity(4, 4, 6, 4, 0, false, false, 0),
+				newMockMoveEntity(4, 4, 7, 4, 0, false, false, 0),
+				newMockMoveEntity(4, 4, 3, 4, 0, false, false, 0),
+				newMockMoveEntity(4, 4, 2, 4, 0, false, false, 0),
+				newMockMoveEntity(4, 4, 1, 4, 0, false, false, 0),
+				newMockMoveEntity(4, 4, 0, 4, 0, false, false, 0),
+				newMockMoveEntity(4, 4, 4, 5, 0, false, false, 0),
+				newMockMoveEntity(4, 4, 4, 6, 0, false, false, 0),
+				newMockMoveEntity(4, 4, 4, 7, 0, false, false, 0),
+				newMockMoveEntity(4, 4, 4, 3, 0, false, false, 0),
+				newMockMoveEntity(4, 4, 4, 2, 0, false, false, 0),
+				newMockMoveEntity(4, 4, 4, 1, 0, false, false, 0),
+				newMockMoveEntity(4, 4, 4, 0, 0, false, false, 0),
+			},
+			expectedError: nil,
+		},
+		{
+			name:  "Rook in corner",
+			fromY: 0,
+			fromX: 0,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				positions := []struct{ toY, toX int }{
+					{0, 1}, {0, 2}, {0, 3}, {0, 4}, {0, 5}, {0, 6}, {0, 7}, {0, 8}, // Right
+					{0, -1},                                                        // Left
+					{1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0}, {8, 0}, // Down
+					{-1, 0}, // Up
+				}
+				for _, pos := range positions {
+					if pos.toY < 0 || pos.toX < 0 || pos.toY > 7 || pos.toX > 7 {
+						m.On("IsWithinBounds", pos.toY, pos.toX).Return(false)
+					} else {
+						m.On("IsWithinBounds", pos.toY, pos.toX).Return(true)
+						m.On("IsSquareEmpty", pos.toY, pos.toX).Return(true, nil)
+					}
+				}
+			},
+			expectedMoves: []entity.MoveEntityInterface{
+				newMockMoveEntity(0, 0, 1, 0, 0, false, false, 0),
+				newMockMoveEntity(0, 0, 2, 0, 0, false, false, 0),
+				newMockMoveEntity(0, 0, 3, 0, 0, false, false, 0),
+				newMockMoveEntity(0, 0, 4, 0, 0, false, false, 0),
+				newMockMoveEntity(0, 0, 5, 0, 0, false, false, 0),
+				newMockMoveEntity(0, 0, 6, 0, 0, false, false, 0),
+				newMockMoveEntity(0, 0, 7, 0, 0, false, false, 0),
+				newMockMoveEntity(0, 0, 0, 1, 0, false, false, 0),
+				newMockMoveEntity(0, 0, 0, 2, 0, false, false, 0),
+				newMockMoveEntity(0, 0, 0, 3, 0, false, false, 0),
+				newMockMoveEntity(0, 0, 0, 4, 0, false, false, 0),
+				newMockMoveEntity(0, 0, 0, 5, 0, false, false, 0),
+				newMockMoveEntity(0, 0, 0, 6, 0, false, false, 0),
+				newMockMoveEntity(0, 0, 0, 7, 0, false, false, 0),
+			},
+			expectedError: nil,
+		},
+		{
+			name:  "Rook in middle with 2 friendly pieces blocking on up and left and 2 enemy pieces on bottom and right",
+			fromY: 4,
+			fromX: 4,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				positions := []struct{ toY, toX int }{
+					{4, 5}, // Right
+					{4, 3}, // Left
+					{5, 4}, // Down
+					{3, 4}, // Up
+				}
+				for _, pos := range positions {
+					m.On("IsWithinBounds", pos.toY, pos.toX).Return(true)
+					m.On("IsSquareEmpty", pos.toY, pos.toX).Return(false, nil)
+					if pos.toX < 4 || pos.toY < 4 {
+						m.On("IsOpponent", 4, pos.toY, pos.toX).Return(false, nil)
+					} else {
+						m.On("IsOpponent", 4, pos.toY, pos.toX).Return(true, nil)
+						m.On("GetPiece", pos.toY, pos.toX).Return(-1, nil)
+					}
+				}
+			},
+			expectedMoves: []entity.MoveEntityInterface{
+				newMockMoveEntity(4, 4, 5, 4, 0, false, false, -1),
+				newMockMoveEntity(4, 4, 4, 5, 0, false, false, -1),
+			},
+			expectedError: nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Arrange
+			mockChessboard := new(mocks.MockChessboardEntity)
+			tc.setupMock(mockChessboard)
+
+			// Act
+			moves, err := getRookMove(4, tc.fromY, tc.fromX, mockChessboard)
+
+			// Assert
+			if tc.expectedError != nil {
+				assert.EqualError(t, err, tc.expectedError.Error())
+			} else {
+				assert.NoError(t, err)
+				assertMovesEqual(t, tc.expectedMoves, moves)
+			}
+		})
+	}
+}
 
 //func Test_MoveService_getQueenMove(t *testing.T) {
 //	testCases := []struct {
