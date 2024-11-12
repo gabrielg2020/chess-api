@@ -817,6 +817,34 @@ func Test_MoveService_getKnightMove(t *testing.T) {
 			},
 			expectedError: nil,
 		},
+		{
+			name:  "Knight in middle with 4 friendly pieces blocking on left and 4 enemy pieces on right",
+			fromY: 4,
+			fromX: 4,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				positions := []struct{ toY, toX int }{
+					{6, 5}, {2, 5}, {6, 3}, {2, 3}, {5, 6}, {3, 6}, {5, 2}, {3, 2},
+				}
+				for _, pos := range positions {
+					toY, toX := pos.toY, pos.toX
+					m.On("IsWithinBounds", toY, toX).Return(true)
+					m.On("IsSquareEmpty", toY, toX).Return(false, nil)
+					if pos.toX < 4 {
+						m.On("IsOpponent", 2, toY, toX).Return(false, nil)
+					} else {
+						m.On("IsOpponent", 2, toY, toX).Return(true, nil)
+						m.On("GetPiece", toY, toX).Return(-1, nil)
+					}
+				}
+			},
+			expectedMoves: []entity.MoveEntityInterface{
+				newMockMoveEntity(4, 4, 5, 6, 0, false, false, -1),
+				newMockMoveEntity(4, 4, 5, 2, 0, false, false, -1),
+				newMockMoveEntity(4, 4, 6, 5, 0, false, false, -1),
+				newMockMoveEntity(4, 4, 6, 3, 0, false, false, -1),
+			},
+			expectedError: nil,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -920,20 +948,16 @@ func Test_MoveService_getBishopMove(t *testing.T) {
 			fromY: 4,
 			fromX: 4,
 			setupMock: func(m *mocks.MockChessboardEntity) {
-				positions := []struct {
-					toY      int
-					toX      int
-					opponent bool
-				}{
-					{5, 5, true},  // Bottom right
-					{5, 3, false}, // Bottom left
-					{3, 5, true},  // Top right
-					{3, 3, false}, // Top left
+				positions := []struct{ toY, toX int }{
+					{5, 5}, // Bottom right
+					{5, 3}, // Bottom left
+					{3, 5}, // Top right
+					{3, 3}, // Top left
 				}
 				for _, pos := range positions {
 					m.On("IsWithinBounds", pos.toY, pos.toX).Return(true)
 					m.On("IsSquareEmpty", pos.toY, pos.toX).Return(false, nil)
-					if !pos.opponent {
+					if pos.toX < 4 {
 						m.On("IsOpponent", 3, pos.toY, pos.toX).Return(false, nil)
 					} else {
 						m.On("IsOpponent", 3, pos.toY, pos.toX).Return(true, nil)
