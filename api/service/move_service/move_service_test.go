@@ -4,7 +4,6 @@ import (
 	"errors"
 	"github.com/gabrielg2020/chess-api/api/entity"
 	"github.com/gabrielg2020/chess-api/api/mocks"
-	"github.com/gabrielg2020/chess-api/api/service/helper_service"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -56,520 +55,686 @@ func Test_MoveService_FindBestMove(t *testing.T) {
 	}
 }
 
-func compareMoves(t *testing.T, expected entity.MoveEntityInterface, actual entity.MoveEntityInterface) {
-	// Compare fromX
-	fromXExpected, err := expected.GetFromX()
-	assert.NoError(t, err)
-	fromXActual, err := actual.GetFromX()
-	assert.NoError(t, err)
-	assert.Equal(t, fromXExpected, fromXActual)
-	// Compare fromY
-	fromYExpected, err := expected.GetFromY()
-	assert.NoError(t, err)
-	fromYActual, err := actual.GetFromY()
-	assert.NoError(t, err)
-	assert.Equal(t, fromYExpected, fromYActual)
-	// Compare toX
-	toXExpected, err := expected.GetToX()
-	assert.NoError(t, err)
-	toXActual, err := actual.GetToX()
-	assert.NoError(t, err)
-	assert.Equal(t, toXExpected, toXActual)
-	// Compare toY
-	toYExpected, err := expected.GetToY()
-	assert.NoError(t, err)
-	toYActual, err := actual.GetToY()
-	assert.NoError(t, err)
-	assert.Equal(t, toYExpected, toYActual)
-	// Compare promotion
-	promotionExpected, err := expected.GetPromotion()
-	assert.NoError(t, err)
-	promotionActual, err := actual.GetPromotion()
-	assert.NoError(t, err)
-	assert.Equal(t, promotionExpected, promotionActual)
-	// Compare isCastling
-	isCastlingExpected, err := expected.IsCastling()
-	assert.NoError(t, err)
-	isCastlingActual, err := actual.IsCastling()
-	assert.NoError(t, err)
-	assert.Equal(t, isCastlingExpected, isCastlingActual)
-	// Compare isEnPassant
-	isEnPassantExpected, err := expected.IsEnPassant()
-	assert.NoError(t, err)
-	isEnPassantActual, err := actual.IsEnPassant()
-	assert.NoError(t, err)
-	assert.Equal(t, isEnPassantExpected, isEnPassantActual)
-	// Compare getCaptured
-	capturedExpected, err := expected.GetCaptured()
-	assert.NoError(t, err)
-	capturedActual, err := actual.GetCaptured()
-	assert.NoError(t, err)
-	assert.Equal(t, capturedExpected, capturedActual)
+func Test_MoveService_generateMoves(t *testing.T) {
+	testCases := []struct {
+		name             string
+		piece            int
+		fromY, fromX     int
+		deltaXs, deltaYs []int
+		isSliding        bool
+		setupMock        func(m *mocks.MockChessboardEntity)
+		expectedMoves    []entity.MoveEntityInterface
+		expectedError    error
+	}{
+		{
+			name:  "Knight moves to empty squares",
+			piece: 2,
+			fromY: 4, fromX: 4,
+			deltaXs:   []int{1, 1, -1, -1, 2, 2, -2, -2},
+			deltaYs:   []int{2, -2, 2, -2, 1, -1, 1, -1},
+			isSliding: false,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				positions := []struct{ toY, toX int }{
+					{6, 5}, {2, 5}, {6, 3}, {2, 3}, {5, 6}, {3, 6}, {5, 2}, {3, 2},
+				}
+				for _, pos := range positions {
+					m.On("IsWithinBounds", pos.toY, pos.toX).Return(true)
+					m.On("IsSquareEmpty", pos.toY, pos.toX).Return(true, nil)
+				}
+			},
+			expectedMoves: []entity.MoveEntityInterface{
+				newMockMoveEntity(4, 4, 5, 6, 0, false, false, 0),
+				newMockMoveEntity(4, 4, 5, 2, 0, false, false, 0),
+				newMockMoveEntity(4, 4, 3, 6, 0, false, false, 0),
+				newMockMoveEntity(4, 4, 3, 2, 0, false, false, 0),
+				newMockMoveEntity(4, 4, 6, 5, 0, false, false, 0),
+				newMockMoveEntity(4, 4, 6, 3, 0, false, false, 0),
+				newMockMoveEntity(4, 4, 2, 5, 0, false, false, 0),
+				newMockMoveEntity(4, 4, 2, 3, 0, false, false, 0),
+			},
+			expectedError: nil,
+		},
+		{
+			name:  "Bishop moves to empty squares (Blocked by own piece)",
+			piece: 3,
+			fromY: 4, fromX: 3,
+			deltaXs:   []int{1, -1, 1, -1},
+			deltaYs:   []int{1, 1, -1, -1},
+			isSliding: true,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				positions := []struct{ toY, toX int }{
+					{5, 4}, {6, 5}, {5, 2}, {6, 1},
+					{3, 4}, {2, 5}, {3, 2}, {2, 1},
+				}
+				for i := 1; i < len(positions); i += 2 {
+					pos1 := positions[i-1]
+					pos2 := positions[i]
+					toY1, toX1 := pos1.toY, pos1.toX
+					m.On("IsWithinBounds", toY1, toX1).Return(true)
+					m.On("IsSquareEmpty", toY1, toX1).Return(true, nil)
+					toY2, toX2 := pos2.toY, pos2.toX
+					m.On("IsWithinBounds", toY2, toX2).Return(true)
+					m.On("IsSquareEmpty", toY2, toX2).Return(false, nil)
+					m.On("IsOpponent", 3, toY2, toX2).Return(true, nil)
+					m.On("GetPiece", toY2, toX2).Return(-1, nil)
+				}
+			},
+			expectedMoves: []entity.MoveEntityInterface{
+				newMockMoveEntity(3, 4, 4, 5, 0, false, false, 0),
+				newMockMoveEntity(3, 4, 5, 6, 0, false, false, -1),
+				newMockMoveEntity(3, 4, 2, 5, 0, false, false, 0),
+				newMockMoveEntity(3, 4, 1, 6, 0, false, false, -1),
+				newMockMoveEntity(3, 4, 4, 3, 0, false, false, 0),
+				newMockMoveEntity(3, 4, 5, 2, 0, false, false, -1),
+				newMockMoveEntity(3, 4, 2, 3, 0, false, false, 0),
+				newMockMoveEntity(3, 4, 1, 2, 0, false, false, -1),
+			},
+			expectedError: nil,
+		},
+		{
+			name:  "Fail to add move when is NOT sliding",
+			piece: 2,
+			fromY: 4, fromX: 4,
+			deltaXs:   []int{1, 1, -1, -1, 2, 2, -2, -2},
+			deltaYs:   []int{2, -2, 2, -2, 1, -1, 1, -1},
+			isSliding: false,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("IsWithinBounds", 6, 5).Return(true)
+				m.On("IsSquareEmpty", 6, 5).Return(false, errors.New("test error in IsSquareEmpty"))
+			},
+			expectedMoves: []entity.MoveEntityInterface{},
+			expectedError: errors.New("MoveService.generateMoves: MoveService.tryAddMove: test error in IsSquareEmpty"),
+		},
+		{
+			name:  "Fail to add move when is sliding",
+			piece: 3,
+			fromY: 4, fromX: 3,
+			deltaXs:   []int{1, -1, 1, -1},
+			deltaYs:   []int{1, 1, -1, -1},
+			isSliding: true,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("IsWithinBounds", 5, 4).Return(true)
+				m.On("IsSquareEmpty", 5, 4).Return(false, errors.New("test error in IsSquareEmpty"))
+			},
+			expectedMoves: []entity.MoveEntityInterface{},
+			expectedError: errors.New("MoveService.generateMoves: MoveService.tryAddMove: test error in IsSquareEmpty"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Arrange
+			mockChessboard := new(mocks.MockChessboardEntity)
+			tc.setupMock(mockChessboard)
+			var moves []entity.MoveEntityInterface
+
+			// Act
+			moves, err := generateMoves(tc.piece, tc.fromY, tc.fromX, tc.deltaXs, tc.deltaYs, tc.isSliding, mockChessboard)
+
+			// Assert
+			if tc.expectedError != nil {
+				assert.EqualError(t, err, tc.expectedError.Error())
+			} else {
+				assert.NoError(t, err)
+				assertMovesEqual(t, tc.expectedMoves, moves)
+			}
+		})
+	}
+}
+
+func Test_MoveService_tryAddMove(t *testing.T) {
+	testCases := []struct {
+		name             string
+		piece            int
+		fromY, fromX     int
+		toY, toX         int
+		setupMock        func(m *mocks.MockChessboardEntity)
+		expectedMoves    []entity.MoveEntityInterface
+		expectedResponse bool
+		expectedError    error
+	}{
+		{
+			name:  "Empty square",
+			piece: 1,
+			fromY: 1, fromX: 1,
+			toY: 2, toX: 1,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("IsSquareEmpty", 2, 1).Return(true, nil)
+			},
+			expectedMoves: []entity.MoveEntityInterface{
+				newMockMoveEntity(1, 1, 1, 2, 0, false, false, 0),
+			},
+			expectedResponse: true,
+			expectedError:    nil,
+		},
+		{
+			name:  "Square occupied by opponent",
+			piece: 1,
+			fromY: 1, fromX: 1,
+			toY: 2, toX: 1,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("IsSquareEmpty", 2, 1).Return(false, nil)
+				m.On("IsOpponent", 1, 2, 1).Return(true, nil)
+				m.On("GetPiece", 2, 1).Return(-3, nil)
+			},
+			expectedMoves: []entity.MoveEntityInterface{
+				newMockMoveEntity(1, 1, 1, 2, 0, false, false, -3),
+			},
+			expectedResponse: false,
+			expectedError:    nil,
+		},
+		{
+			name:  "Square occupied by own piece",
+			piece: 1,
+			fromY: 1, fromX: 1,
+			toY: 2, toX: 1,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("IsSquareEmpty", 2, 1).Return(false, nil)
+				m.On("IsOpponent", 1, 2, 1).Return(false, nil)
+			},
+			expectedMoves:    []entity.MoveEntityInterface{},
+			expectedResponse: false,
+			expectedError:    nil,
+		},
+		{
+			name:  "Error in IsSquareEmpty",
+			piece: 1,
+			fromY: 1, fromX: 1,
+			toY: 2, toX: 1,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("IsSquareEmpty", 2, 1).Return(false, errors.New("test error in IsSquareEmpty"))
+			},
+			expectedMoves:    nil,
+			expectedResponse: false,
+			expectedError:    errors.New("MoveService.tryAddMove: test error in IsSquareEmpty"),
+		},
+		{
+			name:  "Error in IsOpponent",
+			piece: 1,
+			fromY: 1, fromX: 1,
+			toY: 2, toX: 1,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("IsSquareEmpty", 2, 1).Return(false, nil)
+				m.On("IsOpponent", 1, 2, 1).Return(false, errors.New("test error in IsOpponent"))
+			},
+			expectedMoves:    []entity.MoveEntityInterface{},
+			expectedResponse: false,
+			expectedError:    errors.New("MoveService.tryAddMove: test error in IsOpponent"),
+		},
+		{
+			name:  "Square occupied by own piece",
+			piece: 1,
+			fromY: 1, fromX: 1,
+			toY: 2, toX: 1,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("IsSquareEmpty", 2, 1).Return(false, nil)
+				m.On("IsOpponent", 1, 2, 1).Return(true, nil)
+				m.On("GetPiece", 2, 1).Return(-7, errors.New("test error in GetPiece"))
+			},
+			expectedMoves:    []entity.MoveEntityInterface{},
+			expectedResponse: false,
+			expectedError:    errors.New("MoveService.tryAddMove: test error in GetPiece"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Arrange
+			mockChessboard := new(mocks.MockChessboardEntity)
+			tc.setupMock(mockChessboard)
+			var moves []entity.MoveEntityInterface
+
+			// Act
+			result, err := tryAddMove(tc.piece, tc.fromY, tc.fromX, tc.toY, tc.toX, &moves, mockChessboard)
+
+			// Assert
+			if tc.expectedError != nil {
+				assert.EqualError(t, err, tc.expectedError.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedResponse, result)
+				assertMovesEqual(t, tc.expectedMoves, moves)
+			}
+		})
+	}
+}
+
+func Test_MoveService_getCastlingMoves(t *testing.T) {
+	testCases := []struct {
+		name          string
+		piece         int
+		fromY, fromX  int
+		setupMock     func(m *mocks.MockChessboardEntity)
+		expectedMoves []entity.MoveEntityInterface
+		expectedError error
+	}{
+		{
+			name:  "White king can castle king side and queen side",
+			piece: 6,
+			fromY: 7, fromX: 4,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("GetCastlingRights").Return("KQkq", nil)
+				m.On("IsSquareEmpty", 7, 5).Return(true, nil)
+				m.On("IsSquareEmpty", 7, 6).Return(true, nil)
+				m.On("GetPiece", 7, 7).Return(4, nil)
+				m.On("IsSquareEmpty", 7, 3).Return(true, nil)
+				m.On("IsSquareEmpty", 7, 2).Return(true, nil)
+				m.On("IsSquareEmpty", 7, 1).Return(true, nil)
+				m.On("GetPiece", 7, 0).Return(4, nil)
+			},
+			expectedMoves: []entity.MoveEntityInterface{
+				newMockMoveEntity(4, 7, 6, 7, 0, true, false, 0),
+				newMockMoveEntity(4, 7, 2, 7, 0, true, false, 0),
+			},
+			expectedError: nil,
+		},
+		{
+			name:  "Black king can castle king side and queen side",
+			piece: -6,
+			fromY: 0, fromX: 4,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("GetCastlingRights").Return("KQkq", nil)
+				m.On("IsSquareEmpty", 0, 5).Return(true, nil)
+				m.On("IsSquareEmpty", 0, 6).Return(true, nil)
+				m.On("GetPiece", 0, 7).Return(-4, nil)
+				m.On("IsSquareEmpty", 0, 3).Return(true, nil)
+				m.On("IsSquareEmpty", 0, 2).Return(true, nil)
+				m.On("IsSquareEmpty", 0, 1).Return(true, nil)
+				m.On("GetPiece", 0, 0).Return(-4, nil)
+			},
+			expectedMoves: []entity.MoveEntityInterface{
+				newMockMoveEntity(4, 0, 2, 0, 0, true, false, 0),
+				newMockMoveEntity(4, 0, 6, 0, 0, true, false, 0),
+			},
+			expectedError: nil,
+		},
+		{
+			name:  "Error in GetCastlingRights",
+			piece: 6,
+			fromY: 7, fromX: 4,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("GetCastlingRights").Return("", errors.New("test error in GetCastlingRights"))
+			},
+			expectedMoves: nil,
+			expectedError: errors.New("MoveService.getCastlingMoves: test error in GetCastlingRights"),
+		},
+		{
+			name:  "Error in canCastleKingSide",
+			piece: 6,
+			fromY: 7, fromX: 4,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("GetCastlingRights").Return("KQkq", nil)
+				m.On("IsSquareEmpty", 7, 5).Return(false, errors.New("test error in IsSquareEmpty"))
+			},
+			expectedMoves: nil,
+			expectedError: errors.New("MoveService.getCastlingMoves: MoveService.canCastleKingSide: test error in IsSquareEmpty"),
+		},
+		{
+			name:  "Error in canCastleQueenSide",
+			piece: 6,
+			fromY: 7, fromX: 4,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("GetCastlingRights").Return("KQkq", nil)
+				m.On("IsSquareEmpty", 7, 5).Return(true, nil)
+				m.On("IsSquareEmpty", 7, 6).Return(true, nil)
+				m.On("GetPiece", 7, 7).Return(4, nil)
+				m.On("IsSquareEmpty", 7, 3).Return(false, errors.New("test error in IsSquareEmpty"))
+			},
+			expectedMoves: nil,
+			expectedError: errors.New("MoveService.getCastlingMoves: MoveService.canCastleQueenSide: test error in IsSquareEmpty"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Arrange
+			mockChessboard := new(mocks.MockChessboardEntity)
+			tc.setupMock(mockChessboard)
+
+			// Act
+			moves, err := getCastlingMoves(tc.piece, tc.fromY, tc.fromX, mockChessboard)
+
+			// Assert
+			if tc.expectedError != nil {
+				assert.EqualError(t, err, tc.expectedError.Error())
+			} else {
+				assert.NoError(t, err)
+				assertMovesEqual(t, tc.expectedMoves, moves)
+			}
+		})
+	}
+}
+
+func Test_MoveService_canCastleKingSide(t *testing.T) {
+	testCases := []struct {
+		name             string
+		fromX, fromY     int
+		setupMock        func(m *mocks.MockChessboardEntity)
+		expectedResponse bool
+		expectedError    error
+	}{
+		{
+			name:  "Can castle king side",
+			fromX: 4,
+			fromY: 0,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("IsSquareEmpty", 0, 5).Return(true, nil)
+				m.On("IsSquareEmpty", 0, 6).Return(true, nil)
+				m.On("GetPiece", 0, 7).Return(4, nil)
+			},
+			expectedResponse: true,
+			expectedError:    nil,
+		},
+		{
+			name:  "Cannot castle king side (Space between king and rook is not empty)",
+			fromX: 4,
+			fromY: 0,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("IsSquareEmpty", 0, 5).Return(false, nil)
+			},
+			expectedResponse: false,
+			expectedError:    nil,
+		},
+		{
+			name:  "Cannot castle king side (Rook is not in the correct position)",
+			fromX: 4,
+			fromY: 0,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("IsSquareEmpty", 0, 5).Return(true, nil)
+				m.On("IsSquareEmpty", 0, 6).Return(true, nil)
+				m.On("GetPiece", 0, 7).Return(0, nil)
+			},
+			expectedResponse: false,
+			expectedError:    nil,
+		},
+		{
+			name:  "Error in IsSquareEmpty",
+			fromX: 4,
+			fromY: 0,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("IsSquareEmpty", 0, 5).Return(false, errors.New("test error in IsSquareEmpty"))
+			},
+			expectedResponse: false,
+			expectedError:    errors.New("MoveService.canCastleKingSide: test error in IsSquareEmpty"),
+		},
+		{
+			name:  "Error in GetPiece",
+			fromX: 4,
+			fromY: 0,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("IsSquareEmpty", 0, 5).Return(true, nil)
+				m.On("IsSquareEmpty", 0, 6).Return(true, nil)
+				m.On("GetPiece", 0, 7).Return(0, errors.New("test error in GetPiece"))
+			},
+			expectedResponse: false,
+			expectedError:    errors.New("MoveService.canCastleKingSide: test error in GetPiece"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Arrange
+			mockChessboard := new(mocks.MockChessboardEntity)
+			tc.setupMock(mockChessboard)
+
+			// Act
+			result, err := canCastleKingSide(6, tc.fromY, tc.fromX, mockChessboard)
+
+			// Assert
+			if tc.expectedError != nil {
+				assert.EqualError(t, err, tc.expectedError.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedResponse, result)
+			}
+		})
+	}
+}
+
+func Test_MoveService_canCastleQueenSide(t *testing.T) {
+	testCases := []struct {
+		name             string
+		fromX, fromY     int
+		setupMock        func(m *mocks.MockChessboardEntity)
+		expectedResponse bool
+		expectedError    error
+	}{
+		{
+			name:  "Can castle queen side",
+			fromX: 4,
+			fromY: 0,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("IsSquareEmpty", 0, 3).Return(true, nil)
+				m.On("IsSquareEmpty", 0, 2).Return(true, nil)
+				m.On("IsSquareEmpty", 0, 1).Return(true, nil)
+				m.On("GetPiece", 0, 0).Return(4, nil)
+			},
+			expectedResponse: true,
+			expectedError:    nil,
+		},
+		{
+			name:  "Cannot castle queen side (Space between king and rook is not empty)",
+			fromX: 4,
+			fromY: 0,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("IsSquareEmpty", 0, 3).Return(false, nil)
+			},
+			expectedResponse: false,
+			expectedError:    nil,
+		},
+		{
+			name:  "Cannot castle queen side (Rook is not in the correct position)",
+			fromX: 4,
+			fromY: 0,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("IsSquareEmpty", 0, 3).Return(true, nil)
+				m.On("IsSquareEmpty", 0, 2).Return(true, nil)
+				m.On("IsSquareEmpty", 0, 1).Return(true, nil)
+				m.On("GetPiece", 0, 0).Return(0, nil)
+			},
+			expectedResponse: false,
+			expectedError:    nil,
+		},
+		{
+			name:  "Error in IsSquareEmpty",
+			fromX: 4,
+			fromY: 0,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("IsSquareEmpty", 0, 3).Return(false, errors.New("test error in IsSquareEmpty"))
+			},
+			expectedResponse: false,
+			expectedError:    errors.New("MoveService.canCastleQueenSide: test error in IsSquareEmpty"),
+		},
+		{
+			name:  "Error in GetPiece",
+			fromX: 4,
+			fromY: 0,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("IsSquareEmpty", 0, 3).Return(true, nil)
+				m.On("IsSquareEmpty", 0, 2).Return(true, nil)
+				m.On("IsSquareEmpty", 0, 1).Return(true, nil)
+				m.On("GetPiece", 0, 0).Return(0, errors.New("test error in GetPiece"))
+			},
+			expectedResponse: false,
+			expectedError:    errors.New("MoveService.canCastleQueenSide: test error in GetPiece"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Arrange
+			mockChessboard := new(mocks.MockChessboardEntity)
+			tc.setupMock(mockChessboard)
+
+			// Act
+			result, err := canCastleQueenSide(6, tc.fromY, tc.fromX, mockChessboard)
+
+			// Assert
+			if tc.expectedError != nil {
+				assert.EqualError(t, err, tc.expectedError.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedResponse, result)
+			}
+		})
+	}
 }
 
 func Test_MoveService_getPawnMove(t *testing.T) {
 	testCases := []struct {
 		name          string
 		piece         int
-		fromX         int // col
-		fromY         int // row
+		fromY, fromX  int
 		setupMock     func(m *mocks.MockChessboardEntity)
 		expectedMoves []entity.MoveEntityInterface
 		expectedError error
 	}{
 		{
-			name:  "White Pawn 1 Move Forward",
+			name:  "White pawn moves one and two squares forward",
 			piece: 1,
-			fromX: 2,
-			fromY: 3,
+			fromY: 6, fromX: 4,
 			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Square 1 ahead is empty
-				m.On("IsSquareEmpty", 2, 2).Return(true, nil)
-				// Square 2 ahead is not empty
-				m.On("IsSquareEmpty", 1, 2).Return(false, nil)
-				// Left, 1 ahead has no opponent
-				m.On("IsOpponent", 1, 2, 1).Return(false, nil)
-				// Right, 1 ahead has no opponent
-				m.On("IsOpponent", 1, 2, 3).Return(false, nil)
-			},
-			expectedMoves: []entity.MoveEntityInterface{
-				entity.NewMoveEntity(
-					HelperService.IntPtr(2), HelperService.IntPtr(3),
-					HelperService.IntPtr(2), HelperService.IntPtr(2),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-			},
-			expectedError: nil,
-		},
-		{
-			name:  "Black Pawn 1 Move Forward",
-			piece: -1,
-			fromX: 2,
-			fromY: 3,
-			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Square 1 ahead is empty
-				m.On("IsSquareEmpty", 4, 2).Return(true, nil)
-				// Square 2 ahead is not empty
-				m.On("IsSquareEmpty", 5, 2).Return(false, nil)
-				// Left, 1 ahead has no opponent
-				m.On("IsOpponent", -1, 4, 3).Return(false, nil)
-				// Right, 1 ahead has no opponent
-				m.On("IsOpponent", -1, 4, 1).Return(false, nil)
-			},
-			expectedMoves: []entity.MoveEntityInterface{
-				entity.NewMoveEntity(
-					HelperService.IntPtr(2), HelperService.IntPtr(3),
-					HelperService.IntPtr(2), HelperService.IntPtr(4),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-			},
-			expectedError: nil,
-		},
-		{
-			name:  "White Pawn 2 Move Forward",
-			piece: 1,
-			fromX: 2,
-			fromY: 6,
-			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Square 1 ahead is empty
-				m.On("IsSquareEmpty", 5, 2).Return(true, nil)
-				// Square 2 ahead is empty
-				m.On("IsSquareEmpty", 4, 2).Return(true, nil)
-				// Left, 1 ahead has no opponent
+				m.On("IsSquareEmpty", 5, 4).Return(true, nil)
+				m.On("IsSquareEmpty", 4, 4).Return(true, nil)
 				m.On("IsOpponent", 1, 5, 3).Return(false, nil)
-				// Right, 1 ahead has no opponent
-				m.On("IsOpponent", 1, 5, 1).Return(false, nil)
+				m.On("IsOpponent", 1, 5, 5).Return(false, nil)
 			},
 			expectedMoves: []entity.MoveEntityInterface{
-				entity.NewMoveEntity(
-					HelperService.IntPtr(2), HelperService.IntPtr(6),
-					HelperService.IntPtr(2), HelperService.IntPtr(5),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(2), HelperService.IntPtr(6),
-					HelperService.IntPtr(2), HelperService.IntPtr(4),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(true),
-					HelperService.IntPtr(0),
-				),
+				newMockMoveEntity(4, 6, 4, 5, 0, false, false, 0),
+				newMockMoveEntity(4, 6, 4, 4, 0, false, true, 0),
 			},
 			expectedError: nil,
 		},
 		{
-			name:  "Black Pawn 2 Move Forward",
+			name:  "Black pawn moves one square forward",
 			piece: -1,
-			fromX: 2,
-			fromY: 1,
+			fromY: 2, fromX: 4,
 			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Square 1 ahead is empty
-				m.On("IsSquareEmpty", 2, 2).Return(true, nil)
-				// Square 2 ahead is empty
-				m.On("IsSquareEmpty", 3, 2).Return(true, nil)
-				// Left, 1 ahead has no opponent
-				m.On("IsOpponent", -1, 2, 3).Return(false, nil)
-				// Right, 1 ahead has no opponent
-				m.On("IsOpponent", -1, 2, 1).Return(false, nil)
+				m.On("IsSquareEmpty", 3, 4).Return(true, nil)
+				m.On("IsSquareEmpty", 4, 4).Return(false, nil)
+				m.On("IsOpponent", -1, 3, 3).Return(false, nil)
+				m.On("IsOpponent", -1, 3, 5).Return(false, nil)
 			},
 			expectedMoves: []entity.MoveEntityInterface{
-				entity.NewMoveEntity(
-					HelperService.IntPtr(2), HelperService.IntPtr(1),
-					HelperService.IntPtr(2), HelperService.IntPtr(2),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(2), HelperService.IntPtr(1),
-					HelperService.IntPtr(2), HelperService.IntPtr(3),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(true),
-					HelperService.IntPtr(0),
-				),
+				newMockMoveEntity(4, 2, 4, 3, 0, false, false, 0),
 			},
 			expectedError: nil,
 		},
 		{
-			name:  "White Pawn Promotion",
+			name:  "White pawn moves one square forward and can promote",
 			piece: 1,
-			fromX: 2,
-			fromY: 1,
+			fromY: 1, fromX: 4,
 			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Square 1 ahead is empty
-				m.On("IsSquareEmpty", 0, 2).Return(true, nil)
-				// Left, 1 ahead has no opponent
-				m.On("IsOpponent", 1, 0, 1).Return(false, nil)
-				// Right, 1 ahead has no opponent
+				m.On("IsSquareEmpty", 0, 4).Return(true, nil)
+				m.On("IsSquareEmpty", -1, 4).Return(false, nil)
 				m.On("IsOpponent", 1, 0, 3).Return(false, nil)
+				m.On("IsOpponent", 1, 0, 5).Return(false, nil)
 			},
 			expectedMoves: []entity.MoveEntityInterface{
-				entity.NewMoveEntity(
-					HelperService.IntPtr(2), HelperService.IntPtr(1),
-					HelperService.IntPtr(2), HelperService.IntPtr(0),
-					HelperService.IntPtr(2),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(2), HelperService.IntPtr(1),
-					HelperService.IntPtr(2), HelperService.IntPtr(0),
-					HelperService.IntPtr(3),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(2), HelperService.IntPtr(1),
-					HelperService.IntPtr(2), HelperService.IntPtr(0),
-					HelperService.IntPtr(4),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(2), HelperService.IntPtr(1),
-					HelperService.IntPtr(2), HelperService.IntPtr(0),
-					HelperService.IntPtr(5),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
+				newMockMoveEntity(4, 1, 4, 0, 2, false, false, 0),
+				newMockMoveEntity(4, 1, 4, 0, 3, false, false, 0),
+				newMockMoveEntity(4, 1, 4, 0, 4, false, false, 0),
+				newMockMoveEntity(4, 1, 4, 0, 5, false, false, 0),
 			},
 			expectedError: nil,
 		},
 		{
-			name:  "Black Pawn Promotion",
-			piece: -1,
-			fromX: 2,
-			fromY: 6,
+			name:  "White pawn captures both sides",
+			piece: 1,
+			fromY: 6, fromX: 4,
 			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Square 1 ahead is empty
-				m.On("IsSquareEmpty", 7, 2).Return(true, nil)
-				// Left, 1 ahead has no opponent
-				m.On("IsOpponent", -1, 7, 1).Return(false, nil)
-				// Right, 1 ahead has no opponent
-				m.On("IsOpponent", -1, 7, 3).Return(false, nil)
+				m.On("IsSquareEmpty", 5, 4).Return(false, nil)
+				m.On("IsOpponent", 1, 5, 3).Return(true, nil)
+				m.On("GetPiece", 5, 3).Return(-1, nil)
+				m.On("IsOpponent", 1, 5, 5).Return(true, nil)
+				m.On("GetPiece", 5, 5).Return(-1, nil)
 			},
 			expectedMoves: []entity.MoveEntityInterface{
-				entity.NewMoveEntity(
-					HelperService.IntPtr(2), HelperService.IntPtr(6),
-					HelperService.IntPtr(2), HelperService.IntPtr(7),
-					HelperService.IntPtr(-2),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(2), HelperService.IntPtr(6),
-					HelperService.IntPtr(2), HelperService.IntPtr(7),
-					HelperService.IntPtr(-3),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(2), HelperService.IntPtr(6),
-					HelperService.IntPtr(2), HelperService.IntPtr(7),
-					HelperService.IntPtr(-4),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(2), HelperService.IntPtr(6),
-					HelperService.IntPtr(2), HelperService.IntPtr(7),
-					HelperService.IntPtr(-5),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
+				newMockMoveEntity(4, 6, 3, 5, 0, false, false, -1),
+				newMockMoveEntity(4, 6, 5, 5, 0, false, false, -1),
 			},
 			expectedError: nil,
 		},
 		{
-			name:  "White Pawn Take Left and Right",
+			name:  "White pawn captures left and promotes",
 			piece: 1,
-			fromX: 2,
-			fromY: 3,
+			fromY: 1, fromX: 4,
 			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Square 1 ahead is not empty
-				m.On("IsSquareEmpty", 2, 2).Return(false, nil)
-				// Left, 1 ahead has opponent
-				m.On("IsOpponent", 1, 2, 1).Return(true, nil)
-				m.On("GetPiece", 2, 1).Return(-4, nil)
-				// Right, 1 ahead has opponent
-				m.On("IsOpponent", 1, 2, 3).Return(true, nil)
-				m.On("GetPiece", 2, 3).Return(-4, nil)
+				m.On("IsSquareEmpty", 0, 4).Return(false, nil)
+				m.On("IsSquareEmpty", -1, 4).Return(false, nil)
+				m.On("IsOpponent", 1, 0, 3).Return(true, nil)
+				m.On("GetPiece", 0, 3).Return(-1, nil)
+				m.On("IsOpponent", 1, 0, 5).Return(false, nil)
 			},
 			expectedMoves: []entity.MoveEntityInterface{
-				entity.NewMoveEntity(
-					HelperService.IntPtr(2), HelperService.IntPtr(3),
-					HelperService.IntPtr(1), HelperService.IntPtr(2),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(-4),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(2), HelperService.IntPtr(3),
-					HelperService.IntPtr(3), HelperService.IntPtr(2),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(-4),
-				),
+				newMockMoveEntity(4, 1, 3, 0, 2, false, false, -1),
+				newMockMoveEntity(4, 1, 3, 0, 3, false, false, -1),
+				newMockMoveEntity(4, 1, 3, 0, 4, false, false, -1),
+				newMockMoveEntity(4, 1, 3, 0, 5, false, false, -1),
 			},
 			expectedError: nil,
 		},
 		{
-			name:  "Black Pawn Take Left and Right",
-			piece: -1,
-			fromX: 2,
-			fromY: 3,
+			name:  "White pawn has an en passant capture on left",
+			piece: 1,
+			fromY: 4, fromX: 4,
 			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Square 1 ahead is not empty
-				m.On("IsSquareEmpty", 4, 2).Return(false, nil)
-				// Left, 1 ahead has opponent
-				m.On("IsOpponent", -1, 4, 1).Return(true, nil)
-				m.On("GetPiece", 4, 1).Return(4, nil)
-				// Right, 1 ahead has opponent
-				m.On("IsOpponent", -1, 4, 3).Return(true, nil)
-				m.On("GetPiece", 4, 3).Return(4, nil)
+				m.On("IsSquareEmpty", 3, 4).Return(false, nil)
+				m.On("IsSquareEmpty", 2, 4).Return(false, nil)
+				m.On("IsOpponent", 1, 3, 5).Return(true, nil)
+				m.On("GetPiece", 3, 5).Return(0, nil)
+				m.On("IsOpponent", 1, 3, 3).Return(false, nil)
 			},
 			expectedMoves: []entity.MoveEntityInterface{
-				entity.NewMoveEntity(
-					HelperService.IntPtr(2), HelperService.IntPtr(3),
-					HelperService.IntPtr(1), HelperService.IntPtr(4),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(4),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(2), HelperService.IntPtr(3),
-					HelperService.IntPtr(3), HelperService.IntPtr(4),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(4),
-				),
+				newMockMoveEntity(4, 4, 5, 3, 0, false, false, -1),
 			},
 			expectedError: nil,
 		},
 		{
-			name:  "White Pawn Take Left With Promotion",
+			name:  "Error in IsSquareEmpty (1st square)",
 			piece: 1,
-			fromX: 2,
-			fromY: 1,
+			fromY: 6, fromX: 4,
 			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Square 1 ahead is not empty
-				m.On("IsSquareEmpty", 0, 2).Return(false, nil)
-				// Left, 1 ahead has opponent
-				m.On("IsOpponent", 1, 0, 1).Return(true, nil)
-				m.On("GetPiece", 0, 1).Return(-4, nil)
-				// Right, 1 ahead has no opponent
-				m.On("IsOpponent", 1, 0, 3).Return(false, nil)
+				m.On("IsSquareEmpty", 5, 4).Return(false, errors.New("test error in IsSquareEmpty"))
 			},
-			expectedMoves: []entity.MoveEntityInterface{
-				entity.NewMoveEntity(
-					HelperService.IntPtr(2), HelperService.IntPtr(1),
-					HelperService.IntPtr(1), HelperService.IntPtr(0),
-					HelperService.IntPtr(2),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(-4),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(2), HelperService.IntPtr(1),
-					HelperService.IntPtr(1), HelperService.IntPtr(0),
-					HelperService.IntPtr(3),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(-4),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(2), HelperService.IntPtr(1),
-					HelperService.IntPtr(1), HelperService.IntPtr(0),
-					HelperService.IntPtr(4),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(-4),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(2), HelperService.IntPtr(1),
-					HelperService.IntPtr(1), HelperService.IntPtr(0),
-					HelperService.IntPtr(5),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(-4),
-				),
-			},
-			expectedError: nil,
+			expectedMoves: []entity.MoveEntityInterface{},
+			expectedError: errors.New("MoveService.getPawnMove: test error in IsSquareEmpty"),
 		},
 		{
-			name:  "Black Pawn Take Left With Promotion",
-			piece: -1,
-			fromX: 2,
-			fromY: 6,
+			name:  "Error in IsSquareEmpty (2nd square)",
+			piece: 1,
+			fromY: 6, fromX: 4,
 			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Square 1 ahead is not empty
-				m.On("IsSquareEmpty", 7, 2).Return(false, nil)
-				// Left, 1 ahead has opponent
-				m.On("IsOpponent", -1, 7, 1).Return(true, nil)
-				m.On("GetPiece", 7, 1).Return(4, nil)
-				// Right, 1 ahead has no opponent
-				m.On("IsOpponent", -1, 7, 3).Return(false, nil)
+				m.On("IsSquareEmpty", 5, 4).Return(true, nil)
+				m.On("IsSquareEmpty", 4, 4).Return(false, errors.New("test error in IsSquareEmpty"))
 			},
-			expectedMoves: []entity.MoveEntityInterface{
-				entity.NewMoveEntity(
-					HelperService.IntPtr(2), HelperService.IntPtr(6),
-					HelperService.IntPtr(1), HelperService.IntPtr(7),
-					HelperService.IntPtr(-2),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(4),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(2), HelperService.IntPtr(6),
-					HelperService.IntPtr(1), HelperService.IntPtr(7),
-					HelperService.IntPtr(-3),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(4),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(2), HelperService.IntPtr(6),
-					HelperService.IntPtr(1), HelperService.IntPtr(7),
-					HelperService.IntPtr(-4),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(4),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(2), HelperService.IntPtr(6),
-					HelperService.IntPtr(1), HelperService.IntPtr(7),
-					HelperService.IntPtr(-5),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(4),
-				),
-			},
-			expectedError: nil,
+			expectedMoves: []entity.MoveEntityInterface{},
+			expectedError: errors.New("MoveService.getPawnMove: test error in IsSquareEmpty"),
 		},
 		{
-			name:  "Failed To Check If Square Is Empty When Checking 1 Move Ahead",
+			name:  "Error in IsOpponent",
 			piece: 1,
-			fromX: 3,
-			fromY: 6,
+			fromY: 6, fromX: 4,
 			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Fail on 1st square
-				m.On("IsSquareEmpty", 5, 3).Return(false, errors.New("ChessboardEntity.IsSquareEmpty: board is not set"))
+				m.On("IsSquareEmpty", 5, 4).Return(true, nil)
+				m.On("IsSquareEmpty", 4, 4).Return(true, nil)
+				m.On("IsOpponent", 1, 5, 3).Return(false, errors.New("test error in IsOpponent"))
 			},
-			expectedMoves: nil,
-			expectedError: errors.New("MoveService.getPawnMove: ChessboardEntity.IsSquareEmpty: board is not set"),
+			expectedMoves: []entity.MoveEntityInterface{},
+			expectedError: errors.New("MoveService.getPawnMove: test error in IsOpponent"),
 		},
 		{
-			name:  "Failed To Check If Square Is Empty When Checking 2 Move Ahead",
+			name:  "Error in GetPiece",
 			piece: 1,
-			fromX: 3,
-			fromY: 6,
+			fromY: 6, fromX: 4,
 			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Pass on 1st square
-				m.On("IsSquareEmpty", 5, 3).Return(true, nil)
-				// Fail on 2nd square
-				m.On("IsSquareEmpty", 4, 3).Return(false, errors.New("ChessboardEntity.IsSquareEmpty: board is not set"))
+				m.On("IsSquareEmpty", 5, 4).Return(true, nil)
+				m.On("IsSquareEmpty", 4, 4).Return(true, nil)
+				m.On("IsOpponent", 1, 5, 3).Return(true, nil)
+				m.On("GetPiece", 5, 3).Return(0, errors.New("test error in GetPiece"))
 			},
-			expectedMoves: nil,
-			expectedError: errors.New("MoveService.getPawnMove: ChessboardEntity.IsSquareEmpty: board is not set"),
-		},
-		{
-			name:  "Failed To Check If Is Opponent",
-			piece: 1,
-			fromX: 3,
-			fromY: 6,
-			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Pass on 1st square
-				m.On("IsSquareEmpty", 5, 3).Return(true, nil)
-				// Pass on 2nd square
-				m.On("IsSquareEmpty", 4, 3).Return(true, nil)
-				// Fail Checking IsOpponent
-				m.On("IsOpponent", 1, 5, 2).Return(false, errors.New("ChessboardEntity.IsOpponent: board is not set"))
-			},
-			expectedMoves: nil,
-			expectedError: errors.New("MoveService.getPawnMove: ChessboardEntity.IsOpponent: board is not set"),
-		},
-		{
-			name:  "Failed To Get Captured Piece",
-			piece: 1,
-			fromX: 3,
-			fromY: 6,
-			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Pass on 1st square
-				m.On("IsSquareEmpty", 5, 3).Return(true, nil)
-				// Pass on 2nd square
-				m.On("IsSquareEmpty", 4, 3).Return(true, nil)
-				// Pass Checking IsOpponent
-				m.On("IsOpponent", 1, 5, 2).Return(true, nil)
-				// Failed Getting Piece
-				m.On("GetPiece", 5, 2).Return(-7, errors.New("ChessboardEntity.GetPiece: row or col out of bounds"))
-			},
-			expectedMoves: nil,
-			expectedError: errors.New("MoveService.getPawnMove: ChessboardEntity.GetPiece: row or col out of bounds"),
-		},
-		{
-			name:  "En Passant Capture",
-			piece: 1,
-			fromX: 3,
-			fromY: 6,
-			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Pass on 1st square
-				m.On("IsSquareEmpty", 5, 3).Return(true, nil)
-				// Pass on 2nd square
-				m.On("IsSquareEmpty", 4, 3).Return(true, nil)
-				// Pass Checking IsOpponent
-				m.On("IsOpponent", 1, 5, 2).Return(true, nil)
-				// Pass Getting Piece
-				m.On("GetPiece", 5, 2).Return(0, nil)
-				// Fail Checking IsOpponent
-				m.On("IsOpponent", 1, 5, 4).Return(false, errors.New("ChessboardEntity.IsOpponent: ChessboardEntity.GetEnPassantSquare: enPassantSquare is not set"))
-			},
-			expectedMoves: []entity.MoveEntityInterface{
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(6),
-					HelperService.IntPtr(5), HelperService.IntPtr(2),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(-1),
-				),
-			},
-			expectedError: errors.New("MoveService.getPawnMove: ChessboardEntity.IsOpponent: ChessboardEntity.GetEnPassantSquare: enPassantSquare is not set"),
+			expectedMoves: []entity.MoveEntityInterface{},
+			expectedError: errors.New("MoveService.getPawnMove: test error in GetPiece"),
 		},
 	}
 
@@ -587,12 +752,7 @@ func Test_MoveService_getPawnMove(t *testing.T) {
 				assert.EqualError(t, err, tc.expectedError.Error())
 			} else {
 				assert.NoError(t, err)
-				assert.Len(t, moves, len(tc.expectedMoves))
-
-				for index, move := range moves {
-					expectedMove := tc.expectedMoves[index]
-					compareMoves(t, expectedMove, move)
-				}
+				assertMovesEqual(t, tc.expectedMoves, moves)
 			}
 		})
 	}
@@ -601,1843 +761,706 @@ func Test_MoveService_getPawnMove(t *testing.T) {
 func Test_MoveService_getKnightMove(t *testing.T) {
 	testCases := []struct {
 		name          string
-		piece         int
-		fromX         int // col
-		fromY         int // row
+		fromY, fromX  int
 		setupMock     func(m *mocks.MockChessboardEntity)
 		expectedMoves []entity.MoveEntityInterface
 		expectedError error
 	}{
 		{
-			name:  "White Knight In Middle Of Board",
-			piece: 2,
-			fromX: 3,
-			fromY: 3,
+			name:  "Knight in the middle of the board",
+			fromY: 4,
+			fromX: 4,
 			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Bottom Right
-				m.On("IsSquareEmpty", 5, 4).Return(true, nil)
-				// Top Right
-				m.On("IsSquareEmpty", 1, 4).Return(true, nil)
-				// Bottom Left
-				m.On("IsSquareEmpty", 5, 2).Return(true, nil)
-				// Top Left
-				m.On("IsSquareEmpty", 1, 2).Return(true, nil)
-				// Right Bottom
-				m.On("IsSquareEmpty", 4, 5).Return(true, nil)
-				// Right Top
-				m.On("IsSquareEmpty", 2, 5).Return(true, nil)
-				// Left Bottom
-				m.On("IsSquareEmpty", 4, 1).Return(true, nil)
-				// Left Bottom
-				m.On("IsSquareEmpty", 4, 1).Return(true, nil)
-				// Left Top
-				m.On("IsSquareEmpty", 2, 1).Return(true, nil)
+				positions := []struct{ toY, toX int }{
+					{6, 5}, {2, 5}, {6, 3}, {2, 3}, {5, 6}, {3, 6}, {5, 2}, {3, 2},
+				}
+				for _, pos := range positions {
+					m.On("IsWithinBounds", pos.toY, pos.toX).Return(true)
+					m.On("IsSquareEmpty", pos.toY, pos.toX).Return(true, nil)
+				}
 			},
-			expectedMoves: []entity.MoveEntityInterface{
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(4), HelperService.IntPtr(5),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(4), HelperService.IntPtr(1),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(2), HelperService.IntPtr(5),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(2), HelperService.IntPtr(1),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(5), HelperService.IntPtr(4),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(5), HelperService.IntPtr(2),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(1), HelperService.IntPtr(4),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(1), HelperService.IntPtr(2),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-			},
+			expectedMoves: massCreateMoveEntities(4, 4, []struct{ toY, toX int }{
+				{6, 5}, {2, 5}, {6, 3}, {2, 3}, {5, 6}, {3, 6}, {5, 2}, {3, 2},
+			}, 0, false, false, 0),
 			expectedError: nil,
 		},
 		{
-			name:  "White Knight In Bottom Left Corner With Opponent",
-			piece: 2,
+			name:  "Knight in corner",
+			fromY: 0,
 			fromX: 0,
-			fromY: 7,
 			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Bottom Right
-				m.On("IsSquareEmpty", 9, 1).Return(false, nil)
-				m.On("IsOpponent", 2, 9, 1).Return(false, nil)
-				// Top Right
-				m.On("IsSquareEmpty", 5, 1).Return(true, nil)
-				// Bottom Left
-				m.On("IsSquareEmpty", 9, -1).Return(false, nil)
-				m.On("IsOpponent", 2, 9, -1).Return(false, nil)
-				// Top Left
-				m.On("IsSquareEmpty", 5, -1).Return(false, nil)
-				m.On("IsOpponent", 2, 5, -1).Return(false, nil)
-				// Right Bottom
-				m.On("IsSquareEmpty", 8, 2).Return(false, nil)
-				m.On("IsOpponent", 2, 8, 2).Return(false, nil)
-				// Right Top
-				m.On("IsSquareEmpty", 6, 2).Return(false, nil)
-				m.On("IsOpponent", 2, 6, 2).Return(true, nil)
-				m.On("GetPiece", 6, 2).Return(-4, nil)
-				// Left Bottom
-				m.On("IsSquareEmpty", 8, -2).Return(false, nil)
-				m.On("IsOpponent", 2, 8, -2).Return(false, nil)
-				// Left Top
-				m.On("IsSquareEmpty", 6, -2).Return(false, nil)
-				m.On("IsOpponent", 2, 6, -2).Return(false, nil)
+				positions := []struct{ toY, toX int }{
+					{2, 1}, {-2, 1}, {2, -1}, {-2, -1}, {1, 2}, {-1, 2}, {1, -2}, {-1, -2},
+				}
+				for _, pos := range positions {
+					if pos.toY < 0 || pos.toX < 0 {
+						m.On("IsWithinBounds", pos.toY, pos.toX).Return(false)
+					} else {
+						m.On("IsWithinBounds", pos.toY, pos.toX).Return(true)
+						m.On("IsSquareEmpty", pos.toY, pos.toX).Return(true, nil)
+					}
+				}
 			},
 			expectedMoves: []entity.MoveEntityInterface{
-				entity.NewMoveEntity(
-					HelperService.IntPtr(0), HelperService.IntPtr(7),
-					HelperService.IntPtr(1), HelperService.IntPtr(5),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(0), HelperService.IntPtr(7),
-					HelperService.IntPtr(2), HelperService.IntPtr(6),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(-4),
-				),
+				newMockMoveEntity(0, 0, 1, 2, 0, false, false, 0),
+				newMockMoveEntity(0, 0, 2, 1, 0, false, false, 0),
 			},
 			expectedError: nil,
 		},
 		{
-			name:  "Black Knight In Bottom Left Corner With Opponent",
-			piece: -2,
-			fromX: 0,
-			fromY: 7,
+			name:  "Knight in middle with 4 friendly pieces blocking on left and 4 enemy pieces on right",
+			fromY: 4,
+			fromX: 4,
 			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Bottom Right
-				m.On("IsSquareEmpty", 9, 1).Return(false, nil)
-				m.On("IsOpponent", -2, 9, 1).Return(false, nil)
-				// Top Right
-				m.On("IsSquareEmpty", 5, 1).Return(true, nil)
-				// Bottom Left
-				m.On("IsSquareEmpty", 9, -1).Return(false, nil)
-				m.On("IsOpponent", -2, 9, -1).Return(false, nil)
-				// Top Left
-				m.On("IsSquareEmpty", 5, -1).Return(false, nil)
-				m.On("IsOpponent", -2, 5, -1).Return(false, nil)
-				// Right Bottom
-				m.On("IsSquareEmpty", 8, 2).Return(false, nil)
-				m.On("IsOpponent", -2, 8, 2).Return(false, nil)
-				// Right Top
-				m.On("IsSquareEmpty", 6, 2).Return(false, nil)
-				m.On("IsOpponent", -2, 6, 2).Return(true, nil)
-				m.On("GetPiece", 6, 2).Return(4, nil)
-				// Left Bottom
-				m.On("IsSquareEmpty", 8, -2).Return(false, nil)
-				m.On("IsOpponent", -2, 8, -2).Return(false, nil)
-				// Left Top
-				m.On("IsSquareEmpty", 6, -2).Return(false, nil)
-				m.On("IsOpponent", -2, 6, -2).Return(false, nil)
+				positions := []struct{ toY, toX int }{
+					{6, 5}, {2, 5}, {6, 3}, {2, 3}, {5, 6}, {3, 6}, {5, 2}, {3, 2},
+				}
+				for _, pos := range positions {
+					m.On("IsWithinBounds", pos.toY, pos.toX).Return(true)
+					m.On("IsSquareEmpty", pos.toY, pos.toX).Return(false, nil)
+					if pos.toX < 4 {
+						m.On("IsOpponent", 2, pos.toY, pos.toX).Return(false, nil)
+					} else {
+						m.On("IsOpponent", 2, pos.toY, pos.toX).Return(true, nil)
+						m.On("GetPiece", pos.toY, pos.toX).Return(-1, nil)
+					}
+				}
 			},
 			expectedMoves: []entity.MoveEntityInterface{
-				entity.NewMoveEntity(
-					HelperService.IntPtr(0), HelperService.IntPtr(7),
-					HelperService.IntPtr(1), HelperService.IntPtr(5),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(0), HelperService.IntPtr(7),
-					HelperService.IntPtr(2), HelperService.IntPtr(6),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(4),
-				),
+				newMockMoveEntity(4, 4, 5, 6, 0, false, false, -1),
+				newMockMoveEntity(4, 4, 5, 2, 0, false, false, -1),
+				newMockMoveEntity(4, 4, 6, 5, 0, false, false, -1),
+				newMockMoveEntity(4, 4, 6, 3, 0, false, false, -1),
 			},
 			expectedError: nil,
-		},
-		{
-			name:  "Failed To Check If Square Is Empty",
-			piece: 2,
-			fromX: 3,
-			fromY: 3,
-			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Fail on Bottom Right
-				m.On("IsSquareEmpty", 5, 4).Return(false, errors.New("ChessboardEntity.IsSquareEmpty: board is not set"))
-			},
-			expectedMoves: nil,
-			expectedError: errors.New("MoveService.getKnightMove: ChessboardEntity.IsSquareEmpty: board is not set"),
-		},
-		{
-			name:  "Failed To Check If Is Opponent",
-			piece: 2,
-			fromX: 3,
-			fromY: 3,
-			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Fail on Bottom Right
-				m.On("IsSquareEmpty", 5, 4).Return(false, nil)
-				m.On("IsOpponent", 2, 5, 4).Return(false, errors.New("ChessboardEntity.IsOpponent: board is not set"))
-			},
-			expectedMoves: nil,
-			expectedError: errors.New("MoveService.getKnightMove: ChessboardEntity.IsOpponent: board is not set"),
-		},
-		{
-			name:  "Failed To Get Captured Piece",
-			piece: 2,
-			fromX: 3,
-			fromY: 3,
-			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Fail on Bottom Right
-				m.On("IsSquareEmpty", 5, 4).Return(false, nil)
-				m.On("IsOpponent", 2, 5, 4).Return(true, nil)
-				m.On("GetPiece", 5, 4).Return(0, errors.New("ChessboardEntity.GetPiece: row or col out of bounds"))
-			},
-			expectedMoves: nil,
-			expectedError: errors.New("MoveService.getKnightMove: ChessboardEntity.GetPiece: row or col out of bounds"),
 		},
 	}
 
 	for _, tc := range testCases {
-		// Arrange
-		mockChessboard := new(mocks.MockChessboardEntity)
-		tc.setupMock(mockChessboard)
+		t.Run(tc.name, func(t *testing.T) {
+			// Arrange
+			mockChessboard := new(mocks.MockChessboardEntity)
+			tc.setupMock(mockChessboard)
 
-		// Act
-		moves, err := getKnightMove(tc.piece, tc.fromY, tc.fromX, mockChessboard)
+			// Act
+			moves, err := getKnightMove(2, tc.fromY, tc.fromX, mockChessboard)
 
-		// Assert
-		if tc.expectedError != nil {
-			assert.EqualError(t, err, tc.expectedError.Error())
-		} else {
-			assert.NoError(t, err)
-			assert.Len(t, moves, len(tc.expectedMoves))
-
-			for index, move := range moves {
-				expectedMove := tc.expectedMoves[index]
-				compareMoves(t, expectedMove, move)
+			// Assert
+			if tc.expectedError != nil {
+				assert.EqualError(t, err, tc.expectedError.Error())
+			} else {
+				assert.NoError(t, err)
+				assertMovesEqual(t, tc.expectedMoves, moves)
 			}
-		}
+		})
 	}
 }
 
 func Test_MoveService_getBishopMove(t *testing.T) {
 	testCases := []struct {
 		name          string
-		piece         int
-		fromX         int // col
-		fromY         int // row
+		fromY, fromX  int
 		setupMock     func(m *mocks.MockChessboardEntity)
 		expectedMoves []entity.MoveEntityInterface
 		expectedError error
 	}{
 		{
-			name:  "White Bishop In Middle Of Board",
-			piece: 3,
-			fromX: 3,
-			fromY: 3,
+			name:  "Bishop in the middle of the board",
+			fromY: 4,
+			fromX: 4,
 			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Diagonal Bottom Right
-				m.On("IsWithinBounds", 4, 4).Return(true)
-				m.On("IsSquareEmpty", 4, 4).Return(true, nil)
-				m.On("IsWithinBounds", 5, 5).Return(true)
-				m.On("IsSquareEmpty", 5, 5).Return(true, nil)
-				m.On("IsWithinBounds", 6, 6).Return(true)
-				m.On("IsSquareEmpty", 6, 6).Return(true, nil)
-				m.On("IsWithinBounds", 7, 7).Return(true)
-				m.On("IsSquareEmpty", 7, 7).Return(true, nil)
-				m.On("IsWithinBounds", 8, 8).Return(false)
-				// Diagonal Bottom Left
-				m.On("IsWithinBounds", 4, 2).Return(true)
-				m.On("IsSquareEmpty", 4, 2).Return(true, nil)
-				m.On("IsWithinBounds", 5, 1).Return(true)
-				m.On("IsSquareEmpty", 5, 1).Return(true, nil)
-				m.On("IsWithinBounds", 6, 0).Return(true)
-				m.On("IsSquareEmpty", 6, 0).Return(true, nil)
-				m.On("IsWithinBounds", 7, -1).Return(false)
-				// Diagonal Top Right
-				m.On("IsWithinBounds", 2, 4).Return(true)
-				m.On("IsSquareEmpty", 2, 4).Return(true, nil)
-				m.On("IsWithinBounds", 1, 5).Return(true)
-				m.On("IsSquareEmpty", 1, 5).Return(true, nil)
-				m.On("IsWithinBounds", 0, 6).Return(true)
-				m.On("IsSquareEmpty", 0, 6).Return(true, nil)
-				m.On("IsWithinBounds", -1, 7).Return(false)
-				// Diagonal Top Left
-				m.On("IsWithinBounds", 2, 2).Return(true)
-				m.On("IsSquareEmpty", 2, 2).Return(true, nil)
-				m.On("IsWithinBounds", 1, 1).Return(true)
-				m.On("IsSquareEmpty", 1, 1).Return(true, nil)
-				m.On("IsWithinBounds", 0, 0).Return(true)
-				m.On("IsSquareEmpty", 0, 0).Return(true, nil)
-				m.On("IsWithinBounds", -1, -1).Return(false)
+				positions := []struct{ toY, toX int }{
+					{5, 5}, {6, 6}, {7, 7}, {8, 8}, // Bottom right
+					{5, 3}, {6, 2}, {7, 1}, {8, 0}, // Bottom left
+					{3, 5}, {2, 6}, {1, 7}, {0, 8}, // Top right
+					{3, 3}, {2, 2}, {1, 1}, {0, 0}, {-1, -1}, // Top left
+				}
+				for _, pos := range positions {
+					if pos.toY < 0 || pos.toX < 0 || pos.toY > 7 || pos.toX > 7 {
+						m.On("IsWithinBounds", pos.toY, pos.toX).Return(false)
+					} else {
+						m.On("IsWithinBounds", pos.toY, pos.toX).Return(true)
+						m.On("IsSquareEmpty", pos.toY, pos.toX).Return(true, nil)
+					}
+				}
 			},
-			expectedMoves: []entity.MoveEntityInterface{
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(4), HelperService.IntPtr(4),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(5), HelperService.IntPtr(5),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(6), HelperService.IntPtr(6),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(7), HelperService.IntPtr(7),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(2), HelperService.IntPtr(4),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(1), HelperService.IntPtr(5),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(0), HelperService.IntPtr(6),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(4), HelperService.IntPtr(2),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(5), HelperService.IntPtr(1),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(6), HelperService.IntPtr(0),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(2), HelperService.IntPtr(2),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(1), HelperService.IntPtr(1),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(0), HelperService.IntPtr(0),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-			},
+			expectedMoves: massCreateMoveEntities(4, 4, []struct{ toY, toX int }{
+				{5, 5}, {6, 6}, {7, 7}, // Bottom right
+				{5, 3}, {6, 2}, {7, 1}, // Bottom left
+				{3, 5}, {2, 6}, {1, 7}, // Top right
+				{3, 3}, {2, 2}, {1, 1}, {0, 0}, // Top left
+			}, 0, false, false, 0),
 			expectedError: nil,
 		},
 		{
-			name:  "White Bishop Surrounded By Opponents",
-			piece: 3,
-			fromX: 3,
-			fromY: 3,
+			name:  "Bishop in corner",
+			fromY: 0,
+			fromX: 0,
 			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Diagonal Bottom Right
-				m.On("IsWithinBounds", 4, 4).Return(true)
-				m.On("IsSquareEmpty", 4, 4).Return(false, nil)
-				m.On("IsOpponent", 3, 4, 4).Return(true, nil)
-				m.On("GetPiece", 4, 4).Return(-3, nil)
-				// Diagonal Bottom Left
-				m.On("IsWithinBounds", 4, 2).Return(true)
-				m.On("IsSquareEmpty", 4, 2).Return(false, nil)
-				m.On("IsOpponent", 3, 4, 2).Return(true, nil)
-				m.On("GetPiece", 4, 2).Return(-3, nil)
-				// Diagonal Top Right
-				m.On("IsWithinBounds", 2, 4).Return(true)
-				m.On("IsSquareEmpty", 2, 4).Return(false, nil)
-				m.On("IsOpponent", 3, 2, 4).Return(true, nil)
-				m.On("GetPiece", 2, 4).Return(-3, nil)
-				// Diagonal Top Left
-				m.On("IsWithinBounds", 2, 2).Return(true)
-				m.On("IsSquareEmpty", 2, 2).Return(false, nil)
-				m.On("IsOpponent", 3, 2, 2).Return(true, nil)
-				m.On("GetPiece", 2, 2).Return(-3, nil)
+				positions := []struct{ toY, toX int }{
+					{1, 1}, {2, 2}, {3, 3}, {4, 4}, {5, 5}, {6, 6}, {7, 7}, {8, 8}, // Bottom right
+					{1, -1},  // Bottom left
+					{-1, 1},  // Top right
+					{-1, -1}, // Top left
+				}
+				for _, pos := range positions {
+					if pos.toY < 0 || pos.toX < 0 || pos.toY > 7 || pos.toX > 7 {
+						m.On("IsWithinBounds", pos.toY, pos.toX).Return(false)
+					} else {
+						m.On("IsWithinBounds", pos.toY, pos.toX).Return(true)
+						m.On("IsSquareEmpty", pos.toY, pos.toX).Return(true, nil)
+					}
+				}
 			},
-			expectedMoves: []entity.MoveEntityInterface{
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(4), HelperService.IntPtr(4),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(-3),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(2), HelperService.IntPtr(4),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(-3),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(4), HelperService.IntPtr(2),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(-3),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(2), HelperService.IntPtr(2),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(-3),
-				),
-			},
+			expectedMoves: massCreateMoveEntities(0, 0, []struct{ toY, toX int }{
+				{1, 1}, {2, 2}, {3, 3}, {4, 4}, {5, 5}, {6, 6}, {7, 7}, // Bottom right
+			}, 0, false, false, 0),
 			expectedError: nil,
 		},
 		{
-			name:  "Black Bishop Surrounded By Opponents",
-			piece: -3,
-			fromX: 3,
-			fromY: 3,
+			name:  "Bishop in middle with 2 friendly pieces blocking on left and 2 enemy pieces on right",
+			fromY: 4,
+			fromX: 4,
 			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Diagonal Bottom Right
-				m.On("IsWithinBounds", 4, 4).Return(true)
-				m.On("IsSquareEmpty", 4, 4).Return(false, nil)
-				m.On("IsOpponent", -3, 4, 4).Return(true, nil)
-				m.On("GetPiece", 4, 4).Return(3, nil)
-				// Diagonal Bottom Left
-				m.On("IsWithinBounds", 4, 2).Return(true)
-				m.On("IsSquareEmpty", 4, 2).Return(false, nil)
-				m.On("IsOpponent", -3, 4, 2).Return(true, nil)
-				m.On("GetPiece", 4, 2).Return(3, nil)
-				// Diagonal Top Right
-				m.On("IsWithinBounds", 2, 4).Return(true)
-				m.On("IsSquareEmpty", 2, 4).Return(false, nil)
-				m.On("IsOpponent", -3, 2, 4).Return(true, nil)
-				m.On("GetPiece", 2, 4).Return(3, nil)
-				// Diagonal Top Left
-				m.On("IsWithinBounds", 2, 2).Return(true)
-				m.On("IsSquareEmpty", 2, 2).Return(false, nil)
-				m.On("IsOpponent", -3, 2, 2).Return(true, nil)
-				m.On("GetPiece", 2, 2).Return(3, nil)
+				positions := []struct{ toY, toX int }{
+					{5, 5}, // Bottom right
+					{5, 3}, // Bottom left
+					{3, 5}, // Top right
+					{3, 3}, // Top left
+				}
+				for _, pos := range positions {
+					m.On("IsWithinBounds", pos.toY, pos.toX).Return(true)
+					m.On("IsSquareEmpty", pos.toY, pos.toX).Return(false, nil)
+					if pos.toX < 4 {
+						m.On("IsOpponent", 3, pos.toY, pos.toX).Return(false, nil)
+					} else {
+						m.On("IsOpponent", 3, pos.toY, pos.toX).Return(true, nil)
+						m.On("GetPiece", pos.toY, pos.toX).Return(-1, nil)
+					}
+				}
 			},
 			expectedMoves: []entity.MoveEntityInterface{
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(4), HelperService.IntPtr(4),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(3),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(2), HelperService.IntPtr(4),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(3),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(4), HelperService.IntPtr(2),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(3),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(2), HelperService.IntPtr(2),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(3),
-				),
+				newMockMoveEntity(4, 4, 5, 5, 0, false, false, -1),
+				newMockMoveEntity(4, 4, 5, 3, 0, false, false, -1),
 			},
 			expectedError: nil,
-		},
-		{
-			name:  "Failed To Check If Square Is Empty",
-			piece: 3,
-			fromX: 3,
-			fromY: 3,
-			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Fail on Diagonal Bottom Right
-				m.On("IsWithinBounds", 4, 4).Return(true)
-				m.On("IsSquareEmpty", 4, 4).Return(false, errors.New("ChessboardEntity.IsSquareEmpty: board is not set"))
-			},
-			expectedMoves: nil,
-			expectedError: errors.New("MoveService.getBishopMove: ChessboardEntity.IsSquareEmpty: board is not set"),
-		},
-		{
-			name:  "Failed To Check If Is Opponent",
-			piece: 3,
-			fromX: 3,
-			fromY: 3,
-			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Fail on Diagonal Bottom Right
-				m.On("IsWithinBounds", 4, 4).Return(true)
-				m.On("IsSquareEmpty", 4, 4).Return(false, nil)
-				m.On("IsOpponent", 3, 4, 4).Return(false, errors.New("ChessboardEntity.IsOpponent: board is not set"))
-			},
-			expectedMoves: nil,
-			expectedError: errors.New("MoveService.getBishopMove: ChessboardEntity.IsOpponent: board is not set"),
-		},
-		{
-			name:  "Failed To Get Captured Piece",
-			piece: 3,
-			fromX: 3,
-			fromY: 3,
-			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Fail on Diagonal Bottom Right
-				m.On("IsWithinBounds", 4, 4).Return(true)
-				m.On("IsSquareEmpty", 4, 4).Return(false, nil)
-				m.On("IsOpponent", 3, 4, 4).Return(true, nil)
-				m.On("GetPiece", 4, 4).Return(0, errors.New("ChessboardEntity.GetPiece: row or col out of bounds"))
-			},
-			expectedMoves: nil,
-			expectedError: errors.New("MoveService.getBishopMove: ChessboardEntity.GetPiece: row or col out of bounds"),
 		},
 	}
 
 	for _, tc := range testCases {
-		// Arrange
-		mockChessboard := new(mocks.MockChessboardEntity)
-		tc.setupMock(mockChessboard)
+		t.Run(tc.name, func(t *testing.T) {
+			// Arrange
+			mockChessboard := new(mocks.MockChessboardEntity)
+			tc.setupMock(mockChessboard)
 
-		// Act
-		moves, err := getBishopMove(tc.piece, tc.fromY, tc.fromX, mockChessboard)
+			// Act
+			moves, err := getBishopMove(3, tc.fromY, tc.fromX, mockChessboard)
 
-		// Assert
-		if tc.expectedError != nil {
-			assert.EqualError(t, err, tc.expectedError.Error())
-		} else {
-			assert.NoError(t, err)
-			assert.Len(t, moves, len(tc.expectedMoves))
-
-			for index, move := range moves {
-				expectedMove := tc.expectedMoves[index]
-				compareMoves(t, expectedMove, move)
+			// Assert
+			if tc.expectedError != nil {
+				assert.EqualError(t, err, tc.expectedError.Error())
+			} else {
+				assert.NoError(t, err)
+				assertMovesEqual(t, tc.expectedMoves, moves)
 			}
-		}
+		})
 	}
 }
 
 func Test_MoveService_getRookMove(t *testing.T) {
 	testCases := []struct {
 		name          string
-		piece         int
-		fromX         int // col
-		fromY         int // row
+		fromY, fromX  int
 		setupMock     func(m *mocks.MockChessboardEntity)
 		expectedMoves []entity.MoveEntityInterface
 		expectedError error
 	}{
 		{
-			name:  "White Rook In Middle Of Board",
-			piece: 4,
-			fromX: 3,
-			fromY: 3,
+			name:  "Rook in the middle of the board",
+			fromY: 4,
+			fromX: 4,
 			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Right
-				m.On("IsWithinBounds", 3, 4).Return(true)
-				m.On("IsSquareEmpty", 3, 4).Return(true, nil)
-				m.On("IsWithinBounds", 3, 5).Return(true)
-				m.On("IsSquareEmpty", 3, 5).Return(true, nil)
-				m.On("IsWithinBounds", 3, 6).Return(true)
-				m.On("IsSquareEmpty", 3, 6).Return(true, nil)
-				m.On("IsWithinBounds", 3, 7).Return(true)
-				m.On("IsSquareEmpty", 3, 7).Return(true, nil)
-				m.On("IsWithinBounds", 3, 8).Return(false)
-				// Left
-				m.On("IsWithinBounds", 3, 2).Return(true)
-				m.On("IsSquareEmpty", 3, 2).Return(true, nil)
-				m.On("IsWithinBounds", 3, 1).Return(true)
-				m.On("IsSquareEmpty", 3, 1).Return(true, nil)
-				m.On("IsWithinBounds", 3, 0).Return(true)
-				m.On("IsSquareEmpty", 3, 0).Return(true, nil)
-				m.On("IsWithinBounds", 3, -1).Return(false)
-				// Down
-				m.On("IsWithinBounds", 4, 3).Return(true)
-				m.On("IsSquareEmpty", 4, 3).Return(true, nil)
-				m.On("IsWithinBounds", 5, 3).Return(true)
-				m.On("IsSquareEmpty", 5, 3).Return(true, nil)
-				m.On("IsWithinBounds", 6, 3).Return(true)
-				m.On("IsSquareEmpty", 6, 3).Return(true, nil)
-				m.On("IsWithinBounds", 7, 3).Return(true)
-				m.On("IsSquareEmpty", 7, 3).Return(true, nil)
-				m.On("IsWithinBounds", 8, 3).Return(false)
-				// Up
-				m.On("IsWithinBounds", 2, 3).Return(true)
-				m.On("IsSquareEmpty", 2, 3).Return(true, nil)
-				m.On("IsWithinBounds", 1, 3).Return(true)
-				m.On("IsSquareEmpty", 1, 3).Return(true, nil)
-				m.On("IsWithinBounds", 0, 3).Return(true)
-				m.On("IsSquareEmpty", 0, 3).Return(true, nil)
-				m.On("IsWithinBounds", -1, 3).Return(false)
+				positions := []struct{ toY, toX int }{
+					{4, 5}, {4, 6}, {4, 7}, {4, 8}, // Right
+					{4, 3}, {4, 2}, {4, 1}, {4, 0}, {4, -1}, // Left
+					{5, 4}, {6, 4}, {7, 4}, {8, 4}, // Down
+					{3, 4}, {2, 4}, {1, 4}, {0, 4}, {-1, 4}, // Up
+				}
+				for _, pos := range positions {
+					if pos.toY < 0 || pos.toX < 0 || pos.toY > 7 || pos.toX > 7 {
+						m.On("IsWithinBounds", pos.toY, pos.toX).Return(false)
+					} else {
+						m.On("IsWithinBounds", pos.toY, pos.toX).Return(true)
+						m.On("IsSquareEmpty", pos.toY, pos.toX).Return(true, nil)
+					}
+				}
 			},
-			expectedMoves: []entity.MoveEntityInterface{
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(4), HelperService.IntPtr(3),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(5), HelperService.IntPtr(3),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(6), HelperService.IntPtr(3),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(7), HelperService.IntPtr(3),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(2), HelperService.IntPtr(3),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(1), HelperService.IntPtr(3),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(0), HelperService.IntPtr(3),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(3), HelperService.IntPtr(4),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(3), HelperService.IntPtr(5),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(3), HelperService.IntPtr(6),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(3), HelperService.IntPtr(7),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(3), HelperService.IntPtr(2),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(3), HelperService.IntPtr(1),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(3), HelperService.IntPtr(0),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-			},
+			expectedMoves: massCreateMoveEntities(4, 4, []struct{ toY, toX int }{
+				{4, 5}, {4, 6}, {4, 7}, // Right
+				{4, 3}, {4, 2}, {4, 1}, {4, 0}, // Left
+				{5, 4}, {6, 4}, {7, 4}, // Down
+				{3, 4}, {2, 4}, {1, 4}, {0, 4}, // Up
+			}, 0, false, false, 0),
 			expectedError: nil,
 		},
 		{
-			name:  "White Rook Surrounded By Opponents",
-			piece: 4,
-			fromX: 3,
-			fromY: 3,
+			name:  "Rook in corner",
+			fromY: 0,
+			fromX: 0,
 			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Right
-				m.On("IsWithinBounds", 3, 4).Return(true)
-				m.On("IsSquareEmpty", 3, 4).Return(false, nil)
-				m.On("IsOpponent", 4, 3, 4).Return(true, nil)
-				m.On("GetPiece", 3, 4).Return(-4, nil)
-				// Left
-				m.On("IsWithinBounds", 3, 2).Return(true)
-				m.On("IsSquareEmpty", 3, 2).Return(false, nil)
-				m.On("IsOpponent", 4, 3, 2).Return(true, nil)
-				m.On("GetPiece", 3, 2).Return(-4, nil)
-				// Down
-				m.On("IsWithinBounds", 4, 3).Return(true)
-				m.On("IsSquareEmpty", 4, 3).Return(false, nil)
-				m.On("IsOpponent", 4, 4, 3).Return(true, nil)
-				m.On("GetPiece", 4, 3).Return(-4, nil)
-				// Up
-				m.On("IsWithinBounds", 2, 3).Return(true)
-				m.On("IsSquareEmpty", 2, 3).Return(false, nil)
-				m.On("IsOpponent", 4, 2, 3).Return(true, nil)
-				m.On("GetPiece", 2, 3).Return(-4, nil)
+				positions := []struct{ toY, toX int }{
+					{0, 1}, {0, 2}, {0, 3}, {0, 4}, {0, 5}, {0, 6}, {0, 7}, {0, 8}, // Right
+					{0, -1},                                                        // Left
+					{1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0}, {8, 0}, // Down
+					{-1, 0}, // Up
+				}
+				for _, pos := range positions {
+					if pos.toY < 0 || pos.toX < 0 || pos.toY > 7 || pos.toX > 7 {
+						m.On("IsWithinBounds", pos.toY, pos.toX).Return(false)
+					} else {
+						m.On("IsWithinBounds", pos.toY, pos.toX).Return(true)
+						m.On("IsSquareEmpty", pos.toY, pos.toX).Return(true, nil)
+					}
+				}
 			},
-			expectedMoves: []entity.MoveEntityInterface{
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(4), HelperService.IntPtr(3),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(-4),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(2), HelperService.IntPtr(3),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(-4),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(3), HelperService.IntPtr(4),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(-4),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(3), HelperService.IntPtr(2),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(-4),
-				),
-			},
+			expectedMoves: massCreateMoveEntities(0, 0, []struct{ toY, toX int }{
+				{0, 1}, {0, 2}, {0, 3}, {0, 4}, {0, 5}, {0, 6}, {0, 7}, // Right
+				{1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0}, // Down
+			}, 0, false, false, 0),
 			expectedError: nil,
 		},
 		{
-			name:  "Black Rook Surrounded By Opponents",
-			piece: -4,
-			fromX: 3,
-			fromY: 3,
+			name:  "Rook in middle with 2 friendly pieces blocking on up and left and 2 enemy pieces on bottom and right",
+			fromY: 4,
+			fromX: 4,
 			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Right
-				m.On("IsWithinBounds", 3, 4).Return(true)
-				m.On("IsSquareEmpty", 3, 4).Return(false, nil)
-				m.On("IsOpponent", -4, 3, 4).Return(true, nil)
-				m.On("GetPiece", 3, 4).Return(4, nil)
-				// Lef
-				m.On("IsWithinBounds", 3, 2).Return(true)
-				m.On("IsSquareEmpty", 3, 2).Return(false, nil)
-				m.On("IsOpponent", -4, 3, 2).Return(true, nil)
-				m.On("GetPiece", 3, 2).Return(4, nil)
-				// Down
-				m.On("IsWithinBounds", 4, 3).Return(true)
-				m.On("IsSquareEmpty", 4, 3).Return(false, nil)
-				m.On("IsOpponent", -4, 4, 3).Return(true, nil)
-				m.On("GetPiece", 4, 3).Return(4, nil)
-				// Up
-				m.On("IsWithinBounds", 2, 3).Return(true)
-				m.On("IsSquareEmpty", 2, 3).Return(false, nil)
-				m.On("IsOpponent", -4, 2, 3).Return(true, nil)
-				m.On("GetPiece", 2, 3).Return(4, nil)
+				positions := []struct{ toY, toX int }{
+					{4, 5}, // Right
+					{4, 3}, // Left
+					{5, 4}, // Down
+					{3, 4}, // Up
+				}
+				for _, pos := range positions {
+					m.On("IsWithinBounds", pos.toY, pos.toX).Return(true)
+					m.On("IsSquareEmpty", pos.toY, pos.toX).Return(false, nil)
+					if pos.toX < 4 || pos.toY < 4 {
+						m.On("IsOpponent", 4, pos.toY, pos.toX).Return(false, nil)
+					} else {
+						m.On("IsOpponent", 4, pos.toY, pos.toX).Return(true, nil)
+						m.On("GetPiece", pos.toY, pos.toX).Return(-1, nil)
+					}
+				}
 			},
 			expectedMoves: []entity.MoveEntityInterface{
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(4), HelperService.IntPtr(3),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(4),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(2), HelperService.IntPtr(3),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(4),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(3), HelperService.IntPtr(4),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(4),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(3), HelperService.IntPtr(2),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(4),
-				),
+				newMockMoveEntity(4, 4, 5, 4, 0, false, false, -1),
+				newMockMoveEntity(4, 4, 4, 5, 0, false, false, -1),
 			},
 			expectedError: nil,
-		},
-		{
-			name:  "Failed To Check If Square Is Empty",
-			piece: 4,
-			fromX: 3,
-			fromY: 3,
-			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Right
-				m.On("IsWithinBounds", 3, 4).Return(true)
-				m.On("IsSquareEmpty", 3, 4).Return(false, errors.New("ChessboardEntity.IsSquareEmpty: board is not set"))
-			},
-			expectedMoves: nil,
-			expectedError: errors.New("MoveService.getRookMove: ChessboardEntity.IsSquareEmpty: board is not set"),
-		},
-		{
-			name:  "Failed To Check If Is Opponent",
-			piece: 4,
-			fromX: 3,
-			fromY: 3,
-			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Right
-				m.On("IsWithinBounds", 3, 4).Return(true)
-				m.On("IsSquareEmpty", 3, 4).Return(false, nil)
-				m.On("IsOpponent", 4, 3, 4).Return(false, errors.New("ChessboardEntity.IsOpponent: board is not set"))
-			},
-			expectedMoves: nil,
-			expectedError: errors.New("MoveService.getRookMove: ChessboardEntity.IsOpponent: board is not set"),
-		},
-		{
-			name:  "Failed To Get Captured Piece",
-			piece: 4,
-			fromX: 3,
-			fromY: 3,
-			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Right
-				m.On("IsWithinBounds", 3, 4).Return(true)
-				m.On("IsSquareEmpty", 3, 4).Return(false, nil)
-				m.On("IsOpponent", 4, 3, 4).Return(true, nil)
-				m.On("GetPiece", 3, 4).Return(0, errors.New("ChessboardEntity.GetPiece: row or col out of bounds"))
-			},
-			expectedMoves: nil,
-			expectedError: errors.New("MoveService.getRookMove: ChessboardEntity.GetPiece: row or col out of bounds"),
 		},
 	}
 
 	for _, tc := range testCases {
-		// Arrange
-		mockChessboard := new(mocks.MockChessboardEntity)
-		tc.setupMock(mockChessboard)
+		t.Run(tc.name, func(t *testing.T) {
+			// Arrange
+			mockChessboard := new(mocks.MockChessboardEntity)
+			tc.setupMock(mockChessboard)
 
-		// Act
-		moves, err := getRookMove(tc.piece, tc.fromY, tc.fromX, mockChessboard)
+			// Act
+			moves, err := getRookMove(4, tc.fromY, tc.fromX, mockChessboard)
 
-		// Assert
-		if tc.expectedError != nil {
-			assert.EqualError(t, err, tc.expectedError.Error())
-		} else {
-			assert.NoError(t, err)
-			assert.Len(t, moves, len(tc.expectedMoves))
-
-			for index, move := range moves {
-				expectedMove := tc.expectedMoves[index]
-				compareMoves(t, expectedMove, move)
+			// Assert
+			if tc.expectedError != nil {
+				assert.EqualError(t, err, tc.expectedError.Error())
+			} else {
+				assert.NoError(t, err)
+				assertMovesEqual(t, tc.expectedMoves, moves)
 			}
-		}
+		})
 	}
 }
 
 func Test_MoveService_getQueenMove(t *testing.T) {
 	testCases := []struct {
 		name          string
-		piece         int
-		fromX         int // col
-		fromY         int // row
+		fromY, fromX  int
 		setupMock     func(m *mocks.MockChessboardEntity)
 		expectedMoves []entity.MoveEntityInterface
 		expectedError error
 	}{
 		{
-			name:  "White Queen In Middle Of Board",
-			piece: 5,
-			fromX: 3,
-			fromY: 3,
+			name:  "Queen in the middle of the board",
+			fromY: 4,
+			fromX: 4,
 			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Diagonal Bottom Right
-				m.On("IsWithinBounds", 4, 4).Return(true)
-				m.On("IsSquareEmpty", 4, 4).Return(true, nil)
-				m.On("IsWithinBounds", 5, 5).Return(true)
-				m.On("IsSquareEmpty", 5, 5).Return(true, nil)
-				m.On("IsWithinBounds", 6, 6).Return(true)
-				m.On("IsSquareEmpty", 6, 6).Return(true, nil)
-				m.On("IsWithinBounds", 7, 7).Return(true)
-				m.On("IsSquareEmpty", 7, 7).Return(true, nil)
-				m.On("IsWithinBounds", 8, 8).Return(false)
-				// Diagonal Bottom Left
-				m.On("IsWithinBounds", 4, 2).Return(true)
-				m.On("IsSquareEmpty", 4, 2).Return(true, nil)
-				m.On("IsWithinBounds", 5, 1).Return(true)
-				m.On("IsSquareEmpty", 5, 1).Return(true, nil)
-				m.On("IsWithinBounds", 6, 0).Return(true)
-				m.On("IsSquareEmpty", 6, 0).Return(true, nil)
-				m.On("IsWithinBounds", 7, -1).Return(false)
-				// Diagonal Top Right
-				m.On("IsWithinBounds", 2, 4).Return(true)
-				m.On("IsSquareEmpty", 2, 4).Return(true, nil)
-				m.On("IsWithinBounds", 1, 5).Return(true)
-				m.On("IsSquareEmpty", 1, 5).Return(true, nil)
-				m.On("IsWithinBounds", 0, 6).Return(true)
-				m.On("IsSquareEmpty", 0, 6).Return(true, nil)
-				m.On("IsWithinBounds", -1, 7).Return(false)
-				// Diagonal Top Left
-				m.On("IsWithinBounds", 2, 2).Return(true)
-				m.On("IsSquareEmpty", 2, 2).Return(true, nil)
-				m.On("IsWithinBounds", 1, 1).Return(true)
-				m.On("IsSquareEmpty", 1, 1).Return(true, nil)
-				m.On("IsWithinBounds", 0, 0).Return(true)
-				m.On("IsSquareEmpty", 0, 0).Return(true, nil)
-				m.On("IsWithinBounds", -1, -1).Return(false)
-				// Right
-				m.On("IsWithinBounds", 3, 4).Return(true)
-				m.On("IsSquareEmpty", 3, 4).Return(true, nil)
-				m.On("IsWithinBounds", 3, 5).Return(true)
-				m.On("IsSquareEmpty", 3, 5).Return(true, nil)
-				m.On("IsWithinBounds", 3, 6).Return(true)
-				m.On("IsSquareEmpty", 3, 6).Return(true, nil)
-				m.On("IsWithinBounds", 3, 7).Return(true)
-				m.On("IsSquareEmpty", 3, 7).Return(true, nil)
-				m.On("IsWithinBounds", 3, 8).Return(false)
-				// Left
-				m.On("IsWithinBounds", 3, 2).Return(true)
-				m.On("IsSquareEmpty", 3, 2).Return(true, nil)
-				m.On("IsWithinBounds", 3, 1).Return(true)
-				m.On("IsSquareEmpty", 3, 1).Return(true, nil)
-				m.On("IsWithinBounds", 3, 0).Return(true)
-				m.On("IsSquareEmpty", 3, 0).Return(true, nil)
-				m.On("IsWithinBounds", 3, -1).Return(false)
-				// Down
-				m.On("IsWithinBounds", 4, 3).Return(true)
-				m.On("IsSquareEmpty", 4, 3).Return(true, nil)
-				m.On("IsWithinBounds", 5, 3).Return(true)
-				m.On("IsSquareEmpty", 5, 3).Return(true, nil)
-				m.On("IsWithinBounds", 6, 3).Return(true)
-				m.On("IsSquareEmpty", 6, 3).Return(true, nil)
-				m.On("IsWithinBounds", 7, 3).Return(true)
-				m.On("IsSquareEmpty", 7, 3).Return(true, nil)
-				m.On("IsWithinBounds", 8, 3).Return(false)
-				// Up
-				m.On("IsWithinBounds", 2, 3).Return(true)
-				m.On("IsSquareEmpty", 2, 3).Return(true, nil)
-				m.On("IsWithinBounds", 1, 3).Return(true)
-				m.On("IsSquareEmpty", 1, 3).Return(true, nil)
-				m.On("IsWithinBounds", 0, 3).Return(true)
-				m.On("IsSquareEmpty", 0, 3).Return(true, nil)
-				m.On("IsWithinBounds", -1, 3).Return(false)
+				positions := []struct{ toY, toX int }{
+					{5, 5}, {6, 6}, {7, 7}, {8, 8}, // Bottom right
+					{5, 3}, {6, 2}, {7, 1}, {8, 0}, // Bottom left
+					{3, 5}, {2, 6}, {1, 7}, {0, 8}, // Top right
+					{3, 3}, {2, 2}, {1, 1}, {0, 0}, {-1, -1}, // Top left
+					{4, 5}, {4, 6}, {4, 7}, {4, 8}, // Right
+					{4, 3}, {4, 2}, {4, 1}, {4, 0}, {4, -1}, // Left
+					{5, 4}, {6, 4}, {7, 4}, {8, 4}, // Down
+					{3, 4}, {2, 4}, {1, 4}, {0, 4}, {-1, 4}, // Up
+				}
+				for _, pos := range positions {
+					if pos.toY < 0 || pos.toX < 0 || pos.toY > 7 || pos.toX > 7 {
+						m.On("IsWithinBounds", pos.toY, pos.toX).Return(false)
+					} else {
+						m.On("IsWithinBounds", pos.toY, pos.toX).Return(true)
+						m.On("IsSquareEmpty", pos.toY, pos.toX).Return(true, nil)
+					}
+				}
 			},
-			expectedMoves: []entity.MoveEntityInterface{
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(4), HelperService.IntPtr(4),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(5), HelperService.IntPtr(5),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(6), HelperService.IntPtr(6),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(7), HelperService.IntPtr(7),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(2), HelperService.IntPtr(4),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(1), HelperService.IntPtr(5),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(0), HelperService.IntPtr(6),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(4), HelperService.IntPtr(2),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(5), HelperService.IntPtr(1),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(6), HelperService.IntPtr(0),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(2), HelperService.IntPtr(2),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(1), HelperService.IntPtr(1),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(0), HelperService.IntPtr(0),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(4), HelperService.IntPtr(3),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(5), HelperService.IntPtr(3),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(6), HelperService.IntPtr(3),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(7), HelperService.IntPtr(3),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(2), HelperService.IntPtr(3),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(1), HelperService.IntPtr(3),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(0), HelperService.IntPtr(3),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(3), HelperService.IntPtr(4),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(3), HelperService.IntPtr(5),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(3), HelperService.IntPtr(6),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(3), HelperService.IntPtr(7),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(3), HelperService.IntPtr(2),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(3), HelperService.IntPtr(1),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(3), HelperService.IntPtr(0),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-			},
+			expectedMoves: massCreateMoveEntities(4, 4, []struct{ toY, toX int }{
+				{5, 5}, {6, 6}, {7, 7}, // Bottom right
+				{5, 3}, {6, 2}, {7, 1}, // Bottom left
+				{3, 5}, {2, 6}, {1, 7}, // Top right
+				{3, 3}, {2, 2}, {1, 1}, {0, 0}, // Top left
+				{4, 5}, {4, 6}, {4, 7}, // Right
+				{4, 3}, {4, 2}, {4, 1}, {4, 0}, // Left
+				{5, 4}, {6, 4}, {7, 4}, // Down
+				{3, 4}, {2, 4}, {1, 4}, {0, 4}, // Up
+			}, 0, false, false, 0),
 			expectedError: nil,
 		},
 		{
-			name:  "White Queen Surrounded By Opponents",
-			piece: 5,
-			fromX: 3,
-			fromY: 3,
+			name:  "Queen in corner",
+			fromY: 0,
+			fromX: 0,
 			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Diagonal Bottom Right
-				m.On("IsWithinBounds", 4, 4).Return(true)
-				m.On("IsSquareEmpty", 4, 4).Return(false, nil)
-				m.On("IsOpponent", 5, 4, 4).Return(true, nil)
-				m.On("GetPiece", 4, 4).Return(-5, nil)
-				// Diagonal Bottom Left
-				m.On("IsWithinBounds", 4, 2).Return(true)
-				m.On("IsSquareEmpty", 4, 2).Return(false, nil)
-				m.On("IsOpponent", 5, 4, 2).Return(true, nil)
-				m.On("GetPiece", 4, 2).Return(-5, nil)
-				// Diagonal Top Right
-				m.On("IsWithinBounds", 2, 4).Return(true)
-				m.On("IsSquareEmpty", 2, 4).Return(false, nil)
-				m.On("IsOpponent", 5, 2, 4).Return(true, nil)
-				m.On("GetPiece", 2, 4).Return(-5, nil)
-				// Diagonal Top Left
-				m.On("IsWithinBounds", 2, 2).Return(true)
-				m.On("IsSquareEmpty", 2, 2).Return(false, nil)
-				m.On("IsOpponent", 5, 2, 2).Return(true, nil)
-				m.On("GetPiece", 2, 2).Return(-5, nil)
-				// Right
-				m.On("IsWithinBounds", 3, 4).Return(true)
-				m.On("IsSquareEmpty", 3, 4).Return(false, nil)
-				m.On("IsOpponent", 5, 3, 4).Return(true, nil)
-				m.On("GetPiece", 3, 4).Return(-5, nil)
-				// Left
-				m.On("IsWithinBounds", 3, 2).Return(true)
-				m.On("IsSquareEmpty", 3, 2).Return(false, nil)
-				m.On("IsOpponent", 5, 3, 2).Return(true, nil)
-				m.On("GetPiece", 3, 2).Return(-5, nil)
-				// Down
-				m.On("IsWithinBounds", 4, 3).Return(true)
-				m.On("IsSquareEmpty", 4, 3).Return(false, nil)
-				m.On("IsOpponent", 5, 4, 3).Return(true, nil)
-				m.On("GetPiece", 4, 3).Return(-5, nil)
-				// Up
-				m.On("IsWithinBounds", 2, 3).Return(true)
-				m.On("IsSquareEmpty", 2, 3).Return(false, nil)
-				m.On("IsOpponent", 5, 2, 3).Return(true, nil)
-				m.On("GetPiece", 2, 3).Return(-5, nil)
+				positions := []struct{ toY, toX int }{
+					{1, 1}, {2, 2}, {3, 3}, {4, 4}, {5, 5}, {6, 6}, {7, 7}, {8, 8}, // Bottom right
+					{1, -1},                                                        // Bottom left
+					{-1, 1},                                                        // Top right
+					{-1, -1},                                                       // Top left
+					{0, 1}, {0, 2}, {0, 3}, {0, 4}, {0, 5}, {0, 6}, {0, 7}, {0, 8}, // Right
+					{0, -1},                                                        // Left
+					{1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0}, {8, 0}, // Down
+					{-1, 0}, // Up
+				}
+				for _, pos := range positions {
+					if pos.toY < 0 || pos.toX < 0 || pos.toY > 7 || pos.toX > 7 {
+						m.On("IsWithinBounds", pos.toY, pos.toX).Return(false)
+					} else {
+						m.On("IsWithinBounds", pos.toY, pos.toX).Return(true)
+						m.On("IsSquareEmpty", pos.toY, pos.toX).Return(true, nil)
+					}
+				}
 			},
-			expectedMoves: []entity.MoveEntityInterface{
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(4), HelperService.IntPtr(4),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(-5),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(2), HelperService.IntPtr(4),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(-5),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(4), HelperService.IntPtr(2),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(-5),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(2), HelperService.IntPtr(2),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(-5),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(4), HelperService.IntPtr(3),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(-5),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(2), HelperService.IntPtr(3),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(-5),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(3), HelperService.IntPtr(4),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(-5),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(3), HelperService.IntPtr(2),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(-5),
-				),
-			},
+			expectedMoves: massCreateMoveEntities(0, 0, []struct{ toY, toX int }{
+				{1, 1}, {2, 2}, {3, 3}, {4, 4}, {5, 5}, {6, 6}, {7, 7}, // Bottom right
+				{0, 1}, {0, 2}, {0, 3}, {0, 4}, {0, 5}, {0, 6}, {0, 7}, // Right
+				{1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0}, // Down
+			}, 0, false, false, 0),
 			expectedError: nil,
 		},
 		{
-			name:  "Black Queen Surrounded By Opponents",
-			piece: -5,
-			fromX: 3,
-			fromY: 3,
+			name:  "Queen in middle with 3 friendly pieces blocking on up and 5 opponent pieces on bottom, right, left",
+			fromY: 4,
+			fromX: 4,
 			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Diagonal Bottom Right
-				m.On("IsWithinBounds", 4, 4).Return(true)
-				m.On("IsSquareEmpty", 4, 4).Return(false, nil)
-				m.On("IsOpponent", -5, 4, 4).Return(true, nil)
-				m.On("GetPiece", 4, 4).Return(5, nil)
-				// Diagonal Bottom Left
-				m.On("IsWithinBounds", 4, 2).Return(true)
-				m.On("IsSquareEmpty", 4, 2).Return(false, nil)
-				m.On("IsOpponent", -5, 4, 2).Return(true, nil)
-				m.On("GetPiece", 4, 2).Return(5, nil)
-				// Diagonal Top Right
-				m.On("IsWithinBounds", 2, 4).Return(true)
-				m.On("IsSquareEmpty", 2, 4).Return(false, nil)
-				m.On("IsOpponent", -5, 2, 4).Return(true, nil)
-				m.On("GetPiece", 2, 4).Return(5, nil)
-				// Diagonal Top Left
-				m.On("IsWithinBounds", 2, 2).Return(true)
-				m.On("IsSquareEmpty", 2, 2).Return(false, nil)
-				m.On("IsOpponent", -5, 2, 2).Return(true, nil)
-				m.On("GetPiece", 2, 2).Return(5, nil)
-				// Right
-				m.On("IsWithinBounds", 3, 4).Return(true)
-				m.On("IsSquareEmpty", 3, 4).Return(false, nil)
-				m.On("IsOpponent", -5, 3, 4).Return(true, nil)
-				m.On("GetPiece", 3, 4).Return(5, nil)
-				// Left
-				m.On("IsWithinBounds", 3, 2).Return(true)
-				m.On("IsSquareEmpty", 3, 2).Return(false, nil)
-				m.On("IsOpponent", -5, 3, 2).Return(true, nil)
-				m.On("GetPiece", 3, 2).Return(5, nil)
-				// Down
-				m.On("IsWithinBounds", 4, 3).Return(true)
-				m.On("IsSquareEmpty", 4, 3).Return(false, nil)
-				m.On("IsOpponent", -5, 4, 3).Return(true, nil)
-				m.On("GetPiece", 4, 3).Return(5, nil)
-				// Up
-				m.On("IsWithinBounds", 2, 3).Return(true)
-				m.On("IsSquareEmpty", 2, 3).Return(false, nil)
-				m.On("IsOpponent", -5, 2, 3).Return(true, nil)
-				m.On("GetPiece", 2, 3).Return(5, nil)
+				positions := []struct{ toY, toX int }{
+					{5, 5}, // Bottom right
+					{5, 3}, // Bottom left
+					{3, 5}, // Top right
+					{3, 3}, // Top left
+					{4, 5}, // Right
+					{4, 3}, // Left
+					{5, 4}, // Down
+					{3, 4}, // Up
+				}
+				for _, pos := range positions {
+					m.On("IsWithinBounds", pos.toY, pos.toX).Return(true)
+					m.On("IsSquareEmpty", pos.toY, pos.toX).Return(false, nil)
+					if pos.toY < 4 {
+						m.On("IsOpponent", 5, pos.toY, pos.toX).Return(false, nil)
+					} else {
+						m.On("IsOpponent", 5, pos.toY, pos.toX).Return(true, nil)
+						m.On("GetPiece", pos.toY, pos.toX).Return(-1, nil)
+					}
+				}
 			},
-			expectedMoves: []entity.MoveEntityInterface{
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(4), HelperService.IntPtr(4),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(5),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(2), HelperService.IntPtr(4),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(5),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(4), HelperService.IntPtr(2),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(5),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(2), HelperService.IntPtr(2),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(5),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(4), HelperService.IntPtr(3),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(5),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(2), HelperService.IntPtr(3),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(5),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(3), HelperService.IntPtr(4),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(5),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(3), HelperService.IntPtr(2),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(5),
-				),
-			},
+			expectedMoves: massCreateMoveEntities(4, 4, []struct{ toY, toX int }{
+				{5, 5}, // Bottom right
+				{5, 3}, // Bottom left
+				{4, 5}, // Right
+				{4, 3}, // Left
+				{5, 4}, // Down
+			}, 0, false, false, -1),
 			expectedError: nil,
-		},
-		{
-			name:  "Failed To Check If Square Is Empty",
-			piece: 5,
-			fromX: 3,
-			fromY: 3,
-			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Fail on Diagonal Bottom Right
-				m.On("IsWithinBounds", 4, 4).Return(true)
-				m.On("IsSquareEmpty", 4, 4).Return(false, errors.New("ChessboardEntity.IsSquareEmpty: board is not set"))
-			},
-			expectedMoves: nil,
-			expectedError: errors.New("MoveService.getQueenMove: MoveService.getBishopMove: ChessboardEntity.IsSquareEmpty: board is not set"),
-		},
-		{
-			name:  "Failed To Check If Is Opponent",
-			piece: 5,
-			fromX: 3,
-			fromY: 3,
-			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Fail on Diagonal Bottom Right
-				m.On("IsWithinBounds", 4, 4).Return(true)
-				m.On("IsSquareEmpty", 4, 4).Return(false, nil)
-				m.On("IsOpponent", 5, 4, 4).Return(false, errors.New("ChessboardEntity.IsOpponent: board is not set"))
-			},
-			expectedMoves: nil,
-			expectedError: errors.New("MoveService.getQueenMove: MoveService.getBishopMove: ChessboardEntity.IsOpponent: board is not set"),
-		},
-		{
-			name:  "Failed To Get Captured Piece",
-			piece: 5,
-			fromX: 3,
-			fromY: 3,
-			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Fail on Diagonal Bottom Right
-				m.On("IsWithinBounds", 4, 4).Return(true)
-				m.On("IsSquareEmpty", 4, 4).Return(false, nil)
-				m.On("IsOpponent", 5, 4, 4).Return(true, nil)
-				m.On("GetPiece", 4, 4).Return(0, errors.New("ChessboardEntity.GetPiece: row or col out of bounds"))
-			},
-			expectedMoves: nil,
-			expectedError: errors.New("MoveService.getQueenMove: MoveService.getBishopMove: ChessboardEntity.GetPiece: row or col out of bounds"),
 		},
 	}
 
 	for _, tc := range testCases {
-		// Arrange
-		mockChessboard := new(mocks.MockChessboardEntity)
-		tc.setupMock(mockChessboard)
+		t.Run(tc.name, func(t *testing.T) {
+			// Arrange
+			mockChessboard := new(mocks.MockChessboardEntity)
+			tc.setupMock(mockChessboard)
 
-		// Act
-		moves, err := getQueenMove(tc.piece, tc.fromY, tc.fromX, mockChessboard)
+			// Act
+			moves, err := getQueenMove(5, tc.fromY, tc.fromX, mockChessboard)
 
-		// Assert
-		if tc.expectedError != nil {
-			assert.EqualError(t, err, tc.expectedError.Error())
-		} else {
-			assert.NoError(t, err)
-			assert.Len(t, moves, len(tc.expectedMoves))
-
-			for index, move := range moves {
-				expectedMove := tc.expectedMoves[index]
-				compareMoves(t, expectedMove, move)
+			// Assert
+			if tc.expectedError != nil {
+				assert.EqualError(t, err, tc.expectedError.Error())
+			} else {
+				assert.NoError(t, err)
+				assertMovesEqual(t, tc.expectedMoves, moves)
 			}
-		}
+		})
 	}
 }
 
 func Test_MoveService_getKingMove(t *testing.T) {
 	testCases := []struct {
 		name          string
-		piece         int
-		fromX         int // col
-		fromY         int // row
+		fromY, fromX  int
 		setupMock     func(m *mocks.MockChessboardEntity)
 		expectedMoves []entity.MoveEntityInterface
 		expectedError error
 	}{
 		{
-			name:  "White King In Middle Of Board",
-			piece: 6,
-			fromX: 3,
-			fromY: 3,
+			name:  "King in the middle of the board",
+			fromY: 4,
+			fromX: 4,
 			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Diagonal Bottom Right
-				m.On("IsSquareEmpty", 4, 4).Return(true, nil)
-				// Right
-				m.On("IsSquareEmpty", 3, 4).Return(true, nil)
-				// Diagonal Top Right
-				m.On("IsSquareEmpty", 2, 4).Return(true, nil)
-				// Down
-				m.On("IsSquareEmpty", 4, 3).Return(true, nil)
-				// Up
-				m.On("IsSquareEmpty", 2, 3).Return(true, nil)
-				// Diagonal Bottom Left
-				m.On("IsSquareEmpty", 4, 2).Return(true, nil)
-				// Left
-				m.On("IsSquareEmpty", 3, 2).Return(true, nil)
-				// Diagonal Top Left
-				m.On("IsSquareEmpty", 2, 2).Return(true, nil)
+				positions := []struct{ toY, toX int }{
+					{5, 5}, {4, 5}, {3, 5}, {5, 4}, {3, 4}, {5, 3}, {4, 3}, {3, 3},
+				}
+				for _, pos := range positions {
+					m.On("IsWithinBounds", pos.toY, pos.toX).Return(true)
+					m.On("IsSquareEmpty", pos.toY, pos.toX).Return(true, nil)
+				}
+
+				m.On("GetCastlingRights").Return("-", nil)
 			},
-			expectedMoves: []entity.MoveEntityInterface{
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(4), HelperService.IntPtr(4),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(4), HelperService.IntPtr(3),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(4), HelperService.IntPtr(2),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(3), HelperService.IntPtr(4),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(3), HelperService.IntPtr(2),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(2), HelperService.IntPtr(4),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(2), HelperService.IntPtr(3),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(2), HelperService.IntPtr(2),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(0),
-				),
-			},
+			expectedMoves: massCreateMoveEntities(4, 4, []struct{ toY, toX int }{
+				{5, 5}, {4, 5}, {3, 5}, {5, 4}, {3, 4}, {5, 3}, {4, 3}, {3, 3},
+			}, 0, false, false, 0),
 			expectedError: nil,
 		},
 		{
-			name:  "White King Surrounded By Opponents",
-			piece: 6,
-			fromX: 3,
-			fromY: 3,
+			name:  "King in corner",
+			fromY: 0,
+			fromX: 0,
 			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Diagonal Bottom Right
-				m.On("IsSquareEmpty", 4, 4).Return(false, nil)
-				m.On("IsOpponent", 6, 4, 4).Return(true, nil)
-				m.On("GetPiece", 4, 4).Return(-6, nil)
-				// Right
-				m.On("IsSquareEmpty", 3, 4).Return(false, nil)
-				m.On("IsOpponent", 6, 3, 4).Return(true, nil)
-				m.On("GetPiece", 3, 4).Return(-6, nil)
-				// Diagonal Top Right
-				m.On("IsSquareEmpty", 2, 4).Return(false, nil)
-				m.On("IsOpponent", 6, 2, 4).Return(true, nil)
-				m.On("GetPiece", 2, 4).Return(-6, nil)
-				// Down
-				m.On("IsSquareEmpty", 4, 3).Return(false, nil)
-				m.On("IsOpponent", 6, 4, 3).Return(true, nil)
-				m.On("GetPiece", 4, 3).Return(-6, nil)
-				// Up
-				m.On("IsSquareEmpty", 2, 3).Return(false, nil)
-				m.On("IsOpponent", 6, 2, 3).Return(true, nil)
-				m.On("GetPiece", 2, 3).Return(-6, nil)
-				// Diagonal Bottom Left
-				m.On("IsSquareEmpty", 4, 2).Return(false, nil)
-				m.On("IsOpponent", 6, 4, 2).Return(true, nil)
-				m.On("GetPiece", 4, 2).Return(-6, nil)
-				// Left
-				m.On("IsSquareEmpty", 3, 2).Return(false, nil)
-				m.On("IsOpponent", 6, 3, 2).Return(true, nil)
-				m.On("GetPiece", 3, 2).Return(-6, nil)
-				// Diagonal Top Left
-				m.On("IsSquareEmpty", 2, 2).Return(false, nil)
-				m.On("IsOpponent", 6, 2, 2).Return(true, nil)
-				m.On("GetPiece", 2, 2).Return(-6, nil)
+				positions := []struct{ toY, toX int }{
+					{1, 1}, {0, 1}, {-1, 1}, {1, 0}, {-1, 0}, {1, -1}, {0, -1}, {-1, -1},
+				}
+				for _, pos := range positions {
+					if pos.toY < 0 || pos.toX < 0 {
+						m.On("IsWithinBounds", pos.toY, pos.toX).Return(false)
+					} else {
+						m.On("IsWithinBounds", pos.toY, pos.toX).Return(true)
+						m.On("IsSquareEmpty", pos.toY, pos.toX).Return(true, nil)
+					}
+				}
+
+				m.On("GetCastlingRights").Return("-", nil)
 			},
-			expectedMoves: []entity.MoveEntityInterface{
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(4), HelperService.IntPtr(4),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(-6),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(4), HelperService.IntPtr(3),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(-6),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(4), HelperService.IntPtr(2),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(-6),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(3), HelperService.IntPtr(4),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(-6),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(3), HelperService.IntPtr(2),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(-6),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(2), HelperService.IntPtr(4),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(-6),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(2), HelperService.IntPtr(3),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(-6),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(2), HelperService.IntPtr(2),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(-6),
-				),
-			},
+			expectedMoves: massCreateMoveEntities(0, 0, []struct{ toY, toX int }{
+				{1, 1}, {0, 1}, {1, 0},
+			}, 0, false, false, 0),
 			expectedError: nil,
 		},
 		{
-			name:  "Black King Surrounded By Opponents",
-			piece: -6,
-			fromX: 3,
-			fromY: 3,
+			name:  "King in middle with 3 friendly pieces blocking on up and 5 opponent pieces on bottom, right, left",
+			fromY: 4,
+			fromX: 4,
 			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Diagonal Bottom Right
-				m.On("IsSquareEmpty", 4, 4).Return(false, nil)
-				m.On("IsOpponent", -6, 4, 4).Return(true, nil)
-				m.On("GetPiece", 4, 4).Return(6, nil)
-				// Right
-				m.On("IsSquareEmpty", 3, 4).Return(false, nil)
-				m.On("IsOpponent", -6, 3, 4).Return(true, nil)
-				m.On("GetPiece", 3, 4).Return(6, nil)
-				// Diagonal Top Right
-				m.On("IsSquareEmpty", 2, 4).Return(false, nil)
-				m.On("IsOpponent", -6, 2, 4).Return(true, nil)
-				m.On("GetPiece", 2, 4).Return(6, nil)
-				// Down
-				m.On("IsSquareEmpty", 4, 3).Return(false, nil)
-				m.On("IsOpponent", -6, 4, 3).Return(true, nil)
-				m.On("GetPiece", 4, 3).Return(6, nil)
-				// Up
-				m.On("IsSquareEmpty", 2, 3).Return(false, nil)
-				m.On("IsOpponent", -6, 2, 3).Return(true, nil)
-				m.On("GetPiece", 2, 3).Return(6, nil)
-				// Diagonal Bottom Left
-				m.On("IsSquareEmpty", 4, 2).Return(false, nil)
-				m.On("IsOpponent", -6, 4, 2).Return(true, nil)
-				m.On("GetPiece", 4, 2).Return(6, nil)
-				// Left
-				m.On("IsSquareEmpty", 3, 2).Return(false, nil)
-				m.On("IsOpponent", -6, 3, 2).Return(true, nil)
-				m.On("GetPiece", 3, 2).Return(6, nil)
-				// Diagonal Top Left
-				m.On("IsSquareEmpty", 2, 2).Return(false, nil)
-				m.On("IsOpponent", -6, 2, 2).Return(true, nil)
-				m.On("GetPiece", 2, 2).Return(6, nil)
+				positions := []struct{ toY, toX int }{
+					{5, 5}, {4, 5}, {3, 5}, {5, 4}, {3, 4}, {5, 3}, {4, 3}, {3, 3},
+				}
+				for _, pos := range positions {
+					m.On("IsWithinBounds", pos.toY, pos.toX).Return(true)
+					m.On("IsSquareEmpty", pos.toY, pos.toX).Return(false, nil)
+					if pos.toY > 4 {
+						m.On("IsOpponent", 6, pos.toY, pos.toX).Return(false, nil)
+					} else {
+						m.On("IsOpponent", 6, pos.toY, pos.toX).Return(true, nil)
+						m.On("GetPiece", pos.toY, pos.toX).Return(-1, nil)
+					}
+				}
+
+				m.On("GetCastlingRights").Return("-", nil)
 			},
-			expectedMoves: []entity.MoveEntityInterface{
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(4), HelperService.IntPtr(4),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(6),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(4), HelperService.IntPtr(3),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(6),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(4), HelperService.IntPtr(2),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(6),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(3), HelperService.IntPtr(4),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(6),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(3), HelperService.IntPtr(2),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(6),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(2), HelperService.IntPtr(4),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(6),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(2), HelperService.IntPtr(3),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(6),
-				),
-				entity.NewMoveEntity(
-					HelperService.IntPtr(3), HelperService.IntPtr(3),
-					HelperService.IntPtr(2), HelperService.IntPtr(2),
-					HelperService.IntPtr(0),
-					HelperService.BoolPtr(false), HelperService.BoolPtr(false),
-					HelperService.IntPtr(6),
-				),
-			},
+			expectedMoves: massCreateMoveEntities(4, 4, []struct{ toY, toX int }{
+				{4, 5}, {3, 5}, {3, 4}, {4, 3}, {3, 3},
+			}, 0, false, false, -1),
 			expectedError: nil,
 		},
 		{
-			name:  "Failed To Check If Square Is Empty",
-			piece: 6,
-			fromX: 3,
-			fromY: 3,
+			name:  "King castling king and queen side",
+			fromY: 7,
+			fromX: 4,
 			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Diagonal Bottom Right
-				m.On("IsSquareEmpty", 4, 4).Return(false, errors.New("ChessboardEntity.IsSquareEmpty: board is not set"))
+				positions := []struct{ toY, toX int }{
+					{8, 5}, {7, 5}, {6, 5}, {8, 4}, {6, 4}, {8, 3}, {7, 3}, {6, 3},
+				}
+				for _, pos := range positions {
+					if pos.toY <= 7 {
+						m.On("IsWithinBounds", pos.toY, pos.toX).Return(true)
+						m.On("IsSquareEmpty", pos.toY, pos.toX).Return(true, nil)
+					} else {
+						m.On("IsWithinBounds", pos.toY, pos.toX).Return(false)
+					}
+				}
+
+				m.On("GetCastlingRights").Return("KQkq", nil)
+				m.On("IsSquareEmpty", 7, 5).Return(true, nil)
+				m.On("IsSquareEmpty", 7, 6).Return(true, nil)
+				m.On("GetPiece", 7, 7).Return(4, nil)
+				m.On("IsSquareEmpty", 7, 3).Return(true, nil)
+				m.On("IsSquareEmpty", 7, 2).Return(true, nil)
+				m.On("IsSquareEmpty", 7, 1).Return(true, nil)
+				m.On("GetPiece", 7, 0).Return(4, nil)
 			},
-			expectedMoves: nil,
-			expectedError: errors.New("MoveService.getKingMove: ChessboardEntity.IsSquareEmpty: board is not set"),
+			// Create 2 sets of moves... one for normal moves and one for castling moves
+			expectedMoves: append(massCreateMoveEntities(4, 7, []struct{ toY, toX int }{
+				{7, 5}, {6, 5}, {6, 4}, {7, 3}, {6, 3},
+			}, 0, false, false, 0),
+				massCreateMoveEntities(4, 7, []struct{ toY, toX int }{
+					{7, 6}, {7, 2},
+				}, 0, true, false, 0)...),
+			expectedError: nil,
 		},
 		{
-			name:  "Failed To Check If Is Opponent",
-			piece: 6,
-			fromX: 3,
-			fromY: 3,
+			name:  "Error in IsSquareEmpty",
+			fromY: 4,
+			fromX: 4,
 			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Diagonal Bottom Right
-				m.On("IsSquareEmpty", 4, 4).Return(false, nil)
-				m.On("IsOpponent", 6, 4, 4).Return(false, errors.New("ChessboardEntity.IsOpponent: board is not set"))
+				m.On("IsWithinBounds", 5, 5).Return(true)
+				m.On("IsSquareEmpty", 5, 5).Return(false, errors.New("test error in IsSquareEmpty"))
 			},
 			expectedMoves: nil,
-			expectedError: errors.New("MoveService.getKingMove: ChessboardEntity.IsOpponent: board is not set"),
+			expectedError: errors.New("MoveService.getKingMove: MoveService.generateMoves: MoveService.tryAddMove: test error in IsSquareEmpty"),
 		},
 		{
-			name:  "Failed To Get Captured Piece",
-			piece: 6,
-			fromX: 3,
-			fromY: 3,
+			name:  "Error in GetCastlingRights",
+			fromY: 4,
+			fromX: 4,
 			setupMock: func(m *mocks.MockChessboardEntity) {
-				// Diagonal Bottom Right
-				m.On("IsSquareEmpty", 4, 4).Return(false, nil)
-				m.On("IsOpponent", 6, 4, 4).Return(true, nil)
-				m.On("GetPiece", 4, 4).Return(0, errors.New("ChessboardEntity.GetPiece: row or col out of bounds"))
+				positions := []struct{ toY, toX int }{
+					{5, 5}, {4, 5}, {3, 5}, {5, 4}, {3, 4}, {5, 3}, {4, 3}, {3, 3},
+				}
+				for _, pos := range positions {
+					m.On("IsWithinBounds", pos.toY, pos.toX).Return(true)
+					m.On("IsSquareEmpty", pos.toY, pos.toX).Return(true, nil)
+				}
+
+				m.On("GetCastlingRights").Return("", errors.New("test error in GetCastlingRights"))
 			},
 			expectedMoves: nil,
-			expectedError: errors.New("MoveService.getKingMove: ChessboardEntity.GetPiece: row or col out of bounds"),
+			expectedError: errors.New("MoveService.getKingMove: MoveService.getCastlingMoves: test error in GetCastlingRights"),
 		},
 	}
 
 	for _, tc := range testCases {
-		// Arrange
-		mockChessboard := new(mocks.MockChessboardEntity)
-		tc.setupMock(mockChessboard)
+		t.Run(tc.name, func(t *testing.T) {
+			// Arrange
+			mockChessboard := new(mocks.MockChessboardEntity)
+			tc.setupMock(mockChessboard)
 
-		// Act
-		moves, err := getKingMove(tc.piece, tc.fromY, tc.fromX, mockChessboard)
+			// Act
+			moves, err := getKingMove(6, tc.fromY, tc.fromX, mockChessboard)
 
-		// Assert
-		if tc.expectedError != nil {
-			assert.EqualError(t, err, tc.expectedError.Error())
-		} else {
-			assert.NoError(t, err)
-			assert.Len(t, moves, len(tc.expectedMoves))
-
-			for index, move := range moves {
-				expectedMove := tc.expectedMoves[index]
-				compareMoves(t, expectedMove, move)
+			// Assert
+			if tc.expectedError != nil {
+				assert.EqualError(t, err, tc.expectedError.Error())
+			} else {
+				assert.NoError(t, err)
+				assertMovesEqual(t, tc.expectedMoves, moves)
 			}
-		}
+		})
 	}
+}
+
+// Helper functions
+func assertMovesEqual(t *testing.T, expected, actual []entity.MoveEntityInterface) {
+	assert.Equal(t, len(expected), len(actual), "Number of moves should be equal")
+	for i := range expected {
+		assertMoveEqual(t, expected[i], actual[i])
+	}
+}
+
+func assertMoveEqual(t *testing.T, expected, actual entity.MoveEntityInterface) {
+	// Get FromX
+	expectedFromX, err := expected.GetFromX()
+	assert.NoError(t, err, "Expected move GetFromX should not return an error")
+	actualFromX, err := actual.GetFromX()
+	assert.NoError(t, err, "Actual move GetFromX should not return an error")
+	assert.Equal(t, expectedFromX, actualFromX, "FromX should be equal")
+
+	// Get FromY
+	expectedFromY, err := expected.GetFromY()
+	assert.NoError(t, err, "Expected move GetFromY should not return an error")
+	actualFromY, err := actual.GetFromY()
+	assert.NoError(t, err, "Actual move GetFromY should not return an error")
+	assert.Equal(t, expectedFromY, actualFromY, "FromY should be equal")
+
+	// Get ToX
+	expectedToX, err := expected.GetToX()
+	assert.NoError(t, err, "Expected move GetToX should not return an error")
+	actualToX, err := actual.GetToX()
+	assert.NoError(t, err, "Actual move GetToX should not return an error")
+	assert.Equal(t, expectedToX, actualToX, "ToX should be equal")
+
+	// Get ToY
+	expectedToY, err := expected.GetToY()
+	assert.NoError(t, err, "Expected move GetToY should not return an error")
+	actualToY, err := actual.GetToY()
+	assert.NoError(t, err, "Actual move GetToY should not return an error")
+	assert.Equal(t, expectedToY, actualToY, "ToY should be equal")
+
+	// Get Promotion
+	expectedPromotion, err := expected.GetPromotion()
+	assert.NoError(t, err, "Expected move GetPromotion should not return an error")
+	actualPromotion, err := actual.GetPromotion()
+	assert.NoError(t, err, "Actual move GetPromotion should not return an error")
+	assert.Equal(t, expectedPromotion, actualPromotion, "Promotion should be equal")
+
+	// IsCastling
+	expectedIsCastling, err := expected.IsCastling()
+	assert.NoError(t, err, "Expected move IsCastling should not return an error")
+	actualIsCastling, err := actual.IsCastling()
+	assert.NoError(t, err, "Actual move IsCastling should not return an error")
+	assert.Equal(t, expectedIsCastling, actualIsCastling, "IsCastling should be equal")
+
+	// IsEnPassant
+	expectedIsEnPassant, err := expected.IsEnPassant()
+	assert.NoError(t, err, "Expected move IsEnPassant should not return an error")
+	actualIsEnPassant, err := actual.IsEnPassant()
+	assert.NoError(t, err, "Actual move IsEnPassant should not return an error")
+	assert.Equal(t, expectedIsEnPassant, actualIsEnPassant, "IsEnPassant should be equal")
+
+	// GetCaptured
+	expectedCaptured, err := expected.GetCaptured()
+	assert.NoError(t, err, "Expected move GetCaptured should not return an error")
+	actualCaptured, err := actual.GetCaptured()
+	assert.NoError(t, err, "Actual move GetCaptured should not return an error")
+	assert.Equal(t, expectedCaptured, actualCaptured, "Captured piece should be equal")
+}
+
+func massCreateMoveEntities(fromX int, fromY int, positions []struct{ toY, toX int }, promotion int, isCastling bool, isEnPassant bool, captured int) []entity.MoveEntityInterface {
+	moves := make([]entity.MoveEntityInterface, len(positions))
+	for i, pos := range positions {
+		moves[i] = newMockMoveEntity(fromX, fromY, pos.toX, pos.toY, promotion, isCastling, isEnPassant, captured)
+	}
+	return moves
+}
+
+func newMockMoveEntity(fromX, fromY, toX, toY, promotion int, isCastling, isEnPassant bool, captured int) entity.MoveEntityInterface {
+	mockMove := new(mocks.MockMoveEntity)
+
+	mockMove.On("GetFromX").Return(fromX, nil)
+	mockMove.On("GetFromY").Return(fromY, nil)
+	mockMove.On("GetToX").Return(toX, nil)
+	mockMove.On("GetToY").Return(toY, nil)
+	mockMove.On("GetPromotion").Return(promotion, nil)
+	mockMove.On("IsCastling").Return(isCastling, nil)
+	mockMove.On("IsEnPassant").Return(isEnPassant, nil)
+	mockMove.On("GetCaptured").Return(captured, nil)
+	mockMove.On("GetChessNotation").Return("", nil)
+
+	return mockMove
 }
