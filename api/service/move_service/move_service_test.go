@@ -581,6 +581,184 @@ func Test_MoveService_canCastleQueenSide(t *testing.T) {
 	}
 }
 
+func Test_MoveService_getPawnMove(t *testing.T) {
+	testCases := []struct {
+		name          string
+		piece         int
+		fromY, fromX  int
+		setupMock     func(m *mocks.MockChessboardEntity)
+		expectedMoves []entity.MoveEntityInterface
+		expectedError error
+	}{
+		{
+			name:  "White pawn moves one and two squares forward",
+			piece: 1,
+			fromY: 6, fromX: 4,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("IsSquareEmpty", 5, 4).Return(true, nil)
+				m.On("IsSquareEmpty", 4, 4).Return(true, nil)
+				m.On("IsOpponent", 1, 5, 3).Return(false, nil)
+				m.On("IsOpponent", 1, 5, 5).Return(false, nil)
+			},
+			expectedMoves: []entity.MoveEntityInterface{
+				newMockMoveEntity(4, 6, 4, 5, 0, false, false, 0),
+				newMockMoveEntity(4, 6, 4, 4, 0, false, true, 0),
+			},
+			expectedError: nil,
+		},
+		{
+			name:  "Black pawn moves one square forward",
+			piece: -1,
+			fromY: 2, fromX: 4,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("IsSquareEmpty", 3, 4).Return(true, nil)
+				m.On("IsSquareEmpty", 4, 4).Return(false, nil)
+				m.On("IsOpponent", -1, 3, 3).Return(false, nil)
+				m.On("IsOpponent", -1, 3, 5).Return(false, nil)
+			},
+			expectedMoves: []entity.MoveEntityInterface{
+				newMockMoveEntity(4, 2, 4, 3, 0, false, false, 0),
+			},
+			expectedError: nil,
+		},
+		{
+			name:  "White pawn moves one square forward and can promote",
+			piece: 1,
+			fromY: 1, fromX: 4,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("IsSquareEmpty", 0, 4).Return(true, nil)
+				m.On("IsSquareEmpty", -1, 4).Return(false, nil)
+				m.On("IsOpponent", 1, 0, 3).Return(false, nil)
+				m.On("IsOpponent", 1, 0, 5).Return(false, nil)
+			},
+			expectedMoves: []entity.MoveEntityInterface{
+				newMockMoveEntity(4, 1, 4, 0, 2, false, false, 0),
+				newMockMoveEntity(4, 1, 4, 0, 3, false, false, 0),
+				newMockMoveEntity(4, 1, 4, 0, 4, false, false, 0),
+				newMockMoveEntity(4, 1, 4, 0, 5, false, false, 0),
+			},
+			expectedError: nil,
+		},
+		{
+			name:  "White pawn captures both sides",
+			piece: 1,
+			fromY: 6, fromX: 4,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("IsSquareEmpty", 5, 4).Return(false, nil)
+				m.On("IsOpponent", 1, 5, 3).Return(true, nil)
+				m.On("GetPiece", 5, 3).Return(-1, nil)
+				m.On("IsOpponent", 1, 5, 5).Return(true, nil)
+				m.On("GetPiece", 5, 5).Return(-1, nil)
+			},
+			expectedMoves: []entity.MoveEntityInterface{
+				newMockMoveEntity(4, 6, 3, 5, 0, false, false, -1),
+				newMockMoveEntity(4, 6, 5, 5, 0, false, false, -1),
+			},
+			expectedError: nil,
+		},
+		{
+			name:  "White pawn captures left and promotes",
+			piece: 1,
+			fromY: 1, fromX: 4,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("IsSquareEmpty", 0, 4).Return(false, nil)
+				m.On("IsSquareEmpty", -1, 4).Return(false, nil)
+				m.On("IsOpponent", 1, 0, 3).Return(true, nil)
+				m.On("GetPiece", 0, 3).Return(-1, nil)
+				m.On("IsOpponent", 1, 0, 5).Return(false, nil)
+			},
+			expectedMoves: []entity.MoveEntityInterface{
+				newMockMoveEntity(4, 1, 3, 0, 2, false, false, -1),
+				newMockMoveEntity(4, 1, 3, 0, 3, false, false, -1),
+				newMockMoveEntity(4, 1, 3, 0, 4, false, false, -1),
+				newMockMoveEntity(4, 1, 3, 0, 5, false, false, -1),
+			},
+			expectedError: nil,
+		},
+		{
+			name:  "White pawn has an en passant capture on left",
+			piece: 1,
+			fromY: 4, fromX: 4,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("IsSquareEmpty", 3, 4).Return(false, nil)
+				m.On("IsSquareEmpty", 2, 4).Return(false, nil)
+				m.On("IsOpponent", 1, 3, 5).Return(true, nil)
+				m.On("GetPiece", 3, 5).Return(0, nil)
+				m.On("IsOpponent", 1, 3, 3).Return(false, nil)
+			},
+			expectedMoves: []entity.MoveEntityInterface{
+				newMockMoveEntity(4, 4, 5, 3, 0, false, false, -1),
+			},
+			expectedError: nil,
+		},
+		{
+			name:  "Error in IsSquareEmpty (1st square)",
+			piece: 1,
+			fromY: 6, fromX: 4,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("IsSquareEmpty", 5, 4).Return(false, errors.New("test error in IsSquareEmpty"))
+			},
+			expectedMoves: []entity.MoveEntityInterface{},
+			expectedError: errors.New("MoveService.getPawnMove: test error in IsSquareEmpty"),
+		},
+		{
+			name:  "Error in IsSquareEmpty (2nd square)",
+			piece: 1,
+			fromY: 6, fromX: 4,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("IsSquareEmpty", 5, 4).Return(true, nil)
+				m.On("IsSquareEmpty", 4, 4).Return(false, errors.New("test error in IsSquareEmpty"))
+			},
+			expectedMoves: []entity.MoveEntityInterface{},
+			expectedError: errors.New("MoveService.getPawnMove: test error in IsSquareEmpty"),
+		},
+		{
+			name:  "Error in IsOpponent",
+			piece: 1,
+			fromY: 6, fromX: 4,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("IsSquareEmpty", 5, 4).Return(true, nil)
+				m.On("IsSquareEmpty", 4, 4).Return(true, nil)
+				m.On("IsOpponent", 1, 5, 3).Return(false, errors.New("test error in IsOpponent"))
+			},
+			expectedMoves: []entity.MoveEntityInterface{},
+			expectedError: errors.New("MoveService.getPawnMove: test error in IsOpponent"),
+		},
+		{
+			name:  "Error in GetPiece",
+			piece: 1,
+			fromY: 6, fromX: 4,
+			setupMock: func(m *mocks.MockChessboardEntity) {
+				m.On("IsSquareEmpty", 5, 4).Return(true, nil)
+				m.On("IsSquareEmpty", 4, 4).Return(true, nil)
+				m.On("IsOpponent", 1, 5, 3).Return(true, nil)
+				m.On("GetPiece", 5, 3).Return(0, errors.New("test error in GetPiece"))
+			},
+			expectedMoves: []entity.MoveEntityInterface{},
+			expectedError: errors.New("MoveService.getPawnMove: test error in GetPiece"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Arrange
+			mockChessboard := new(mocks.MockChessboardEntity)
+			tc.setupMock(mockChessboard)
+
+			// Act
+			moves, err := getPawnMove(tc.piece, tc.fromY, tc.fromX, mockChessboard)
+
+			// Assert
+			if tc.expectedError != nil {
+				assert.EqualError(t, err, tc.expectedError.Error())
+			} else {
+				assert.NoError(t, err)
+				assertMovesEqual(t, tc.expectedMoves, moves)
+			}
+		})
+	}
+}
+
 // Helper functions
 func assertMovesEqual(t *testing.T, expected, actual []entity.MoveEntityInterface) {
 	assert.Equal(t, len(expected), len(actual), "Number of moves should be equal")
