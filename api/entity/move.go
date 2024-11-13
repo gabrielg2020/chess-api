@@ -18,6 +18,7 @@ type MoveEntityInterface interface {
 	IsEnPassant() (bool, error)
 	GetCaptured() (int, error)
 	GetChessNotation() (string, error)
+	GetMoveProperties() (int, int, int, int, int, bool, bool, int, error)
 }
 
 type MoveEntity struct {
@@ -137,4 +138,34 @@ func (entity *MoveEntity) GetChessNotation() (string, error) {
 	toRank := 8 - toY
 
 	return fromFile + strconv.Itoa(fromRank) + toFile + strconv.Itoa(toRank), nil
+}
+
+// TODO needs testing :(
+func (entity *MoveEntity) GetMoveProperties() (int, int, int, int, int, bool, bool, int, error) {
+	if entity.fromX == nil {
+		return -1, -1, -1, -1, -1, false, false, -1, errors.New("MoveEntity.GetMoveProperties: fromX is not set")
+	}
+	if entity.fromY == nil {
+		return -1, -1, -1, -1, -1, false, false, -1, errors.New("MoveEntity.GetMoveProperties: fromY is not set")
+	}
+	if entity.toX == nil {
+		return -1, -1, -1, -1, -1, false, false, -1, errors.New("MoveEntity.GetMoveProperties: toX is not set")
+	}
+	if entity.toY == nil {
+		return -1, -1, -1, -1, -1, false, false, -1, errors.New("MoveEntity.GetMoveProperties: toY is not set")
+	}
+	if entity.promotion == nil {
+		return -1, -1, -1, -1, -1, false, false, -1, errors.New("MoveEntity.GetMoveProperties: promotion is not set")
+	}
+	if entity.isCastling == nil {
+		return -1, -1, -1, -1, -1, false, false, -1, errors.New("MoveEntity.GetMoveProperties: isCastling is not set")
+	}
+	if entity.isEnPassant == nil {
+		return -1, -1, -1, -1, -1, false, false, -1, errors.New("MoveEntity.GetMoveProperties: isEnPassant is not set")
+	}
+	if entity.captured == nil {
+		return -1, -1, -1, -1, -1, false, false, -1, errors.New("MoveEntity.GetMoveProperties: captured is not set")
+	}
+
+	return *entity.fromX, *entity.fromY, *entity.toX, *entity.toY, *entity.promotion, *entity.isCastling, *entity.isEnPassant, *entity.captured, nil
 }
