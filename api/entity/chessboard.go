@@ -20,6 +20,7 @@ type ChessboardEntityInterface interface {
 	IsSquareEmpty(int, int) (bool, error)
 	IsOpponent(int, int, int) (bool, error)
 	IsWithinBounds(int, int) bool
+	SetSquare(int, int, int) error
 	// SetFen(fen string) (*ChessboardEntity, error)
 	// ResetBoard() (*ChessboardEntity, error)
 	// SetPiece(position string, peice int) error
@@ -238,4 +239,19 @@ func (entity *ChessboardEntity) convertChessNotation(chessNotation string) (int,
 	col := 8 - colNumber
 
 	return col, row, nil
+}
+
+// TODO needs testing :(
+func (entity *ChessboardEntity) SetSquare(row int, col int, piece int) error {
+	if !entity.IsWithinBounds(row, col) {
+		return errors.New("ChessboardEntity.SetSquare: row or col out of bounds")
+	}
+
+	if entity.board == nil {
+		return errors.New("ChessboardEntity.SetSquare: board is not set")
+	}
+
+	entity.board[row][col] = piece
+
+	return nil
 }
